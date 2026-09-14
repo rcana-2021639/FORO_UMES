@@ -1,0 +1,6 @@
+# Fuerza LF en el repositorio; evita que los scripts de Docker se rompan en Windows (CRLF)
+* text=auto eol=lf
+*.sh text eol=lf
+*.png binary
+*.jpg binary
+*.ico binary

@@ -1,0 +1,10 @@
+# Bloquea el commit si el linter falla o si algún archivo staged no está formateado
+npm run lint || exit 1
+
+archivos=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(ts|tsx|js|mjs|json|md|yml|yaml)$')
+if [ -n "$archivos" ]; then
+  echo "$archivos" | xargs node node_modules/prettier/bin/prettier.cjs --check || {
+    echo "Formato incorrecto. Ejecuta: npm run format"
+    exit 1
+  }
+fi

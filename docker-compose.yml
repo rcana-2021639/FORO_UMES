@@ -1,0 +1,31 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: foro_posgrado_db
+    restart: unless-stopped
+    environment:
+      # Usuario administrador de PostgreSQL (solo para administrar el contenedor;
+      # la aplicación NUNCA se conecta con este usuario).
+      POSTGRES_USER: ${POSTGRES_ADMIN_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?Define POSTGRES_ADMIN_PASSWORD en .env}
+      POSTGRES_DB: ${DATABASE_NAME:-foro_posgrado_dev}
+      # Usuario limitado que usa Strapi (lo crea docker/init/01-app-user.sh)
+      APP_DB_USER: ${DATABASE_USERNAME:-foro_app}
+      APP_DB_PASSWORD: ${DATABASE_PASSWORD:?Define DATABASE_PASSWORD en .env}
+    ports:
+      - '${DATABASE_PORT:-5432}:5432'
+    volumes:
+      - foro_posgrado_pgdata:/var/lib/postgresql
+      - ./docker/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${POSTGRES_ADMIN_USER:-postgres} -d ${DATABASE_NAME:-foro_posgrado_dev}',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  foro_posgrado_pgdata:
