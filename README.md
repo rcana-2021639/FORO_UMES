@@ -4,7 +4,7 @@ Backend del sitio web del Foro, construido con **Strapi 5 (TypeScript)** sobre *
 Sirve la API REST que consume el frontend (Next.js) y provee el panel administrativo con permisos por universidad.
 
 > Este repositorio sigue el _Plan Técnico de Desarrollo del Backend_ (8 sprints).
-> Estado actual: **Sprint 5 — Seguridad y endurecimiento** completado. Ver [SEGURIDAD.md](SEGURIDAD.md) y [openapi.yaml](openapi.yaml).
+> Estado actual: **Sprint 6 — Observabilidad** completado. Ver [SEGURIDAD.md](SEGURIDAD.md), [OBSERVABILIDAD.md](OBSERVABILIDAD.md) y [openapi.yaml](openapi.yaml).
 
 ---
 
@@ -145,7 +145,7 @@ Al terminar de compilar abre <http://localhost:1337/admin>. La primera vez te pe
 │   ├── lib/              # Lógica pura reutilizable: validación de contacto, lista blanca de consultas, errores
 │   ├── openapi/          # Documentación OpenAPI de las rutas personalizadas
 │   ├── security/         # Roles, condición de propiedad por universidad, guard del panel, auditoría
-│   ├── middlewares/      # admin-security, query-whitelist, rate-limit, upload-guard
+│   ├── middlewares/      # request-context, api-errors, compress, rate-limit, upload-guard, query-whitelist, admin-security
 │   ├── extensions/       # Extensiones de plugins de Strapi
 │   └── index.ts          # Hooks register/bootstrap de la aplicación
 ├── types/generated/      # Tipos generados por Strapi (no editar a mano)
@@ -234,11 +234,11 @@ Reglas comunes:
 
 | Sprint | Objetivo                                                     | Estado       |
 | ------ | ------------------------------------------------------------ | ------------ |
-| 1      | Fundamentos: entorno, repositorio y arquitectura base        | ✅ En curso  |
-| 2      | Modelado de contenido y base de datos                        | ⏳ Pendiente |
-| 3      | Autenticación, roles y control de acceso por universidad     | ⏳ Pendiente |
+| 1      | Fundamentos: entorno, repositorio y arquitectura base        | ✅ Hecho     |
+| 2      | Modelado de contenido y base de datos                        | ✅ Hecho     |
+| 3      | Autenticación, roles y control de acceso por universidad     | ✅ Hecho     |
 | 4      | API pública y lógica de negocio (contacto, filtros, resumen) | ✅ Hecho     |
 | 5      | Seguridad y hardening                                        | ✅ Hecho     |
-| 6      | Observabilidad, manejo de errores y rendimiento              | ⏳ Pendiente |
+| 6      | Observabilidad, manejo de errores y rendimiento              | ✅ Hecho     |
 | 7      | Pruebas automatizadas                                        | ⏳ Pendiente |
 | 8      | CI/CD, despliegue y entrega                                  | ⏳ Pendiente |

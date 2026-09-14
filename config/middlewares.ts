@@ -13,7 +13,12 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Middlewar
   const mediaHost = env('S3_PUBLIC_URL', '');
 
   return [
-    'strapi::logger',
+    // requestId + registro estructurado por petición (reemplaza strapi::logger)
+    'global::request-context',
+    // Compresión gzip/brotli
+    'global::compress',
+    // Normaliza los errores de /api/* al formato estándar del proyecto (envuelve a strapi::errors)
+    'global::api-errors',
     'strapi::errors',
     {
       name: 'strapi::security',

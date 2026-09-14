@@ -28,10 +28,12 @@
   "dependencies": {
     "@strapi/database": "5.53.0",
     "@strapi/plugin-documentation": "^5.53.0",
+    "@strapi/plugin-sentry": "^5.53.0",
     "@strapi/plugin-users-permissions": "5.53.0",
     "@strapi/provider-email-nodemailer": "^5.53.0",
     "@strapi/provider-upload-aws-s3": "^5.53.0",
     "@strapi/strapi": "5.53.0",
+    "koa-compress": "^5.2.2",
     "pg": "8.20.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
@@ -41,6 +43,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/koa-compress": "^4.0.7",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

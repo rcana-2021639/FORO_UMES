@@ -78,6 +78,21 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin =>
       : {},
   },
 
+  // Monitoreo de errores en producción (Sprint 6, tarea 4). Solo se activa con SENTRY_DSN.
+  // sendMetadata: false → no se envían cabeceras ni cuerpo de la petición (datos personales).
+  sentry: {
+    enabled: Boolean(env('SENTRY_DSN')),
+    config: {
+      dsn: env('SENTRY_DSN', ''),
+      sendMetadata: false,
+      init: {
+        environment: env('SENTRY_ENVIRONMENT', env('NODE_ENV', 'development')),
+        release: env('SENTRY_RELEASE', undefined),
+        tracesSampleRate: 0,
+      },
+    },
+  },
+
   // Especificación OpenAPI generada en /documentation (Sprint 4, tarea 9)
   documentation: {
     enabled: true,
