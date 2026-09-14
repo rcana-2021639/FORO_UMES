@@ -1,0 +1,56 @@
+# Despliegue continuo a producción (Sprint 8, tarea 2).
+#
+# Se dispara SOLO cuando el flujo "CI" termina con éxito sobre la rama main.
+# Despliega en Railway con la CLI usando el token del proyecto (secreto RAILWAY_TOKEN).
+#
+# Alternativa sin este archivo: conectar el repo en Railway (Settings → Source) con la rama
+# main y activar "Wait for CI" para que Railway espere a que las comprobaciones pasen.
+# Ambas opciones son equivalentes; este flujo deja el despliegue visible en GitHub Actions.
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    branches: [main]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  production:
+    name: Producción (Railway)
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ vars.PUBLIC_URL }}
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - name: Verificar que el secreto de Railway existe
+        run: |
+          if [ -z "${{ secrets.RAILWAY_TOKEN }}" ]; then
+            echo "Falta el secreto RAILWAY_TOKEN (Settings → Environments → production). Ver DESPLIEGUE.md"; exit 1
+          fi
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm i -g @railway/cli
+      - name: railway up
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: railway up --service "${{ vars.RAILWAY_SERVICE || 'backend' }}" --detach
+      - name: Comprobar salud del backend
+        if: ${{ vars.PUBLIC_URL != '' }}
+        run: |
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "${{ vars.PUBLIC_URL }}/_health" || true)
+            if [ "$code" = "204" ]; then echo "OK"; exit 0; fi
+            sleep 10
+          done
+          echo "El backend no respondió 204 en /_health tras 5 minutos"; exit 1

@@ -4,7 +4,7 @@ Backend del sitio web del Foro, construido con **Strapi 5 (TypeScript)** sobre *
 Sirve la API REST que consume el frontend (Next.js) y provee el panel administrativo con permisos por universidad.
 
 > Este repositorio sigue el _Plan Técnico de Desarrollo del Backend_ (8 sprints).
-> Estado actual: **Sprint 7 — Pruebas automatizadas** completado. Ver [TESTING.md](TESTING.md), Ver [SEGURIDAD.md](SEGURIDAD.md), [OBSERVABILIDAD.md](OBSERVABILIDAD.md) y [openapi.yaml](openapi.yaml).
+> Estado actual: **los 8 sprints del plan técnico están implementados**. Ver [DESPLIEGUE.md](DESPLIEGUE.md), [TESTING.md](TESTING.md), Ver [SEGURIDAD.md](SEGURIDAD.md), [OBSERVABILIDAD.md](OBSERVABILIDAD.md) y [openapi.yaml](openapi.yaml).
 
 ---
 
@@ -119,15 +119,15 @@ Al terminar de compilar abre <http://localhost:1337/admin>. La primera vez te pe
 
 ---
 
-## Convención de ramas
+## Convención de ramas y despliegue
 
-| Rama              | Uso                                                                      |
-| ----------------- | ------------------------------------------------------------------------ |
-| `main`            | Producción. Solo código estable.                                         |
-| `develop`         | Integración (se habilitará cuando el equipo crezca).                     |
-| `feature/<tarea>` | Una rama por tarea individual, p. ej. `feature/content-type-universidad` |
+| Rama              | Uso                                                                                               |
+| ----------------- | ------------------------------------------------------------------------------------------------- |
+| `jonathan`        | Desarrollo. Cada push ejecuta CI; Railway `staging` despliega desde aquí.                         |
+| `main`            | Producción. Solo recibe pull requests desde `jonathan` con CI en verde; al fusionar se despliega. |
+| `feature/<tarea>` | Opcional, para trabajo en paralelo dentro del equipo; se fusiona a `jonathan`.                    |
 
-> Todo el desarrollo del backend se hace en la rama `jonathan`. `main` se actualiza desde ahí cuando un sprint queda estable. Cuando el equipo crezca se activará la protección de rama (PR + revisión obligatoria) y `develop`, como indica el plan técnico.
+CI (`.github/workflows/ci.yml`): gitleaks, lint, formato, tipos, `npm audit`, pruebas con PostgreSQL y cobertura, build del panel y de la imagen Docker. Deploy (`.github/workflows/deploy.yml`): Railway al fusionar en `main`. Detalles, protección de rama, variables de producción, respaldos y rollback en [DESPLIEGUE.md](DESPLIEGUE.md).
 
 ---
 
@@ -140,6 +140,9 @@ Al terminar de compilar abre <http://localhost:1337/admin>. La primera vez te pe
 ├── docker/init/          # Scripts que corren al crear el contenedor de PostgreSQL por primera vez
 ├── scripts/seed.ts       # Datos de prueba
 ├── tests/                # unit/, integration/, api/ (Jest + supertest)
+├── .github/workflows/    # ci.yml, deploy.yml
+├── Dockerfile            # Imagen de producción (multi-etapa, usuario sin privilegios)
+├── railway.json          # Configuración de despliegue en Railway
 ├── public/               # Archivos estáticos (uploads locales en desarrollo)
 ├── src/
 │   ├── api/              # 8 content-types: schema.json + controller/routes/service (+ lifecycles.ts)
@@ -233,13 +236,13 @@ Reglas comunes:
 
 ## Roadmap (según el plan técnico)
 
-| Sprint | Objetivo                                                     | Estado       |
-| ------ | ------------------------------------------------------------ | ------------ |
-| 1      | Fundamentos: entorno, repositorio y arquitectura base        | ✅ Hecho     |
-| 2      | Modelado de contenido y base de datos                        | ✅ Hecho     |
-| 3      | Autenticación, roles y control de acceso por universidad     | ✅ Hecho     |
-| 4      | API pública y lógica de negocio (contacto, filtros, resumen) | ✅ Hecho     |
-| 5      | Seguridad y hardening                                        | ✅ Hecho     |
-| 6      | Observabilidad, manejo de errores y rendimiento              | ✅ Hecho     |
-| 7      | Pruebas automatizadas                                        | ✅ Hecho     |
-| 8      | CI/CD, despliegue y entrega                                  | ⏳ Pendiente |
+| Sprint | Objetivo                                                     | Estado   |
+| ------ | ------------------------------------------------------------ | -------- |
+| 1      | Fundamentos: entorno, repositorio y arquitectura base        | ✅ Hecho |
+| 2      | Modelado de contenido y base de datos                        | ✅ Hecho |
+| 3      | Autenticación, roles y control de acceso por universidad     | ✅ Hecho |
+| 4      | API pública y lógica de negocio (contacto, filtros, resumen) | ✅ Hecho |
+| 5      | Seguridad y hardening                                        | ✅ Hecho |
+| 6      | Observabilidad, manejo de errores y rendimiento              | ✅ Hecho |
+| 7      | Pruebas automatizadas                                        | ✅ Hecho |
+| 8      | CI/CD, despliegue y entrega                                  | ✅ Hecho |

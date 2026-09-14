@@ -1,0 +1,117 @@
+# Integración continua (Sprint 8, tarea 1).
+# Corre en cada push a jonathan/main y en cada pull request. Si algo falla, la fusión se bloquea
+# (con la protección de rama de main activada, ver DESPLIEGUE.md).
+name: CI
+
+on:
+  push:
+    branches: [jonathan, main]
+  pull_request:
+    branches: [jonathan, main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: 24
+
+jobs:
+  secrets-scan:
+    name: Escaneo de secretos (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # todo el historial: un secreto borrado en un commit posterior sigue siendo un secreto filtrado
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  quality:
+    name: Lint, formato, tipos y auditoría
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run typecheck
+      - name: Dependencias con vulnerabilidades altas o críticas
+        run: npm audit --audit-level=high
+
+  test:
+    name: Pruebas (unitarias, integración y API)
+    runs-on: ubuntu-latest
+    needs: quality
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: foro_app
+          POSTGRES_PASSWORD: ci_password
+          POSTGRES_DB: foro_posgrado_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U foro_app -d foro_posgrado_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      # Secretos desechables SOLO para CI (no son los de ningún entorno real)
+      APP_KEYS: ci-key-one,ci-key-two
+      API_TOKEN_SALT: ci-api-token-salt
+      ADMIN_JWT_SECRET: ci-admin-jwt-secret
+      JWT_SECRET: ci-jwt-secret
+      TRANSFER_TOKEN_SALT: ci-transfer-token-salt
+      ENCRYPTION_KEY: ci-encryption-key-32-characters!
+      DATABASE_CLIENT: postgres
+      DATABASE_HOST: 127.0.0.1
+      DATABASE_PORT: 5432
+      DATABASE_NAME: foro_posgrado_test
+      DATABASE_USERNAME: foro_app
+      DATABASE_PASSWORD: ci_password
+      DATABASE_SSL: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: Pruebas con cobertura (umbral 70 %)
+        run: npm run test:coverage
+      - name: Guardar informe de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/lcov-report
+          retention-days: 7
+
+  build:
+    name: Compilación (panel + servidor)
+    runs-on: ubuntu-latest
+    needs: quality
+    env:
+      APP_KEYS: ci-key-one,ci-key-two
+      API_TOKEN_SALT: ci-api-token-salt
+      ADMIN_JWT_SECRET: ci-admin-jwt-secret
+      JWT_SECRET: ci-jwt-secret
+      TRANSFER_TOKEN_SALT: ci-transfer-token-salt
+      ENCRYPTION_KEY: ci-encryption-key-32-characters!
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Imagen Docker construye
+        run: docker build -t foro-posgrado-backend:ci .

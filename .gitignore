@@ -134,3 +134,4 @@ src/extensions/documentation/documentation/
 
 # Archivos temporales de trabajo local
 .tmp-*
+backups/
