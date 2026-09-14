@@ -129,3 +129,8 @@ dist
 build
 .strapi-updater.json
 .strapi-cloud.json
+# Especificación OpenAPI generada por el plugin (la versión versionada es openapi.yaml)
+src/extensions/documentation/documentation/
+
+# Archivos temporales de trabajo local
+.tmp-*

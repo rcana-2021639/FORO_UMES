@@ -5,10 +5,10 @@
     "singularName": "contribution",
     "pluralName": "contributions",
     "displayName": "Aporte",
-    "description": "Resultado, iniciativa o beneficio generado por el trabajo conjunto del Foro"
+    "description": "Resultado, iniciativa o beneficio del trabajo conjunto. Usa borrador/publicado nativo: solo lo publicado es visible al publico"
   },
   "options": {
-    "draftAndPublish": false
+    "draftAndPublish": true
   },
   "attributes": {
     "title": {

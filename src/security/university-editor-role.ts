@@ -9,6 +9,8 @@ export const UNIVERSITY_EDITOR_ROLE = {
 };
 
 const CM = 'plugin::content-manager.explorer';
+// Condición nativa de Strapi: el registro fue creado por el propio usuario
+const CREATOR_CONDITION_ID = 'admin::is-creator';
 
 type Perm = {
   action: string;
@@ -35,6 +37,14 @@ function buildPermissions(strapi: Core.Strapi): Perm[] {
       conditions: withConditionOn.includes(action) ? [OWNERSHIP_CONDITION_ID] : [],
     }));
 
+  const own = (uid: string) =>
+    ['create', 'read', 'update', 'delete'].map((action) => ({
+      action: `${CM}.${action}`,
+      subject: uid,
+      properties: { fields: fieldsOf(strapi, uid) },
+      conditions: action === 'create' ? [] : [CREATOR_CONDITION_ID],
+    }));
+
   return [
     // Su universidad: solo lectura (la ficha institucional la administra el Super Admin)
     ...owned('api::university.university', ['read'], ['read']),
@@ -52,6 +62,10 @@ function buildPermissions(strapi: Core.Strapi): Perm[] {
     ),
     // Actividades: puede proponer (create) y editar las que incluyan a su universidad; no borrar.
     ...owned('api::activity.activity', ['create', 'read', 'update'], ['read', 'update']),
+    // Noticias y aportes: redacta borradores y edita/borra solo los que él mismo creó.
+    // Publicar (explorer.publish) queda reservado al Super Admin.
+    ...own('api::news.news'),
+    ...own('api::contribution.contribution'),
     // Biblioteca de medios: subir y ver archivos (fotos de representantes, portadas)
     { action: 'plugin::upload.read' },
     { action: 'plugin::upload.assets.create' },

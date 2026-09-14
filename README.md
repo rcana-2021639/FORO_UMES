@@ -4,7 +4,7 @@ Backend del sitio web del Foro, construido con **Strapi 5 (TypeScript)** sobre *
 Sirve la API REST que consume el frontend (Next.js) y provee el panel administrativo con permisos por universidad.
 
 > Este repositorio sigue el _Plan Técnico de Desarrollo del Backend_ (8 sprints).
-> Estado actual: **Sprint 3 — Autenticación, roles y control de acceso por universidad** completado. Ver [SEGURIDAD.md](SEGURIDAD.md).
+> Estado actual: **Sprint 4 — API pública y lógica de negocio** completado. Ver [SEGURIDAD.md](SEGURIDAD.md) y [openapi.yaml](openapi.yaml).
 
 ---
 
@@ -93,20 +93,21 @@ Al terminar de compilar abre <http://localhost:1337/admin>. La primera vez te pe
 
 ## Comandos del proyecto
 
-| Comando                | Qué hace                                                          |
-| ---------------------- | ----------------------------------------------------------------- |
-| `npm run develop`      | Strapi en modo desarrollo (recarga al cambiar archivos)           |
-| `npm run start`        | Strapi en modo producción (requiere `npm run build` antes)        |
-| `npm run build`        | Compila el panel administrativo                                   |
-| `npm run lint`         | Ejecuta ESLint sobre todo el proyecto                             |
-| `npm run lint:fix`     | ESLint corrigiendo automáticamente lo que pueda                   |
-| `npm run format`       | Formatea todo con Prettier                                        |
-| `npm run format:check` | Verifica formato sin modificar archivos (útil en CI)              |
-| `npm run typecheck`    | Verifica tipos de TypeScript sin compilar                         |
-| `npm run db:up`        | Levanta PostgreSQL en Docker                                      |
-| `npm run db:down`      | Apaga PostgreSQL                                                  |
-| `npm run db:logs`      | Logs de PostgreSQL                                                |
-| `npm run seed`         | Carga datos de prueba (idempotente). `-- --reset` borra y recarga |
+| Comando                  | Qué hace                                                          |
+| ------------------------ | ----------------------------------------------------------------- |
+| `npm run develop`        | Strapi en modo desarrollo (recarga al cambiar archivos)           |
+| `npm run start`          | Strapi en modo producción (requiere `npm run build` antes)        |
+| `npm run build`          | Compila el panel administrativo                                   |
+| `npm run lint`           | Ejecuta ESLint sobre todo el proyecto                             |
+| `npm run lint:fix`       | ESLint corrigiendo automáticamente lo que pueda                   |
+| `npm run format`         | Formatea todo con Prettier                                        |
+| `npm run format:check`   | Verifica formato sin modificar archivos (útil en CI)              |
+| `npm run typecheck`      | Verifica tipos de TypeScript sin compilar                         |
+| `npm run db:up`          | Levanta PostgreSQL en Docker                                      |
+| `npm run db:down`        | Apaga PostgreSQL                                                  |
+| `npm run db:logs`        | Logs de PostgreSQL                                                |
+| `npm run seed`           | Carga datos de prueba (idempotente). `-- --reset` borra y recarga |
+| `npm run openapi:export` | Exporta la especificación OpenAPI a `openapi.yaml`                |
 
 ---
 
@@ -141,8 +142,10 @@ Al terminar de compilar abre <http://localhost:1337/admin>. La primera vez te pe
 ├── public/               # Archivos estáticos (uploads locales en desarrollo)
 ├── src/
 │   ├── api/              # 8 content-types: schema.json + controller/routes/service (+ lifecycles.ts)
+│   ├── lib/              # Lógica pura reutilizable: validación de contacto, lista blanca de consultas, errores
+│   ├── openapi/          # Documentación OpenAPI de las rutas personalizadas
 │   ├── security/         # Roles, condición de propiedad por universidad, guard del panel, auditoría
-│   ├── middlewares/      # admin-security (política de contraseñas, auditoría de login)
+│   ├── middlewares/      # admin-security (contraseñas, auditoría de login), query-whitelist
 │   ├── extensions/       # Extensiones de plugins de Strapi
 │   └── index.ts          # Hooks register/bootstrap de la aplicación
 ├── types/generated/      # Tipos generados por Strapi (no editar a mano)
@@ -188,6 +191,32 @@ En Strapi 5 las relaciones viven en tablas `_lnk` (p. ej. `academic_programs_uni
 ### Datos de prueba
 
 `npm run seed` carga las 9 universidades reales del Foro (en su orden oficial, `displayOrder`) con un representante y 2 programas **provisionales** cada una, 3 actividades, 2 aportes, 1 video de galería y 2 noticias (1 publicada, 1 borrador). Usa la API de documentos de Strapi, así que pasan por todas las validaciones. Representantes, programas, sitios web y descripciones se reemplazarán cuando el Foro entregue los datos.
+
+---
+
+## API pública
+
+Documentación interactiva en `http://localhost:1337/documentation` y especificación versionada en [`openapi.yaml`](openapi.yaml).
+
+| Ruta                                                     | Descripción                                                                                                         |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/universities`, `/api/universities/:documentId` | Universidades (ordenar con `sort=displayOrder`)                                                                     |
+| `GET /api/representatives`                               | Representantes; filtrable por `university`                                                                          |
+| `GET /api/academic-programs`                             | Programas; filtrable por `university`, `level`, `modality`                                                          |
+| `GET /api/activities`                                    | Actividades; filtrable por `date`, `type`, `participatingUniversities`                                              |
+| `GET /api/contributions`                                 | Aportes publicados                                                                                                  |
+| `GET /api/news-items`                                    | Noticias **publicadas** (los borradores nunca se sirven, aunque se pida `status=draft`)                             |
+| `GET /api/gallery-items`                                 | Galería                                                                                                             |
+| `GET /api/forum-summary`                                 | Contadores + últimas 3 noticias + próximas 3 actividades (cache 60 s)                                               |
+| `POST /api/contact`                                      | Formulario de contacto: `{ name, email, subject?, message, website: '' }` — `website` es el honeypot, debe ir vacío |
+
+Reglas comunes:
+
+- **Solo lectura**: no existen rutas `POST/PUT/DELETE` en `/api/*` (salvo `/api/contact`). El contenido se administra en el panel.
+- **Paginación** obligatoria: `pagination[page]`, `pagination[pageSize]` (máximo **50**, forzado en el servidor; por defecto 25).
+- **Lista blanca** de `filters`, `sort` y `populate` por recurso ([`src/lib/query-whitelist.ts`](src/lib/query-whitelist.ts)); cualquier otro campo responde `400 QUERY_NOT_ALLOWED` indicando los permitidos. `populate=*` se sustituye por el populate mínimo.
+- **Errores** en formato estándar: `{ "error": { "status", "code", "message", "requestId", "details?" } }`.
+- Los mensajes de contacto son privados: se leen solo desde el panel. Al recibir uno se notifica por correo a `CONTACT_NOTIFY_EMAIL` (vía SMTP, p. ej. Resend); sin SMTP configurado se registra en el log.
 
 ---
 

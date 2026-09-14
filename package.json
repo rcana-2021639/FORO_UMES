@@ -22,12 +22,16 @@
     "db:down": "docker compose down",
     "db:logs": "docker compose logs -f postgres",
     "prepare": "husky",
-    "seed": "tsx scripts/seed.ts"
+    "seed": "tsx scripts/seed.ts",
+    "openapi:export": "tsx scripts/export-openapi.ts"
   },
   "dependencies": {
     "@strapi/database": "5.53.0",
     "@strapi/plugin-cloud": "5.53.0",
+    "@strapi/plugin-documentation": "^5.53.0",
     "@strapi/plugin-users-permissions": "5.53.0",
+    "@strapi/provider-email-nodemailer": "^5.53.0",
+    "@strapi/provider-upload-aws-s3": "^5.53.0",
     "@strapi/strapi": "5.53.0",
     "pg": "8.20.0",
     "react": "^18.0.0",
@@ -46,7 +50,8 @@
     "prettier": "^3.9.6",
     "tsx": "^4.23.13",
     "typescript": "^5",
-    "typescript-eslint": "^8.70.0"
+    "typescript-eslint": "^8.70.0",
+    "yaml": "^2.9.1"
   },
   "engines": {
     "node": ">=24.0.0 <25",

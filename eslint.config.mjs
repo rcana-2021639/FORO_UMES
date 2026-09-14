@@ -30,6 +30,11 @@ export default tseslint.config(
       eqeqeq: ['error', 'always'],
     },
   },
+  {
+    // Scripts de línea de comandos: la salida por consola es su interfaz
+    files: ['scripts/**/*.ts'],
+    rules: { 'no-console': 'off' },
+  },
   // Desactiva reglas de formato que chocan con Prettier (siempre al final)
   prettier
 );

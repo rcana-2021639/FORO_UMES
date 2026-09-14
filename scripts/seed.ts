@@ -196,6 +196,7 @@ async function seed(strapi: Core.Strapi) {
       publishedOn: '2025-11-01',
       relatedActivity: activity1.documentId,
     },
+    status: 'published',
   });
 
   await strapi.documents('api::contribution.contribution').create({
@@ -206,6 +207,7 @@ async function seed(strapi: Core.Strapi) {
       publishedOn: '2026-04-10',
       relatedActivity: activity2.documentId,
     },
+    status: 'published',
   });
 
   await strapi.documents('api::gallery-item.gallery-item').create({

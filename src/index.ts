@@ -4,6 +4,7 @@ import { createAdminGuard } from './security/admin-guard';
 import { registerOwnershipCondition } from './security/ownership-condition';
 import { ensureUniversityEditorRole } from './security/university-editor-role';
 import { ensurePublicPermissions } from './security/public-permissions';
+import { CUSTOM_ROUTES_OPENAPI } from './openapi/custom-routes';
 
 /**
  * Engancha el guard de propiedad/auditoría a todas las rutas del content-manager.
@@ -29,6 +30,8 @@ function attachAdminGuard(strapi: Core.Strapi) {
 export default {
   register({ strapi }: { strapi: Core.Strapi }) {
     attachAdminGuard(strapi);
+    // Documenta las rutas personalizadas en la especificación OpenAPI (/documentation)
+    strapi.plugin('documentation').service('override').registerOverride(CUSTOM_ROUTES_OPENAPI);
   },
 
   /**

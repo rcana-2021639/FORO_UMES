@@ -584,13 +584,13 @@ export interface ApiContactMessageContactMessage extends Struct.CollectionTypeSc
 export interface ApiContributionContribution extends Struct.CollectionTypeSchema {
   collectionName: 'contributions';
   info: {
-    description: 'Resultado, iniciativa o beneficio generado por el trabajo conjunto del Foro';
+    description: 'Resultado, iniciativa o beneficio del trabajo conjunto. Usa borrador/publicado nativo: solo lo publicado es visible al publico';
     displayName: 'Aporte';
     pluralName: 'contributions';
     singularName: 'contribution';
   };
   options: {
-    draftAndPublish: false;
+    draftAndPublish: true;
   };
   attributes: {
     createdAt: Schema.Attribute.DateTime;
