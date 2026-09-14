@@ -1,0 +1,48 @@
+{
+  "kind": "collectionType",
+  "collectionName": "academic_programs",
+  "info": {
+    "singularName": "academic-program",
+    "pluralName": "academic-programs",
+    "displayName": "Programa academico",
+    "description": "Programa de posgrado ofrecido por una universidad"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "maxLength": 250
+    },
+    "level": {
+      "type": "enumeration",
+      "enum": ["Maestria", "Doctorado", "Especializacion", "Diplomado"],
+      "required": true
+    },
+    "modality": {
+      "type": "enumeration",
+      "enum": ["Presencial", "Virtual", "Hibrida"],
+      "required": true
+    },
+    "duration": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "description": {
+      "type": "richtext"
+    },
+    "infoUrl": {
+      "type": "string",
+      "regex": "^https?:\\/\\/[^\\s]+$"
+    },
+    "university": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::university.university",
+      "inversedBy": "academicPrograms",
+      "required": true
+    }
+  }
+}

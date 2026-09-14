@@ -396,6 +396,316 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiAcademicProgramAcademicProgram extends Struct.CollectionTypeSchema {
+  collectionName: 'academic_programs';
+  info: {
+    description: 'Programa de posgrado ofrecido por una universidad';
+    displayName: 'Programa academico';
+    pluralName: 'academic-programs';
+    singularName: 'academic-program';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    description: Schema.Attribute.RichText;
+    duration: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 100;
+      }>;
+    infoUrl: Schema.Attribute.String;
+    level: Schema.Attribute.Enumeration<['Maestria', 'Doctorado', 'Especializacion', 'Diplomado']> &
+      Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::academic-program.academic-program'
+    > &
+      Schema.Attribute.Private;
+    modality: Schema.Attribute.Enumeration<['Presencial', 'Virtual', 'Hibrida']> &
+      Schema.Attribute.Required;
+    name: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 250;
+      }>;
+    publishedAt: Schema.Attribute.DateTime;
+    university: Schema.Attribute.Relation<'manyToOne', 'api::university.university'> &
+      Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+  };
+}
+
+export interface ApiActivityActivity extends Struct.CollectionTypeSchema {
+  collectionName: 'activities';
+  info: {
+    description: 'Encuentro, conferencia, seminario, reunion o proyecto del Foro';
+    displayName: 'Actividad';
+    pluralName: 'activities';
+    singularName: 'activity';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    contributions: Schema.Attribute.Relation<'oneToMany', 'api::contribution.contribution'>;
+    coverImage: Schema.Attribute.Media<'images'>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    date: Schema.Attribute.Date & Schema.Attribute.Required;
+    description: Schema.Attribute.RichText;
+    galleryItems: Schema.Attribute.Relation<'oneToMany', 'api::gallery-item.gallery-item'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::activity.activity'> &
+      Schema.Attribute.Private;
+    participatingUniversities: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::university.university'
+    >;
+    publishedAt: Schema.Attribute.DateTime;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 250;
+      }>;
+    type: Schema.Attribute.Enumeration<
+      ['Encuentro', 'Conferencia', 'Seminario', 'Reunion', 'Proyecto']
+    > &
+      Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+  };
+}
+
+export interface ApiContactMessageContactMessage extends Struct.CollectionTypeSchema {
+  collectionName: 'contact_messages';
+  info: {
+    description: 'Mensaje recibido desde el formulario de contacto. Coleccion privada: sin lectura publica';
+    displayName: 'Mensaje de contacto';
+    pluralName: 'contact-messages';
+    singularName: 'contact-message';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    email: Schema.Attribute.Email & Schema.Attribute.Required;
+    handled: Schema.Attribute.Boolean &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<false>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::contact-message.contact-message'> &
+      Schema.Attribute.Private;
+    message: Schema.Attribute.Text &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 2000;
+      }>;
+    name: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 200;
+      }>;
+    publishedAt: Schema.Attribute.DateTime;
+    subject: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 250;
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+  };
+}
+
+export interface ApiContributionContribution extends Struct.CollectionTypeSchema {
+  collectionName: 'contributions';
+  info: {
+    description: 'Resultado, iniciativa o beneficio generado por el trabajo conjunto del Foro';
+    displayName: 'Aporte';
+    pluralName: 'contributions';
+    singularName: 'contribution';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    description: Schema.Attribute.RichText & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::contribution.contribution'> &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    publishedOn: Schema.Attribute.Date & Schema.Attribute.Required;
+    relatedActivity: Schema.Attribute.Relation<'manyToOne', 'api::activity.activity'>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 250;
+      }>;
+    type: Schema.Attribute.Enumeration<['Resultado', 'Iniciativa', 'Beneficio']> &
+      Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+  };
+}
+
+export interface ApiGalleryItemGalleryItem extends Struct.CollectionTypeSchema {
+  collectionName: 'gallery_items';
+  info: {
+    description: 'Foto o video de la galeria del Foro';
+    displayName: 'Elemento de galeria';
+    pluralName: 'gallery-items';
+    singularName: 'gallery-item';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    date: Schema.Attribute.Date;
+    file: Schema.Attribute.Media<'images'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::gallery-item.gallery-item'> &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    relatedActivity: Schema.Attribute.Relation<'manyToOne', 'api::activity.activity'>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 250;
+      }>;
+    type: Schema.Attribute.Enumeration<['Foto', 'Video']> & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    videoUrl: Schema.Attribute.String;
+  };
+}
+
+export interface ApiNewsNews extends Struct.CollectionTypeSchema {
+  collectionName: 'news';
+  info: {
+    description: 'Noticia del Foro. Usa borrador/publicado nativo de Strapi: solo lo publicado es visible al publico';
+    displayName: 'Noticia';
+    pluralName: 'news-items';
+    singularName: 'news';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    content: Schema.Attribute.RichText & Schema.Attribute.Required;
+    coverImage: Schema.Attribute.Media<'images'>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::news.news'> &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    summary: Schema.Attribute.Text &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 300;
+      }>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 250;
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+  };
+}
+
+export interface ApiRepresentativeRepresentative extends Struct.CollectionTypeSchema {
+  collectionName: 'representatives';
+  info: {
+    description: 'Representante de una universidad ante el Foro';
+    displayName: 'Representante';
+    pluralName: 'representatives';
+    singularName: 'representative';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    fullName: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 200;
+      }>;
+    institutionalEmail: Schema.Attribute.Email & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::representative.representative'> &
+      Schema.Attribute.Private;
+    photo: Schema.Attribute.Media<'images'>;
+    position: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 200;
+      }>;
+    publishedAt: Schema.Attribute.DateTime;
+    shortBio: Schema.Attribute.Text &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 800;
+      }>;
+    university: Schema.Attribute.Relation<'manyToOne', 'api::university.university'> &
+      Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+  };
+}
+
+export interface ApiUniversityUniversity extends Struct.CollectionTypeSchema {
+  collectionName: 'universities';
+  info: {
+    description: 'Universidad integrante del Foro';
+    displayName: 'Universidad';
+    pluralName: 'universities';
+    singularName: 'university';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    academicPrograms: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::academic-program.academic-program'
+    >;
+    acronym: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 20;
+      }>;
+    activities: Schema.Attribute.Relation<'manyToMany', 'api::activity.activity'>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    joinedForumAt: Schema.Attribute.Date;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::university.university'> &
+      Schema.Attribute.Private;
+    logo: Schema.Attribute.Media<'images'>;
+    name: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 200;
+      }>;
+    publishedAt: Schema.Attribute.DateTime;
+    representatives: Schema.Attribute.Relation<'oneToMany', 'api::representative.representative'>;
+    shortDescription: Schema.Attribute.Text &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 500;
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    website: Schema.Attribute.String;
+  };
+}
+
 export interface PluginContentReleasesRelease extends Struct.CollectionTypeSchema {
   collectionName: 'strapi_releases';
   info: {
@@ -825,6 +1135,14 @@ declare module '@strapi/strapi' {
       'admin::transfer-token': AdminTransferToken;
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
+      'api::academic-program.academic-program': ApiAcademicProgramAcademicProgram;
+      'api::activity.activity': ApiActivityActivity;
+      'api::contact-message.contact-message': ApiContactMessageContactMessage;
+      'api::contribution.contribution': ApiContributionContribution;
+      'api::gallery-item.gallery-item': ApiGalleryItemGalleryItem;
+      'api::news.news': ApiNewsNews;
+      'api::representative.representative': ApiRepresentativeRepresentative;
+      'api::university.university': ApiUniversityUniversity;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;

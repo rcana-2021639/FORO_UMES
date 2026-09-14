@@ -1,0 +1,33 @@
+{
+  "kind": "collectionType",
+  "collectionName": "news",
+  "info": {
+    "singularName": "news",
+    "pluralName": "news-items",
+    "displayName": "Noticia",
+    "description": "Noticia del Foro. Usa borrador/publicado nativo de Strapi: solo lo publicado es visible al publico"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "maxLength": 250
+    },
+    "summary": {
+      "type": "text",
+      "maxLength": 300
+    },
+    "content": {
+      "type": "richtext",
+      "required": true
+    },
+    "coverImage": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": ["images"]
+    }
+  }
+}

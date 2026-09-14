@@ -1,0 +1,59 @@
+{
+  "kind": "collectionType",
+  "collectionName": "universities",
+  "info": {
+    "singularName": "university",
+    "pluralName": "universities",
+    "displayName": "Universidad",
+    "description": "Universidad integrante del Foro"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "unique": true,
+      "maxLength": 200
+    },
+    "acronym": {
+      "type": "string",
+      "maxLength": 20
+    },
+    "shortDescription": {
+      "type": "text",
+      "maxLength": 500
+    },
+    "logo": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": ["images"]
+    },
+    "website": {
+      "type": "string",
+      "regex": "^https?:\\/\\/[^\\s]+$"
+    },
+    "joinedForumAt": {
+      "type": "date"
+    },
+    "representatives": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::representative.representative",
+      "mappedBy": "university"
+    },
+    "academicPrograms": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::academic-program.academic-program",
+      "mappedBy": "university"
+    },
+    "activities": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::activity.activity",
+      "mappedBy": "participatingUniversities"
+    }
+  }
+}

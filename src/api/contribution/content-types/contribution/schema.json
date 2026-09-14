@@ -1,0 +1,39 @@
+{
+  "kind": "collectionType",
+  "collectionName": "contributions",
+  "info": {
+    "singularName": "contribution",
+    "pluralName": "contributions",
+    "displayName": "Aporte",
+    "description": "Resultado, iniciativa o beneficio generado por el trabajo conjunto del Foro"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "maxLength": 250
+    },
+    "description": {
+      "type": "richtext",
+      "required": true
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": ["Resultado", "Iniciativa", "Beneficio"],
+      "required": true
+    },
+    "publishedOn": {
+      "type": "date",
+      "required": true
+    },
+    "relatedActivity": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::activity.activity",
+      "inversedBy": "contributions"
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "kind": "collectionType",
+  "collectionName": "representatives",
+  "info": {
+    "singularName": "representative",
+    "pluralName": "representatives",
+    "displayName": "Representante",
+    "description": "Representante de una universidad ante el Foro"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "fullName": {
+      "type": "string",
+      "required": true,
+      "maxLength": 200
+    },
+    "position": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "institutionalEmail": {
+      "type": "email",
+      "required": true
+    },
+    "photo": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": ["images"]
+    },
+    "shortBio": {
+      "type": "text",
+      "maxLength": 800
+    },
+    "university": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::university.university",
+      "inversedBy": "representatives",
+      "required": true
+    }
+  }
+}

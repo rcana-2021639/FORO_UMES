@@ -1,20 +1,18 @@
-// import type { Core } from '@strapi/strapi';
+import type { Core } from '@strapi/strapi';
+import { ensureExtraIndexes } from '../database/indexes';
 
 export default {
   /**
-   * An asynchronous register function that runs before
-   * your application is initialized.
-   *
-   * This gives you an opportunity to extend code.
+   * Se ejecuta antes de inicializar la aplicación. Punto de extensión para registrar
+   * lógica global (políticas, middlewares) en sprints posteriores.
    */
   register(/* { strapi }: { strapi: Core.Strapi } */) {},
 
   /**
-   * An asynchronous bootstrap function that runs before
-   * your application gets started.
-   *
-   * This gives you an opportunity to set up your data model,
-   * run jobs, or perform some special logic.
+   * Se ejecuta después de que Strapi sincronizó el esquema en la base de datos
+   * y antes de aceptar peticiones.
    */
-  bootstrap(/* { strapi }: { strapi: Core.Strapi } */) {},
+  async bootstrap({ strapi }: { strapi: Core.Strapi }) {
+    await ensureExtraIndexes(strapi);
+  },
 };

@@ -4,7 +4,7 @@ Backend del sitio web del Foro, construido con **Strapi 5 (TypeScript)** sobre *
 Sirve la API REST que consume el frontend (Next.js) y provee el panel administrativo con permisos por universidad.
 
 > Este repositorio sigue el _Plan Técnico de Desarrollo del Backend_ (8 sprints).
-> Estado actual: **Sprint 1 — Fundamentos** (entorno, repositorio y arquitectura base).
+> Estado actual: **Sprint 2 — Modelado de contenido y base de datos** completado.
 
 ---
 
@@ -93,19 +93,20 @@ Al terminar de compilar abre <http://localhost:1337/admin>. La primera vez te pe
 
 ## Comandos del proyecto
 
-| Comando                | Qué hace                                                   |
-| ---------------------- | ---------------------------------------------------------- |
-| `npm run develop`      | Strapi en modo desarrollo (recarga al cambiar archivos)    |
-| `npm run start`        | Strapi en modo producción (requiere `npm run build` antes) |
-| `npm run build`        | Compila el panel administrativo                            |
-| `npm run lint`         | Ejecuta ESLint sobre todo el proyecto                      |
-| `npm run lint:fix`     | ESLint corrigiendo automáticamente lo que pueda            |
-| `npm run format`       | Formatea todo con Prettier                                 |
-| `npm run format:check` | Verifica formato sin modificar archivos (útil en CI)       |
-| `npm run typecheck`    | Verifica tipos de TypeScript sin compilar                  |
-| `npm run db:up`        | Levanta PostgreSQL en Docker                               |
-| `npm run db:down`      | Apaga PostgreSQL                                           |
-| `npm run db:logs`      | Logs de PostgreSQL                                         |
+| Comando                | Qué hace                                                          |
+| ---------------------- | ----------------------------------------------------------------- |
+| `npm run develop`      | Strapi en modo desarrollo (recarga al cambiar archivos)           |
+| `npm run start`        | Strapi en modo producción (requiere `npm run build` antes)        |
+| `npm run build`        | Compila el panel administrativo                                   |
+| `npm run lint`         | Ejecuta ESLint sobre todo el proyecto                             |
+| `npm run lint:fix`     | ESLint corrigiendo automáticamente lo que pueda                   |
+| `npm run format`       | Formatea todo con Prettier                                        |
+| `npm run format:check` | Verifica formato sin modificar archivos (útil en CI)              |
+| `npm run typecheck`    | Verifica tipos de TypeScript sin compilar                         |
+| `npm run db:up`        | Levanta PostgreSQL en Docker                                      |
+| `npm run db:down`      | Apaga PostgreSQL                                                  |
+| `npm run db:logs`      | Logs de PostgreSQL                                                |
+| `npm run seed`         | Carga datos de prueba (idempotente). `-- --reset` borra y recarga |
 
 ---
 
@@ -134,11 +135,12 @@ Al terminar de compilar abre <http://localhost:1337/admin>. La primera vez te pe
 ```
 .
 ├── config/               # Configuración de Strapi (admin, database, middlewares, plugins, server)
-├── database/migrations/  # Migraciones explícitas (índices adicionales, etc.)
+├── database/             # indexes.ts (índices adicionales) y migrations/ (para migraciones de datos futuras)
 ├── docker/init/          # Scripts que corren al crear el contenedor de PostgreSQL por primera vez
+├── scripts/seed.ts       # Datos de prueba
 ├── public/               # Archivos estáticos (uploads locales en desarrollo)
 ├── src/
-│   ├── api/              # Content-types, controladores, rutas y servicios (Sprint 2+)
+│   ├── api/              # 8 content-types: schema.json + controller/routes/service (+ lifecycles.ts)
 │   ├── policies/         # Políticas personalizadas, p. ej. es-propietario-universidad (Sprint 3)
 │   ├── middlewares/      # Middlewares propios, p. ej. rate-limit-contacto (Sprint 5)
 │   ├── extensions/       # Extensiones de plugins de Strapi
@@ -148,6 +150,44 @@ Al terminar de compilar abre <http://localhost:1337/admin>. La primera vez te pe
 ├── docker-compose.yml    # PostgreSQL 18 local
 └── package.json
 ```
+
+---
+
+## Modelo de contenido
+
+Convención: **código, campos y rutas de API en inglés**; **etiquetas visibles y textos en español**; valores de enumeración **sin tildes** (el frontend muestra la etiqueta bonita).
+
+| Content-type (`displayName`) | UID                                      | Ruta API                 | Relaciones                                                               |
+| ---------------------------- | ---------------------------------------- | ------------------------ | ------------------------------------------------------------------------ |
+| Universidad                  | `api::university.university`             | `/api/universities`      | 1→N representatives, 1→N academicPrograms, N↔N activities                |
+| Representante                | `api::representative.representative`     | `/api/representatives`   | N→1 university (requerido)                                               |
+| Programa academico           | `api::academic-program.academic-program` | `/api/academic-programs` | N→1 university (requerido). Enums `level`, `modality`                    |
+| Actividad                    | `api::activity.activity`                 | `/api/activities`        | N↔N participatingUniversities (mín. 1), 1→N contributions, galleryItems  |
+| Aporte                       | `api::contribution.contribution`         | `/api/contributions`     | N→1 relatedActivity (opcional)                                           |
+| Noticia                      | `api::news.news`                         | `/api/news-items`        | **Draft & Publish nativo** de Strapi (reemplaza el booleano `publicado`) |
+| Elemento de galeria          | `api::gallery-item.gallery-item`         | `/api/gallery-items`     | N→1 relatedActivity. `file` obligatorio si Foto, `videoUrl` si Video     |
+| Mensaje de contacto          | `api::contact-message.contact-message`   | `/api/contact-messages`  | Sin relaciones. **Colección privada** (sin lectura pública, Sprint 3)    |
+
+Enumeraciones:
+
+- `academic-program.level`: `Maestria`, `Doctorado`, `Especializacion`, `Diplomado`
+- `academic-program.modality`: `Presencial`, `Virtual`, `Hibrida`
+- `activity.type`: `Encuentro`, `Conferencia`, `Seminario`, `Reunion`, `Proyecto`
+- `contribution.type`: `Resultado`, `Iniciativa`, `Beneficio`
+- `gallery-item.type`: `Foto`, `Video`
+
+Validaciones que el esquema no puede expresar viven en `lifecycles.ts` del content-type (galería condicional, actividad con ≥1 universidad).
+
+### Índices adicionales
+
+Definidos en [`database/indexes.ts`](database/indexes.ts) y aplicados en `bootstrap` con `CREATE INDEX IF NOT EXISTS`.
+**Por qué no en `database/migrations`:** Strapi 5 ejecuta las migraciones _antes_ de crear las tablas, así que en una base nueva fallarían. `bootstrap` corre siempre después de sincronizar el esquema y es idempotente. Strapi no elimina índices que no creó él mismo.
+
+En Strapi 5 las relaciones viven en tablas `_lnk` (p. ej. `academic_programs_university_lnk`) con sus propios índices, por eso el índice compuesto `(universidad, nivel)` del plan se traduce en un índice sobre `academic_programs.level`.
+
+### Datos de prueba
+
+`npm run seed` carga 8 universidades ficticias con representante y 2 programas cada una, 3 actividades, 2 aportes, 1 video de galería y 2 noticias (1 publicada, 1 borrador). Usa la API de documentos de Strapi, así que pasan por todas las validaciones. Los datos se reemplazarán por la lista real de universidades del Foro.
 
 ---
 

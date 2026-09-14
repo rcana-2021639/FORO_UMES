@@ -1,0 +1,38 @@
+{
+  "kind": "collectionType",
+  "collectionName": "contact_messages",
+  "info": {
+    "singularName": "contact-message",
+    "pluralName": "contact-messages",
+    "displayName": "Mensaje de contacto",
+    "description": "Mensaje recibido desde el formulario de contacto. Coleccion privada: sin lectura publica"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "maxLength": 200
+    },
+    "email": {
+      "type": "email",
+      "required": true
+    },
+    "subject": {
+      "type": "string",
+      "maxLength": 250
+    },
+    "message": {
+      "type": "text",
+      "required": true,
+      "maxLength": 2000
+    },
+    "handled": {
+      "type": "boolean",
+      "default": false,
+      "required": true
+    }
+  }
+}

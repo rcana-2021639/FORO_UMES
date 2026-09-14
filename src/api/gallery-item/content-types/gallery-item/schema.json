@@ -1,0 +1,42 @@
+{
+  "kind": "collectionType",
+  "collectionName": "gallery_items",
+  "info": {
+    "singularName": "gallery-item",
+    "pluralName": "gallery-items",
+    "displayName": "Elemento de galeria",
+    "description": "Foto o video de la galeria del Foro"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "maxLength": 250
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": ["Foto", "Video"],
+      "required": true
+    },
+    "file": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": ["images"]
+    },
+    "videoUrl": {
+      "type": "string",
+      "regex": "^https?:\\/\\/[^\\s]+$"
+    },
+    "date": {
+      "type": "date"
+    },
+    "relatedActivity": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::activity.activity",
+      "inversedBy": "galleryItems"
+    }
+  }
+}
