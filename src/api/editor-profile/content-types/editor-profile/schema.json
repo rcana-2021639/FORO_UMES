@@ -1,0 +1,31 @@
+{
+  "kind": "collectionType",
+  "collectionName": "editor_profiles",
+  "info": {
+    "singularName": "editor-profile",
+    "pluralName": "editor-profiles",
+    "displayName": "Perfil de editor",
+    "description": "Asocia un usuario del panel administrativo con la universidad cuyo contenido puede editar. Solo lo gestiona el Super Admin"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "adminUser": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "admin::user",
+      "required": true
+    },
+    "university": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::university.university",
+      "required": true
+    },
+    "notes": {
+      "type": "text",
+      "maxLength": 500
+    }
+  }
+}

@@ -21,6 +21,11 @@
       "type": "string",
       "maxLength": 20
     },
+    "displayOrder": {
+      "type": "integer",
+      "min": 1,
+      "default": 100
+    },
     "shortDescription": {
       "type": "text",
       "maxLength": 500

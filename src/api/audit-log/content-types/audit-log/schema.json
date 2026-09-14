@@ -1,0 +1,57 @@
+{
+  "kind": "collectionType",
+  "collectionName": "audit_logs",
+  "info": {
+    "singularName": "audit-log",
+    "pluralName": "audit-logs",
+    "displayName": "Bitacora de auditoria",
+    "description": "Registro de acciones administrativas: quien cambio que y cuando. Solo lectura para el Super Admin; lo escribe el sistema"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "adminUserId": {
+      "type": "integer"
+    },
+    "adminUserEmail": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "action": {
+      "type": "enumeration",
+      "enum": [
+        "create",
+        "update",
+        "delete",
+        "publish",
+        "unpublish",
+        "login",
+        "bulk-delete",
+        "bulk-publish",
+        "bulk-unpublish",
+        "other"
+      ],
+      "required": true
+    },
+    "contentType": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "targetDocumentId": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "summary": {
+      "type": "string",
+      "maxLength": 500
+    },
+    "ipAddress": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "statusCode": {
+      "type": "integer"
+    }
+  }
+}

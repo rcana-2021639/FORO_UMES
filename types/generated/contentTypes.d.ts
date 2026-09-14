@@ -480,6 +480,66 @@ export interface ApiActivityActivity extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiAuditLogAuditLog extends Struct.CollectionTypeSchema {
+  collectionName: 'audit_logs';
+  info: {
+    description: 'Registro de acciones administrativas: quien cambio que y cuando. Solo lectura para el Super Admin; lo escribe el sistema';
+    displayName: 'Bitacora de auditoria';
+    pluralName: 'audit-logs';
+    singularName: 'audit-log';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    action: Schema.Attribute.Enumeration<
+      [
+        'create',
+        'update',
+        'delete',
+        'publish',
+        'unpublish',
+        'login',
+        'bulk-delete',
+        'bulk-publish',
+        'bulk-unpublish',
+        'other',
+      ]
+    > &
+      Schema.Attribute.Required;
+    adminUserEmail: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 255;
+      }>;
+    adminUserId: Schema.Attribute.Integer;
+    contentType: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 255;
+      }>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    ipAddress: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 64;
+      }>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::audit-log.audit-log'> &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    statusCode: Schema.Attribute.Integer;
+    summary: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 500;
+      }>;
+    targetDocumentId: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 255;
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+  };
+}
+
 export interface ApiContactMessageContactMessage extends Struct.CollectionTypeSchema {
   collectionName: 'contact_messages';
   info: {
@@ -548,6 +608,36 @@ export interface ApiContributionContribution extends Struct.CollectionTypeSchema
         maxLength: 250;
       }>;
     type: Schema.Attribute.Enumeration<['Resultado', 'Iniciativa', 'Beneficio']> &
+      Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+  };
+}
+
+export interface ApiEditorProfileEditorProfile extends Struct.CollectionTypeSchema {
+  collectionName: 'editor_profiles';
+  info: {
+    description: 'Asocia un usuario del panel administrativo con la universidad cuyo contenido puede editar. Solo lo gestiona el Super Admin';
+    displayName: 'Perfil de editor';
+    pluralName: 'editor-profiles';
+    singularName: 'editor-profile';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    adminUser: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::editor-profile.editor-profile'> &
+      Schema.Attribute.Private;
+    notes: Schema.Attribute.Text &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 500;
+      }>;
+    publishedAt: Schema.Attribute.DateTime;
+    university: Schema.Attribute.Relation<'manyToOne', 'api::university.university'> &
       Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
@@ -683,6 +773,14 @@ export interface ApiUniversityUniversity extends Struct.CollectionTypeSchema {
     activities: Schema.Attribute.Relation<'manyToMany', 'api::activity.activity'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    displayOrder: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 1;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<100>;
     joinedForumAt: Schema.Attribute.Date;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::university.university'> &
@@ -1137,8 +1235,10 @@ declare module '@strapi/strapi' {
       'admin::user': AdminUser;
       'api::academic-program.academic-program': ApiAcademicProgramAcademicProgram;
       'api::activity.activity': ApiActivityActivity;
+      'api::audit-log.audit-log': ApiAuditLogAuditLog;
       'api::contact-message.contact-message': ApiContactMessageContactMessage;
       'api::contribution.contribution': ApiContributionContribution;
+      'api::editor-profile.editor-profile': ApiEditorProfileEditorProfile;
       'api::gallery-item.gallery-item': ApiGalleryItemGalleryItem;
       'api::news.news': ApiNewsNews;
       'api::representative.representative': ApiRepresentativeRepresentative;

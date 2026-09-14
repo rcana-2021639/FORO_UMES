@@ -4,7 +4,7 @@ Backend del sitio web del Foro, construido con **Strapi 5 (TypeScript)** sobre *
 Sirve la API REST que consume el frontend (Next.js) y provee el panel administrativo con permisos por universidad.
 
 > Este repositorio sigue el _Plan Técnico de Desarrollo del Backend_ (8 sprints).
-> Estado actual: **Sprint 2 — Modelado de contenido y base de datos** completado.
+> Estado actual: **Sprint 3 — Autenticación, roles y control de acceso por universidad** completado. Ver [SEGURIDAD.md](SEGURIDAD.md).
 
 ---
 
@@ -141,8 +141,8 @@ Al terminar de compilar abre <http://localhost:1337/admin>. La primera vez te pe
 ├── public/               # Archivos estáticos (uploads locales en desarrollo)
 ├── src/
 │   ├── api/              # 8 content-types: schema.json + controller/routes/service (+ lifecycles.ts)
-│   ├── policies/         # Políticas personalizadas, p. ej. es-propietario-universidad (Sprint 3)
-│   ├── middlewares/      # Middlewares propios, p. ej. rate-limit-contacto (Sprint 5)
+│   ├── security/         # Roles, condición de propiedad por universidad, guard del panel, auditoría
+│   ├── middlewares/      # admin-security (política de contraseñas, auditoría de login)
 │   ├── extensions/       # Extensiones de plugins de Strapi
 │   └── index.ts          # Hooks register/bootstrap de la aplicación
 ├── types/generated/      # Tipos generados por Strapi (no editar a mano)
@@ -187,7 +187,7 @@ En Strapi 5 las relaciones viven en tablas `_lnk` (p. ej. `academic_programs_uni
 
 ### Datos de prueba
 
-`npm run seed` carga 8 universidades ficticias con representante y 2 programas cada una, 3 actividades, 2 aportes, 1 video de galería y 2 noticias (1 publicada, 1 borrador). Usa la API de documentos de Strapi, así que pasan por todas las validaciones. Los datos se reemplazarán por la lista real de universidades del Foro.
+`npm run seed` carga las 9 universidades reales del Foro (en su orden oficial, `displayOrder`) con un representante y 2 programas **provisionales** cada una, 3 actividades, 2 aportes, 1 video de galería y 2 noticias (1 publicada, 1 borrador). Usa la API de documentos de Strapi, así que pasan por todas las validaciones. Representantes, programas, sitios web y descripciones se reemplazarán cuando el Foro entregue los datos.
 
 ---
 
@@ -197,6 +197,7 @@ En Strapi 5 las relaciones viven en tablas `_lnk` (p. ej. `academic_programs_uni
 2. **Strapi se conecta con un usuario limitado** (`foro_app`), nunca con el superusuario de PostgreSQL.
 3. Cada entorno (`development`, `staging`, `production`) tiene **sus propios secretos y su propia base de datos**.
 4. Los archivos SVG y ejecutables están **bloqueados** en la subida de medios (`config/plugins.ts`).
+5. **Control de acceso por objeto**: un Editor de Universidad solo ve y modifica lo de su universidad; detalle y matriz de permisos en [SEGURIDAD.md](SEGURIDAD.md).
 
 ---
 

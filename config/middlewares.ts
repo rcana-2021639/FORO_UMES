@@ -8,6 +8,8 @@ const config: Core.Config.Middlewares = [
   'strapi::poweredBy',
   'strapi::query',
   'strapi::body',
+  // Política de contraseñas del panel + auditoría de login (necesita el cuerpo ya parseado)
+  'global::admin-security',
   'strapi::session',
   'strapi::favicon',
   'strapi::public',

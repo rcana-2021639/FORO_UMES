@@ -8,7 +8,7 @@
  * validaciones del modelo y los lifecycles. Es idempotente: si una universidad ya
  * existe (por nombre) no la duplica.
  *
- * ⚠️ Los datos son FICTICIOS hasta recibir la lista real de universidades del Foro.
+ * Las universidades son las reales del Foro; representantes y programas son provisionales.
  */
 import { createStrapi, compileStrapi } from '@strapi/strapi';
 import type { Core } from '@strapi/strapi';
@@ -19,224 +19,62 @@ type Modality = 'Presencial' | 'Virtual' | 'Hibrida';
 type SeedUniversity = {
   name: string;
   acronym: string;
+  displayOrder: number;
   shortDescription: string;
   website: string;
-  joinedForumAt: string;
+  joinedForumAt?: string;
   representative: { fullName: string; position: string; institutionalEmail: string };
   programs: Array<{ name: string; level: Level; modality: Modality; duration: string }>;
 };
 
-// 8 universidades ficticias (el plan pide entre 6 y 10)
-const UNIVERSITIES: SeedUniversity[] = [
+// Las 9 universidades integrantes del Foro, en el orden oficial en que se presentan (displayOrder).
+// Sitio web, representante y programas son PROVISIONALES hasta que el Foro entregue los datos reales.
+const PLACEHOLDER_REP = (acronym: string) => ({
+  fullName: `Representante de ${acronym} (por confirmar)`,
+  position: 'Por confirmar',
+  institutionalEmail: `posgrado@${acronym.toLowerCase()}.example.edu`,
+});
+const PLACEHOLDER_PROGRAMS: SeedUniversity['programs'] = [
   {
-    name: 'Universidad de Prueba Central',
-    acronym: 'UPC',
-    shortDescription: 'Universidad ficticia usada para desarrollo. Reemplazar con datos reales.',
-    website: 'https://upc.example.edu',
-    joinedForumAt: '2020-03-15',
-    representative: {
-      fullName: 'María López',
-      position: 'Directora de Posgrados',
-      institutionalEmail: 'posgrados@upc.example.edu',
-    },
-    programs: [
-      {
-        name: 'Maestría en Docencia Universitaria',
-        level: 'Maestria',
-        modality: 'Hibrida',
-        duration: '18 meses',
-      },
-      {
-        name: 'Doctorado en Educación',
-        level: 'Doctorado',
-        modality: 'Presencial',
-        duration: '4 años',
-      },
-    ],
+    name: 'Programa de posgrado (por confirmar) 1',
+    level: 'Maestria',
+    modality: 'Presencial',
+    duration: 'Por confirmar',
   },
   {
-    name: 'Universidad de Prueba del Norte',
-    acronym: 'UPN',
-    shortDescription: 'Universidad ficticia usada para desarrollo.',
-    website: 'https://upn.example.edu',
-    joinedForumAt: '2020-03-15',
-    representative: {
-      fullName: 'Carlos Pérez',
-      position: 'Coordinador de Estudios de Posgrado',
-      institutionalEmail: 'posgrado@upn.example.edu',
-    },
-    programs: [
-      {
-        name: 'Maestría en Administración de Empresas',
-        level: 'Maestria',
-        modality: 'Virtual',
-        duration: '2 años',
-      },
-      {
-        name: 'Especialización en Finanzas',
-        level: 'Especializacion',
-        modality: 'Presencial',
-        duration: '1 año',
-      },
-    ],
-  },
-  {
-    name: 'Universidad de Prueba del Sur',
-    acronym: 'UPS',
-    shortDescription: 'Universidad ficticia usada para desarrollo.',
-    website: 'https://ups.example.edu',
-    joinedForumAt: '2021-01-20',
-    representative: {
-      fullName: 'Ana Ramírez',
-      position: 'Decana de Posgrados',
-      institutionalEmail: 'decanato.posgrados@ups.example.edu',
-    },
-    programs: [
-      {
-        name: 'Maestría en Salud Pública',
-        level: 'Maestria',
-        modality: 'Presencial',
-        duration: '2 años',
-      },
-      {
-        name: 'Diplomado en Gestión Hospitalaria',
-        level: 'Diplomado',
-        modality: 'Virtual',
-        duration: '6 meses',
-      },
-    ],
-  },
-  {
-    name: 'Universidad de Prueba de Oriente',
-    acronym: 'UPO',
-    shortDescription: 'Universidad ficticia usada para desarrollo.',
-    website: 'https://upo.example.edu',
-    joinedForumAt: '2021-08-05',
-    representative: {
-      fullName: 'Jorge Castillo',
-      position: 'Director de Investigación y Posgrado',
-      institutionalEmail: 'investigacion@upo.example.edu',
-    },
-    programs: [
-      {
-        name: 'Maestría en Ingeniería de Software',
-        level: 'Maestria',
-        modality: 'Hibrida',
-        duration: '2 años',
-      },
-      {
-        name: 'Doctorado en Ciencias de la Computación',
-        level: 'Doctorado',
-        modality: 'Presencial',
-        duration: '4 años',
-      },
-    ],
-  },
-  {
-    name: 'Universidad de Prueba de Occidente',
-    acronym: 'UPOc',
-    shortDescription: 'Universidad ficticia usada para desarrollo.',
-    website: 'https://upoc.example.edu',
-    joinedForumAt: '2022-02-10',
-    representative: {
-      fullName: 'Lucía Hernández',
-      position: 'Coordinadora Académica de Posgrado',
-      institutionalEmail: 'coordinacion.posgrado@upoc.example.edu',
-    },
-    programs: [
-      {
-        name: 'Maestría en Derecho Constitucional',
-        level: 'Maestria',
-        modality: 'Presencial',
-        duration: '2 años',
-      },
-      {
-        name: 'Especialización en Derecho Laboral',
-        level: 'Especializacion',
-        modality: 'Hibrida',
-        duration: '1 año',
-      },
-    ],
-  },
-  {
-    name: 'Universidad Tecnológica de Prueba',
-    acronym: 'UTP',
-    shortDescription: 'Universidad ficticia usada para desarrollo.',
-    website: 'https://utp.example.edu',
-    joinedForumAt: '2022-09-01',
-    representative: {
-      fullName: 'Roberto Méndez',
-      position: 'Vicerrector Académico',
-      institutionalEmail: 'vicerrectoria@utp.example.edu',
-    },
-    programs: [
-      {
-        name: 'Maestría en Ciencia de Datos',
-        level: 'Maestria',
-        modality: 'Virtual',
-        duration: '18 meses',
-      },
-      {
-        name: 'Diplomado en Ciberseguridad',
-        level: 'Diplomado',
-        modality: 'Virtual',
-        duration: '4 meses',
-      },
-    ],
-  },
-  {
-    name: 'Universidad Humanista de Prueba',
-    acronym: 'UHP',
-    shortDescription: 'Universidad ficticia usada para desarrollo.',
-    website: 'https://uhp.example.edu',
-    joinedForumAt: '2023-03-12',
-    representative: {
-      fullName: 'Patricia Morales',
-      position: 'Directora de Escuela de Posgrado',
-      institutionalEmail: 'escuela.posgrado@uhp.example.edu',
-    },
-    programs: [
-      {
-        name: 'Maestría en Psicología Clínica',
-        level: 'Maestria',
-        modality: 'Presencial',
-        duration: '2 años',
-      },
-      {
-        name: 'Maestría en Trabajo Social',
-        level: 'Maestria',
-        modality: 'Hibrida',
-        duration: '2 años',
-      },
-    ],
-  },
-  {
-    name: 'Universidad Rural de Prueba',
-    acronym: 'URP',
-    shortDescription: 'Universidad ficticia usada para desarrollo.',
-    website: 'https://urp.example.edu',
-    joinedForumAt: '2024-01-25',
-    representative: {
-      fullName: 'Diego Ortiz',
-      position: 'Coordinador de Posgrados',
-      institutionalEmail: 'posgrados@urp.example.edu',
-    },
-    programs: [
-      {
-        name: 'Maestría en Desarrollo Rural',
-        level: 'Maestria',
-        modality: 'Presencial',
-        duration: '2 años',
-      },
-      {
-        name: 'Especialización en Agronegocios',
-        level: 'Especializacion',
-        modality: 'Hibrida',
-        duration: '1 año',
-      },
-    ],
+    name: 'Programa de posgrado (por confirmar) 2',
+    level: 'Doctorado',
+    modality: 'Hibrida',
+    duration: 'Por confirmar',
   },
 ];
+
+const UNIVERSITIES: SeedUniversity[] = [
+  {
+    name: 'Universidad de San Carlos de Guatemala',
+    acronym: 'USAC',
+    website: 'https://www.usac.edu.gt',
+  },
+  { name: 'Universidad Rafael Landívar', acronym: 'URL', website: 'https://www.url.edu.gt' },
+  { name: 'Universidad del Valle de Guatemala', acronym: 'UVG', website: 'https://www.uvg.edu.gt' },
+  {
+    name: 'Universidad Mariano Gálvez de Guatemala',
+    acronym: 'UMG',
+    website: 'https://www.umg.edu.gt',
+  },
+  { name: 'Universidad del Istmo', acronym: 'UNIS', website: 'https://unis.edu.gt' },
+  { name: 'Universidad Panamericana', acronym: 'UPANA', website: 'https://upana.edu.gt' },
+  { name: 'Universidad Mesoamericana', acronym: 'UMES', website: 'https://www.umes.edu.gt' },
+  { name: 'Universidad Galileo', acronym: 'Galileo', website: 'https://www.galileo.edu' },
+  { name: 'Universidad InterNaciones', acronym: 'UNI', website: 'https://uni.edu.gt' },
+].map((u, i) => ({
+  ...u,
+  displayOrder: i + 1,
+  shortDescription: `${u.name}, universidad integrante del Foro Interuniversitario de Estudios de Posgrado. (Descripción por confirmar.)`,
+  joinedForumAt: undefined,
+  representative: PLACEHOLDER_REP(u.acronym),
+  programs: PLACEHOLDER_PROGRAMS,
+}));
 
 const SEED_MARK = '[seed]'; // marca en descripciones para poder identificar/borrar lo sembrado
 
@@ -279,6 +117,7 @@ async function seed(strapi: Core.Strapi) {
       data: {
         name: u.name,
         acronym: u.acronym,
+        displayOrder: u.displayOrder,
         shortDescription: u.shortDescription,
         website: u.website,
         joinedForumAt: u.joinedForumAt,
@@ -317,6 +156,7 @@ async function seed(strapi: Core.Strapi) {
   }
 
   const [u1, u2, u3, u4] = universityDocs;
+  if (!u4) throw new Error('[seed] se esperaban al menos 4 universidades');
 
   const activity1 = await strapi.documents('api::activity.activity').create({
     data: {
@@ -382,7 +222,8 @@ async function seed(strapi: Core.Strapi) {
   await strapi.documents('api::news.news').create({
     data: {
       title: 'El Foro celebra su Encuentro Anual 2025',
-      summary: 'Representantes de ocho universidades se reunieron para definir la agenda conjunta.',
+      summary:
+        'Representantes de las nueve universidades se reunieron para definir la agenda conjunta.',
       content: `${SEED_MARK} Contenido ficticio de la noticia publicada.`,
     },
     status: 'published',
