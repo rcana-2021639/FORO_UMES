@@ -59,7 +59,16 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Middlewar
     'global::query-whitelist',
     // Límite de tasa por ruta (Sprint 5)
     'global::rate-limit',
-    'strapi::body',
+    {
+      name: 'strapi::body',
+      config: {
+        // Corta la subida al superar 5 MB ANTES de procesar la imagen (Strapi solo valida
+        // sizeLimit después de optimizarla, lo que permitiría procesar archivos enormes).
+        formidable: { maxFileSize: 5 * 1024 * 1024 },
+        jsonLimit: '1mb',
+        formLimit: '1mb',
+      },
+    },
     // Verificación de "magic bytes" de imágenes subidas (Sprint 5)
     'global::upload-guard',
     // Política de contraseñas del panel + auditoría de login (necesita el cuerpo ya parseado)

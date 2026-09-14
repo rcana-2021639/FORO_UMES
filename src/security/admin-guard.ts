@@ -66,18 +66,25 @@ export function createAdminGuard(strapi: Core.Strapi) {
           if (!many && (connectsOther || (rel.replaces && !connectsOwn))) {
             return forbid(ctx, 'Solo puede registrar contenido para su propia universidad.');
           }
-          if (many && ((rel.replaces && !connectsOwn) || disconnectsOwn)) {
+          if (many && isCreate) {
+            if (disconnectsOwn) {
+              return forbid(
+                ctx,
+                'Su universidad debe estar entre las participantes de la actividad.'
+              );
+            }
+            if (!connectsOwn) {
+              // Propone una actividad con otras universidades: la suya se agrega siempre
+              rel.connect.push({ documentId: university.documentId });
+              body[attribute] = rel.replaces
+                ? rel.connect.map((r) => r.documentId ?? r.id)
+                : { connect: rel.connect, disconnect: rel.disconnect };
+            }
+          } else if (many && ((rel.replaces && !connectsOwn) || disconnectsOwn)) {
             return forbid(
               ctx,
               'Su universidad debe permanecer entre las participantes de la actividad.'
             );
-          }
-          if (many && isCreate && !connectsOwn) {
-            // Propone una actividad con otras universidades: la suya se agrega siempre
-            rel.connect.push({ documentId: university.documentId });
-            body[attribute] = rel.replaces
-              ? rel.connect.map((r) => r.documentId ?? r.id)
-              : { connect: rel.connect, disconnect: rel.disconnect };
           }
         }
       }

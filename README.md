@@ -4,7 +4,7 @@ Backend del sitio web del Foro, construido con **Strapi 5 (TypeScript)** sobre *
 Sirve la API REST que consume el frontend (Next.js) y provee el panel administrativo con permisos por universidad.
 
 > Este repositorio sigue el _Plan Técnico de Desarrollo del Backend_ (8 sprints).
-> Estado actual: **Sprint 6 — Observabilidad** completado. Ver [SEGURIDAD.md](SEGURIDAD.md), [OBSERVABILIDAD.md](OBSERVABILIDAD.md) y [openapi.yaml](openapi.yaml).
+> Estado actual: **Sprint 7 — Pruebas automatizadas** completado. Ver [TESTING.md](TESTING.md), Ver [SEGURIDAD.md](SEGURIDAD.md), [OBSERVABILIDAD.md](OBSERVABILIDAD.md) y [openapi.yaml](openapi.yaml).
 
 ---
 
@@ -139,6 +139,7 @@ Al terminar de compilar abre <http://localhost:1337/admin>. La primera vez te pe
 ├── database/             # indexes.ts (índices adicionales) y migrations/ (para migraciones de datos futuras)
 ├── docker/init/          # Scripts que corren al crear el contenedor de PostgreSQL por primera vez
 ├── scripts/seed.ts       # Datos de prueba
+├── tests/                # unit/, integration/, api/ (Jest + supertest)
 ├── public/               # Archivos estáticos (uploads locales en desarrollo)
 ├── src/
 │   ├── api/              # 8 content-types: schema.json + controller/routes/service (+ lifecycles.ts)
@@ -240,5 +241,5 @@ Reglas comunes:
 | 4      | API pública y lógica de negocio (contacto, filtros, resumen) | ✅ Hecho     |
 | 5      | Seguridad y hardening                                        | ✅ Hecho     |
 | 6      | Observabilidad, manejo de errores y rendimiento              | ✅ Hecho     |
-| 7      | Pruebas automatizadas                                        | ⏳ Pendiente |
+| 7      | Pruebas automatizadas                                        | ✅ Hecho     |
 | 8      | CI/CD, despliegue y entrega                                  | ⏳ Pendiente |

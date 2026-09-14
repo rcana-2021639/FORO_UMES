@@ -5,8 +5,9 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Server =>
   port: env.int('PORT', 1337),
   // URL pública del backend (enlaces en correos, OpenAPI). En Railway: https://<app>.up.railway.app
   url: env('PUBLIC_URL', ''),
-  // Detrás del proxy del hosting (Railway/Render) para que ctx.ip y HTTPS se detecten bien
-  proxy: env.bool('TRUST_PROXY', false),
+  // Detrás del proxy del hosting (Railway/Render): confía en X-Forwarded-For / X-Forwarded-Proto
+  // para que la IP real llegue al límite de tasa y a la bitácora, y HTTPS se detecte bien.
+  proxy: { koa: env.bool('TRUST_PROXY', false), ipHeader: 'X-Forwarded-For', maxIpsCount: 1 },
   app: {
     keys: env.array('APP_KEYS')!,
   },

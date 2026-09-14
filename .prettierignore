@@ -7,3 +7,4 @@ types/generated
 public
 package-lock.json
 openapi.yaml
+coverage

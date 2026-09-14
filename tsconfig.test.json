@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": ".tmp/ts-jest",
+    "types": ["jest", "node"],
+    "incremental": false,
+    "noEmitOnError": false,
+    "isolatedModules": true
+  },
+  "include": [
+    "tests/**/*.ts",
+    "src/**/*.ts",
+    "database/**/*.ts",
+    "config/**/*.ts",
+    "types/generated/*.d.ts"
+  ],
+  "exclude": ["node_modules", "dist", "build", ".strapi", ".tmp", "src/admin/"]
+}

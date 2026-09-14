@@ -16,3 +16,8 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO "$APP_DB_USER";
     ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON SEQUENCES TO "$APP_DB_USER";
 EOSQL
+
+# Base de datos de pruebas automatizadas (aislada de la de desarrollo), propiedad del usuario de app
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+    CREATE DATABASE "${POSTGRES_DB%_dev}_test" OWNER "$APP_DB_USER";
+EOSQL

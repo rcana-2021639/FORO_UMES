@@ -13,6 +13,7 @@ export default tseslint.config(
       '.tmp/**',
       'types/generated/**',
       'public/**',
+      'coverage/**',
     ],
   },
   js.configs.recommended,
@@ -28,6 +29,26 @@ export default tseslint.config(
       ],
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       eqeqeq: ['error', 'always'],
+    },
+  },
+  {
+    // Pruebas: Jest expone globales y se usan aserciones no nulas a propósito
+    files: ['tests/**/*.ts'],
+    languageOptions: {
+      globals: {
+        jest: 'readonly',
+        describe: 'readonly',
+        it: 'readonly',
+        expect: 'readonly',
+        beforeAll: 'readonly',
+        afterAll: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
     },
   },
   {
