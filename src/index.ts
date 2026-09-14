@@ -5,6 +5,7 @@ import { registerOwnershipCondition } from './security/ownership-condition';
 import { ensureUniversityEditorRole } from './security/university-editor-role';
 import { ensurePublicPermissions } from './security/public-permissions';
 import { CUSTOM_ROUTES_OPENAPI } from './openapi/custom-routes';
+import { registerRichTextSanitizer } from './security/richtext-sanitizer';
 
 /**
  * Engancha el guard de propiedad/auditoría a todas las rutas del content-manager.
@@ -27,9 +28,31 @@ function attachAdminGuard(strapi: Core.Strapi) {
   strapi.log.info(`[security] guard de propiedad aplicado a ${count} rutas del content-manager`);
 }
 
+/**
+ * Elimina rutas de plugins que este proyecto no usa (Sprint 5, tarea 11):
+ * - users-permissions expone registro/login de usuarios finales (/api/auth/*, /api/users/*):
+ *   el sitio no tiene usuarios finales; el rol Public se administra por base de datos.
+ * - upload expone /api/upload y /api/upload/files: el panel usa sus propias rutas /upload.
+ */
+function removeUnusedPluginRoutes(strapi: Core.Strapi) {
+  for (const pluginName of ['users-permissions', 'upload']) {
+    const plugin = strapi.plugin(pluginName);
+    const routes = plugin?.routes as Record<string, { routes: unknown[] }> | undefined;
+    if (routes?.['content-api']) {
+      const removed = routes['content-api'].routes.length;
+      routes['content-api'].routes = [];
+      strapi.log.info(
+        `[security] ${removed} rutas públicas del plugin ${pluginName} deshabilitadas`
+      );
+    }
+  }
+}
+
 export default {
   register({ strapi }: { strapi: Core.Strapi }) {
     attachAdminGuard(strapi);
+    removeUnusedPluginRoutes(strapi);
+    registerRichTextSanitizer(strapi);
     // Documenta las rutas personalizadas en la especificación OpenAPI (/documentation)
     strapi.plugin('documentation').service('override').registerOverride(CUSTOM_ROUTES_OPENAPI);
   },

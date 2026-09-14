@@ -12,6 +12,12 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Admin => 
       idleRefreshTokenLifespan: 60 * 60,
     },
   },
+  // Fuerza bruta en /admin/login: 5 intentos por 15 minutos por correo+IP (plan técnico, Sprint 5)
+  rateLimit: {
+    enabled: true,
+    interval: 15 * 60 * 1000, // ms
+    max: 5,
+  },
   apiToken: {
     salt: env('API_TOKEN_SALT')!,
   },
