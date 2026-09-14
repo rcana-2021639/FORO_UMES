@@ -112,7 +112,7 @@ Al terminar de compilar abre <http://localhost:1337/admin>. La primera vez te pe
 ## Calidad de código
 
 - **ESLint** (`eslint.config.mjs`) + **Prettier** (`.prettierrc`) con reglas compartidas para todo el equipo.
-- **Husky + lint-staged**: al hacer `git commit`, se ejecuta ESLint y Prettier sobre los archivos modificados. Si el linter falla, el commit se bloquea.
+- **Husky** (`.husky/pre-commit`): al hacer `git commit` se ejecuta `npm run lint` y `prettier --check` sobre los archivos staged. Si el linter falla o hay archivos sin formatear, el commit se bloquea.
 - **`.editorconfig`** y **`.gitattributes`** fuerzan finales de línea LF (importante en Windows para que los scripts de Docker funcionen).
 
 ---
@@ -125,7 +125,7 @@ Al terminar de compilar abre <http://localhost:1337/admin>. La primera vez te pe
 | `develop`         | Integración (se habilitará cuando el equipo crezca).                     |
 | `feature/<tarea>` | Una rama por tarea individual, p. ej. `feature/content-type-universidad` |
 
-> Mientras haya un solo desarrollador se trabaja directamente sobre `main`. Cuando se incorpore más gente al equipo se activará la protección de rama (PR + revisión obligatoria) y la rama `develop`, como indica el plan técnico.
+> Todo el desarrollo del backend se hace en la rama `jonathan`. `main` se actualiza desde ahí cuando un sprint queda estable. Cuando el equipo crezca se activará la protección de rama (PR + revisión obligatoria) y `develop`, como indica el plan técnico.
 
 ---
 
