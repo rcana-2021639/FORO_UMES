@@ -48,22 +48,28 @@ R = leer · C = crear · U = editar · D = borrar · P = publicar/despublicar ·
 | Mensaje de contacto   | R U D                     | —                                                                                  | — (ni lectura ni creación directa; el formulario usará `POST /api/contact` en el Sprint 4) |
 | Perfil de editor      | R C U D                   | —                                                                                  | —                                                                                          |
 | Bitácora de auditoría | R (la escribe el sistema) | —                                                                                  | —                                                                                          |
-| Biblioteca de medios  | todo                      | ver, subir, actualizar (no borrar)                                                 | —                                                                                          |
+| Biblioteca de medios  | todo                      | ver, subir, actualizar solo los propios (no borrar)                                | —                                                                                          |
 
 Decisiones confirmadas con el Foro (14-sep-2026):
 
 - **Noticias y aportes**: los editores redactan borradores y ven/editan/borran **solo los que ellos crearon** (condición nativa `admin::is-creator`). **Publicar** es exclusivo del Super Admin. Ambos content-types usan Draft & Publish.
-- **Actividades**: cualquier editor puede proponer una actividad y editar aquellas en las que participa su universidad; borrar es exclusivo del Super Admin.
+- **Actividades**: cualquier editor puede proponer una actividad y editar aquellas en las que participa su universidad; puede agregar universidades participantes pero no quitar ninguna; borrar es exclusivo del Super Admin.
+- **Contenido publicado** (noticias, aportes): una vez publicado por el Super Admin, el editor autor no puede borrarlo ni despublicarlo.
+- **Un usuario del panel = una universidad**: la relación 1→1 del Perfil de editor se refuerza con validación y un índice único en base de datos. Quien edite dos universidades necesita dos cuentas.
+- **Biblioteca de medios**: el editor ve todos los archivos (son públicos en el sitio) pero solo puede editar/renombrar los que él subió; borrar es del Super Admin.
 
 ## 4. Cómo se hace cumplir "su propia universidad" (control por objeto, no solo por rol)
 
 1. **Condición RBAC `admin::is-university-owner`** (`src/security/ownership-condition.ts`). Se adjunta a los permisos R/U/D del rol. Strapi la evalúa con el usuario y el permiso; devuelve un filtro (`university.id = X` o `participatingUniversities.id = X`) que limita los registros que el editor puede ver, editar o borrar. Sin perfil → `false` → sin acceso.
 2. **Guard de escrituras** (`src/security/admin-guard.ts`), middleware sobre las 17 rutas de escritura del content-manager. Cubre lo que una condición no puede:
    - al **crear**, rechaza (403 `NOT_OWNER`) un `university` ajeno en el cuerpo y asigna automáticamente la universidad del editor si no viene;
-   - al **editar**, impide mover un registro a otra universidad o quitar a la propia de una actividad;
+   - al **editar**, impide mover un registro a otra universidad; en actividades un editor solo puede **agregar** universidades, nunca quitar a ninguna (ni a la suya ni a otra) — las bajas las hace el Super Admin;
+   - en noticias y aportes, impide **borrar, despublicar o descartar** contenido que ya fue publicado (el editor puede seguir editando su borrador; el Super Admin decide si republica);
    - bloquea clonar registros para editores;
    - registra en la bitácora toda escritura exitosa.
 3. La lista de content-types "con dueño" y su atributo está en un solo lugar: `src/security/ownership.ts`.
+
+Además, `tests/integration/adversarial.test.ts` (18 casos) cubre: acciones masivas con documentos ajenos, todos los formatos de relación en el cuerpo, expulsión de universidades de actividades compartidas, editores no participantes "invitándose", borrado/despublicación de contenido publicado, edición de medios ajenos, escalada de privilegios (roles, usuarios, API tokens, content-type builder), perfiles duplicados, cambio de universidad en caliente y sondeos de fuga de datos en la API pública. Estas pruebas encontraron y cerraron 4 vulnerabilidades antes de producción (ver TESTING.md).
 
 Verificado manualmente en el Sprint 3 con dos editores (A y B) atacando la API del panel por HTTP: A solo lista lo suyo; crear/editar/borrar/mover contenido de B → 403; quitarse de una actividad → 403; borrar actividad → 403; B (participante) sí edita la actividad. Se automatizará en el Sprint 7.
 

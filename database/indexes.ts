@@ -13,7 +13,20 @@ import type { Core } from '@strapi/strapi';
  * que ya traen índices propios. Por eso el índice compuesto (universidad, nivel) del plan se
  * traduce en un índice sobre `academic_programs.level`; el filtro por universidad lo cubre la tabla lnk.
  */
-export const EXTRA_INDEXES: ReadonlyArray<{ table: string; name: string; columns: string[] }> = [
+export const EXTRA_INDEXES: ReadonlyArray<{
+  table: string;
+  name: string;
+  columns: string[];
+  unique?: boolean;
+}> = [
+  // Un usuario del panel solo puede tener UN perfil de editor (una universidad). La relación
+  // oneToOne de Strapi no lo garantiza en base de datos; este índice único sí.
+  {
+    table: 'editor_profiles_admin_user_lnk',
+    name: 'editor_profiles_admin_user_unique',
+    columns: ['user_id'],
+    unique: true,
+  },
   // Listado de noticias ordenado por más reciente y filtrado por "solo publicadas"
   { table: 'news', name: 'news_published_at_idx', columns: ['published_at'] },
   // Filtro de actividades por año / periodo
@@ -35,7 +48,9 @@ export async function ensureExtraIndexes(strapi: Core.Strapi): Promise<void> {
       continue;
     }
     const cols = index.columns.map((c) => `"${c}"`).join(', ');
-    await knex.raw(`CREATE INDEX IF NOT EXISTS "${index.name}" ON "${index.table}" (${cols})`);
+    await knex.raw(
+      `CREATE ${index.unique ? 'UNIQUE ' : ''}INDEX IF NOT EXISTS "${index.name}" ON "${index.table}" (${cols})`
+    );
   }
 
   strapi.log.info(`[indexes] ${EXTRA_INDEXES.length} índices adicionales verificados`);

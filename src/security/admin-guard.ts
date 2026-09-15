@@ -32,6 +32,13 @@ export function createAdminGuard(strapi: Core.Strapi) {
     const method = ctx.method.toUpperCase();
     const isWrite = method === 'POST' || method === 'PUT' || method === 'DELETE';
 
+    // Contenido con borrador/publicado que el editor redacta (noticias, aportes): puede crear y
+    // editar sus borradores, pero NUNCA borrar ni despublicar lo que el Super Admin ya publicó.
+    if (user && isWrite && !isSuperAdmin(user) && DRAFT_UIDS.has(uid)) {
+      const blocked = await blockedPublishedAction(strapi, ctx, uid);
+      if (blocked) return forbid(ctx, blocked);
+    }
+
     if (user && isWrite && !isSuperAdmin(user) && isOwnedUid(uid)) {
       const university = await getEditorUniversity(strapi, user.id);
       if (!university) {
@@ -55,7 +62,7 @@ export function createAdminGuard(strapi: Core.Strapi) {
       if (isCreate || isUpdate) {
         const rel = readRelation(body[attribute]);
 
-        if (isCreate && !rel.present) {
+        if (isCreate && (!rel.present || (rel.replaces && rel.connect.length === 0))) {
           // Sin universidad en el cuerpo: se asigna la del editor automáticamente
           body[attribute] = many ? [university.documentId] : university.documentId;
         } else if (rel.present) {
@@ -80,11 +87,24 @@ export function createAdminGuard(strapi: Core.Strapi) {
                 ? rel.connect.map((r) => r.documentId ?? r.id)
                 : { connect: rel.connect, disconnect: rel.disconnect };
             }
-          } else if (many && ((rel.replaces && !connectsOwn) || disconnectsOwn)) {
-            return forbid(
-              ctx,
-              'Su universidad debe permanecer entre las participantes de la actividad.'
+          } else if (many && isUpdate) {
+            // Un editor solo puede AGREGAR universidades a una actividad; quitar a cualquiera
+            // (incluida la suya) es decisión del Super Admin. Se compara contra el estado actual.
+            const current = await currentRelationRefs(
+              strapi,
+              uid,
+              String(ctx.params?.id),
+              attribute
             );
+            const removesSomeone =
+              rel.disconnect.length > 0 ||
+              (rel.replaces && current.some((cur) => !rel.connect.some((r) => refMatches(r, cur))));
+            if (removesSomeone) {
+              return forbid(
+                ctx,
+                'No puede quitar universidades de una actividad; solo agregarlas. Pida al Super Admin cualquier baja.'
+              );
+            }
           }
         }
       }
@@ -104,6 +124,54 @@ export function createAdminGuard(strapi: Core.Strapi) {
       });
     }
   };
+}
+
+/** Content-types con Draft & Publish que los editores redactan como borrador propio. */
+const DRAFT_UIDS = new Set(['api::news.news', 'api::contribution.contribution']);
+
+/**
+ * Devuelve el motivo del bloqueo si la acción toca contenido ya publicado (borrar, despublicar,
+ * descartar borrador o borrado masivo que incluya un publicado); undefined si puede continuar.
+ */
+async function blockedPublishedAction(
+  strapi: Core.Strapi,
+  ctx: Context,
+  uid: string
+): Promise<string | undefined> {
+  const path = ctx.path;
+  if (/\/actions\/(unpublish|discard|bulkUnpublish)$/.test(path)) {
+    return 'Despublicar o descartar contenido publicado está reservado al Super Admin.';
+  }
+  const ids: string[] = [];
+  if (ctx.method === 'DELETE' && ctx.params?.id) ids.push(String(ctx.params.id));
+  if (/\/actions\/bulkDelete$/.test(path)) {
+    const body = (ctx.request.body ?? {}) as { documentIds?: unknown[] };
+    ids.push(...(body.documentIds ?? []).map(String));
+  }
+  for (const documentId of ids) {
+    const published = await strapi.db.query(uid).findOne({
+      where: { documentId, publishedAt: { $notNull: true } },
+      select: ['id'],
+    });
+    if (published) {
+      return 'No puede eliminar contenido ya publicado; solicítelo al Super Admin.';
+    }
+  }
+  return undefined;
+}
+
+/** Referencias (id + documentId) actuales de una relación de un documento. */
+async function currentRelationRefs(
+  strapi: Core.Strapi,
+  uid: string,
+  documentId: string,
+  attribute: string
+): Promise<Array<{ id: number; documentId: string }>> {
+  const doc = (await strapi.db.query(uid).findOne({
+    where: { documentId },
+    populate: { [attribute]: { select: ['id', 'documentId'] } },
+  })) as Record<string, Array<{ id: number; documentId: string }> | undefined> | null;
+  return doc?.[attribute] ?? [];
 }
 
 function actionFromPath(method: string, path: string): AuditAction {

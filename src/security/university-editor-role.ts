@@ -69,7 +69,8 @@ function buildPermissions(strapi: Core.Strapi): Perm[] {
     // Biblioteca de medios: subir y ver archivos (fotos de representantes, portadas)
     { action: 'plugin::upload.read' },
     { action: 'plugin::upload.assets.create' },
-    { action: 'plugin::upload.assets.update' },
+    // Solo puede editar/renombrar los archivos que él mismo subió
+    { action: 'plugin::upload.assets.update', conditions: [CREATOR_CONDITION_ID] },
     { action: 'plugin::upload.assets.download' },
     { action: 'plugin::upload.assets.copy-link' },
   ];

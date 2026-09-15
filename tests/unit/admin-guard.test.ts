@@ -12,8 +12,13 @@ const UPN = { id: 2, documentId: 'upn', name: 'UPN' };
 const strapi = {
   db: {
     query: () => ({
-      findOne: async ({ where }: { where: { adminUser: number } }) =>
-        where.adminUser === 10 ? { university: UPC } : null,
+      findOne: async ({ where }: { where: { adminUser?: number; documentId?: string } }) => {
+        if (where.adminUser !== undefined)
+          return where.adminUser === 10 ? { university: UPC } : null;
+        // estado actual de una actividad compartida: participan UPC y UPN
+        if (where.documentId) return { participatingUniversities: [UPC, UPN] };
+        return null;
+      },
     }),
   },
 } as never;
@@ -119,16 +124,88 @@ describe('admin-guard: editar', () => {
     expect(await run(ctx, 200)).not.toHaveBeenCalled();
     expect(ctx.status).toBe(403);
   });
-  it('impide quitar a la propia universidad de una actividad', async () => {
-    const ctx = ctxFor(
+  it('impide quitar a cualquier universidad de una actividad (propia o ajena)', async () => {
+    const own = ctxFor(
       'PUT',
       ACT,
       { participatingUniversities: { disconnect: [{ id: 1 }] } },
       { id: 'doc' }
     );
-    expect(await run(ctx, 200)).not.toHaveBeenCalled();
-    const ctx2 = ctxFor('PUT', ACT, { participatingUniversities: ['upn'] }, { id: 'doc' });
-    expect(await run(ctx2, 200)).not.toHaveBeenCalled();
+    expect(await run(own, 200)).not.toHaveBeenCalled();
+    const other = ctxFor(
+      'PUT',
+      ACT,
+      { participatingUniversities: { disconnect: [{ documentId: 'upn' }] } },
+      { id: 'doc' }
+    );
+    expect(await run(other, 200)).not.toHaveBeenCalled();
+    const withoutOwn = ctxFor('PUT', ACT, { participatingUniversities: ['upn'] }, { id: 'doc' });
+    expect(await run(withoutOwn, 200)).not.toHaveBeenCalled();
+    const withoutOther = ctxFor(
+      'PUT',
+      ACT,
+      { participatingUniversities: { set: [{ documentId: 'upc' }] } },
+      { id: 'doc' }
+    );
+    expect(await run(withoutOther, 200)).not.toHaveBeenCalled();
+    // superconjunto del estado actual: permitido
+    const superset = ctxFor(
+      'PUT',
+      ACT,
+      { participatingUniversities: ['upc', 'upn', 'otra'] },
+      { id: 'doc' }
+    );
+    expect(await run(superset, 200)).toHaveBeenCalled();
+  });
+  it('bloquea borrar/despublicar noticias y aportes publicados; permite borrar borradores', async () => {
+    const withPublished = {
+      db: {
+        query: () => ({
+          findOne: async ({ where }: { where: { adminUser?: number; publishedAt?: unknown } }) =>
+            where.adminUser !== undefined
+              ? { university: UPC }
+              : where.publishedAt
+                ? { id: 1 }
+                : null,
+        }),
+      },
+    } as never;
+    const g = createAdminGuard(withPublished);
+    const del = ctxFor('DELETE', 'api::news.news', {}, { id: 'pub' });
+    await g(del as never, jest.fn());
+    expect(del.status).toBe(403);
+    const unpub = ctxFor(
+      'POST',
+      'api::news.news',
+      {},
+      { id: 'pub', path: '/content-manager/collection-types/api::news.news/pub/actions/unpublish' }
+    );
+    await g(unpub as never, jest.fn());
+    expect(unpub.status).toBe(403);
+    const bulk = ctxFor(
+      'POST',
+      'api::contribution.contribution',
+      { documentIds: ['pub'] },
+      {
+        path: '/content-manager/collection-types/api::contribution.contribution/actions/bulkDelete',
+      }
+    );
+    await g(bulk as never, jest.fn());
+    expect(bulk.status).toBe(403);
+
+    const onlyDrafts = {
+      db: {
+        query: () => ({
+          findOne: async ({ where }: { where: { adminUser?: number } }) =>
+            where.adminUser !== undefined ? { university: UPC } : null,
+        }),
+      },
+    } as never;
+    const g2 = createAdminGuard(onlyDrafts);
+    const delDraft = ctxFor('DELETE', 'api::news.news', {}, { id: 'draft' });
+    const next = jest.fn();
+    await g2(delDraft as never, next);
+    expect(next).toHaveBeenCalled();
   });
   it('permite editar campos sin tocar la relación y agregar otras universidades', async () => {
     const ctx = ctxFor('PUT', PROG, { name: 'nuevo nombre' }, { id: 'doc' });
