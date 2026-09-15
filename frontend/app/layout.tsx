@@ -5,6 +5,7 @@ import { SmoothScroll } from '@/components/providers/SmoothScroll';
 import { ToasterMount } from '@/components/feedback/ToasterMount';
 import { CustomCursor } from '@/components/cursor/CustomCursor';
 import { GooeyDefs } from '@/components/ui/GooeyDefs';
+import { SectionThemeObserver } from '@/components/providers/SectionThemeObserver';
 import { Navbar } from '@/components/nav/Navbar';
 import { Footer } from '@/components/nav/Footer';
 
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </main>
           <Footer />
         </SmoothScroll>
+        <SectionThemeObserver />
         <CustomCursor />
         <ToasterMount />
       </body>

@@ -33,6 +33,8 @@
     ".cache/",
     ".tmp/",
     ".strapi/",
+    // El frontend (Next.js) tiene su propio tsconfig
+    "frontend/",
 
     // Do not include admin files in the server compilation
     "src/admin/",

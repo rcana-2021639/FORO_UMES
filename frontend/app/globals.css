@@ -167,3 +167,73 @@
 @utility animate-dot {
   animation: dot 1.1s steps(1) infinite;
 }
+
+/* ---- Prosa editorial (Markdown del backend) ---- */
+.prose-acta > * + * {
+  margin-top: 1.1em;
+}
+.prose-acta h2,
+.prose-acta h3 {
+  margin-top: 2em;
+  line-height: 1.15;
+}
+.prose-acta h2 {
+  font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+}
+.prose-acta h3 {
+  font-size: 1.3rem;
+}
+.prose-acta ul,
+.prose-acta ol {
+  padding-left: 1.3em;
+}
+.prose-acta ul {
+  list-style: '— ' outside;
+}
+.prose-acta ol {
+  list-style: decimal outside;
+}
+.prose-acta li + li {
+  margin-top: 0.4em;
+}
+.prose-acta blockquote {
+  border-left: 2px solid var(--color-amber);
+  padding-left: 1.2em;
+  font-family: var(--font-display);
+  font-size: 1.3em;
+  line-height: 1.35;
+  font-variation-settings:
+    'opsz' 32,
+    'SOFT' 30;
+}
+.prose-acta strong {
+  font-weight: 600;
+}
+.prose-acta img {
+  border-radius: 3px;
+  border: 1px solid var(--line);
+}
+.prose-acta code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
+.prose-acta table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95em;
+}
+.prose-acta th,
+.prose-acta td {
+  border-bottom: 1px solid var(--line);
+  padding: 0.5em 0.4em;
+  text-align: left;
+}
+
+@keyframes breathe {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}

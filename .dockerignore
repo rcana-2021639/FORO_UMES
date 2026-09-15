@@ -20,3 +20,6 @@ docker
 docker-compose.yml
 *.md
 openapi.yaml
+
+# Frontend (se construye aparte)
+frontend

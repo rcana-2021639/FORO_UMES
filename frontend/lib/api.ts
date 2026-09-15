@@ -224,7 +224,7 @@ export async function safe<T>(promise: Promise<T>, fallback: T): Promise<T> {
   try {
     return await promise;
   } catch (err) {
-    console.error('[api]', err instanceof Error ? err.message : err);
+    console.warn('[api]', err instanceof Error ? err.message : err);
     return fallback;
   }
 }
