@@ -1,0 +1,40 @@
+/* Tokens de diseño — ver DESIGN_NOTES.md §4 y §5 */
+:root {
+  /* Paleta "acta académica": papel + tinta + jade + ámbar */
+  --color-paper: #f3eee4;
+  --color-paper-2: #e9e2d3;
+  --color-ink: #16150f;
+  --color-ink-2: #3d3a31;
+  --color-ink-3: #7c7768;
+  --color-jade: #0f6e5a;
+  --color-jade-2: #3f9e86;
+  --color-amber: #c9782a;
+  --color-night: #101a24;
+  --color-line: #d6cebb;
+
+  /* Fondo/texto "vivos": los anima useSectionTheme según el capítulo visible */
+  --bg: var(--color-paper);
+  --fg: var(--color-ink);
+  --fg-muted: var(--color-ink-3);
+  --line: var(--color-line);
+
+  /* Tipografía (variables inyectadas por next/font en <html>) */
+  --font-display: var(--font-fraunces), 'Iowan Old Style', Georgia, serif;
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, 'Cascadia Mono', monospace;
+
+  /* Escala fluida */
+  --text-h1: clamp(2.75rem, 8vw, 8rem);
+  --text-h2: clamp(2rem, 5vw, 4.5rem);
+  --text-h3: clamp(1.5rem, 2.6vw, 2.25rem);
+  --text-body: 1.0625rem;
+  --text-mono: 0.75rem;
+
+  /* Ritmo */
+  --gutter: clamp(1rem, 4vw, 4rem);
+  --section-y: clamp(5rem, 12vw, 11rem);
+
+  /* Movimiento */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+}

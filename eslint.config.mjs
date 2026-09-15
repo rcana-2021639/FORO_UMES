@@ -14,6 +14,7 @@ export default tseslint.config(
       'types/generated/**',
       'public/**',
       'coverage/**',
+      'frontend/**',
     ],
   },
   js.configs.recommended,
