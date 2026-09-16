@@ -25,7 +25,7 @@ export function CustomCursor() {
 
   useEffect(() => {
     if (!enabled) return;
-    document.documentElement.dataset.cursor = 'custom';
+    document.documentElement.dataset.cursorMode = 'custom';
 
     const onMove = (e: PointerEvent) => {
       x.set(e.clientX);
@@ -60,7 +60,7 @@ export function CustomCursor() {
     window.addEventListener('pointerdown', onDown);
     window.addEventListener('pointerup', onUp);
     return () => {
-      delete document.documentElement.dataset.cursor;
+      delete document.documentElement.dataset.cursorMode;
       window.removeEventListener('pointermove', onMove);
       document.removeEventListener('pointerover', onOver);
       document.documentElement.removeEventListener('pointerleave', onLeave);

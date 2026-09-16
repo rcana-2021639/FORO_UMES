@@ -62,14 +62,14 @@
   }
 
   /* Cuando el cursor custom está activo, el nativo se oculta salvo en foco por teclado */
-  html[data-cursor='custom'] body {
+  html[data-cursor-mode='custom'] body {
     cursor: none;
   }
-  html[data-cursor='custom'] a,
-  html[data-cursor='custom'] button {
+  html[data-cursor-mode='custom'] a,
+  html[data-cursor-mode='custom'] button {
     cursor: none;
   }
-  html[data-cursor='custom'] :focus-visible {
+  html[data-cursor-mode='custom'] :focus-visible {
     cursor: auto;
   }
 
