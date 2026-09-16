@@ -51,7 +51,7 @@ export function RepresentativesSpotlight({ reps }: { reps: Representative[] }) {
                 aria-hidden
                 className={cn(
                   'absolute inset-0 grid place-items-center font-display text-[3rem]',
-                  revealed ? 'text-fg-muted/50' : 'text-paper/15'
+                  revealed ? 'text-ink-3' : 'text-paper/15'
                 )}
                 style={{ fontVariationSettings: "'opsz' 96, 'WONK' 1" }}
               >
@@ -66,7 +66,7 @@ export function RepresentativesSpotlight({ reps }: { reps: Representative[] }) {
                   : 'opacity-0'
               )}
             >
-              <p className="mono-label text-amber">{acronymOf(r.university)}</p>
+              <p className="mono-label text-accent">{acronymOf(r.university)}</p>
               <p className="mt-1 text-[0.98rem] leading-tight text-ink">{r.fullName}</p>
               {r.position && <p className="mt-1 text-[0.8rem] text-ink-3">{r.position}</p>}
             </div>

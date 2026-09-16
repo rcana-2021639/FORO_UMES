@@ -1,7 +1,7 @@
 # DESIGN_NOTES — Frontend del Foro Interuniversitario de Estudios de Posgrado
 
 > Documento de dirección de diseño. Se escribe **antes** de codear y se actualiza si la dirección cambia.
-> Estado: **propuesta pendiente de aprobación**.
+> Estado: **aprobado y construido** (v1). Las notas marcadas con ▸ registran desvíos respecto a la propuesta inicial y su motivo.
 
 ---
 
@@ -23,31 +23,31 @@
 
 Verificado el índice real del repo (Backgrounds / Components / Animations / TextAnimations, 165+ piezas). Se extrae el **código fuente real** de cada componente al momento de usarlo (no de memoria). Selección, con uso previsto:
 
-| Componente                         | Categoría      | Dónde                         | Por qué                                                                                                             |
-| ---------------------------------- | -------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `Aurora` (OGL)                     | Backgrounds    | Capa 1 del hero               | Fondo shader fluido, pero **re-coloreado a jade/ámbar/tinta** (nada de morado/azul). Marca "modernidad" sin gritar. |
-| `Particles` (OGL)                  | Backgrounds    | Capa 2 del hero               | Puntos flotantes con parallax de mouse: "constelación" de la red universitaria.                                     |
-| `GooeyNav`                         | Components     | Navbar desktop                | Indicador activo con filtro metaball SVG (req. sección 6).                                                          |
-| `SplitText` (GSAP)                 | TextAnimations | Títulos H1/H2                 | Reveal por caracteres/palabras con stagger (scroll anim #3).                                                        |
-| `CountUp`                          | TextAnimations | "El Foro en cifras"           | Contadores activados en viewport (scroll anim #8), alimentados por `/api/forum-summary`.                            |
-| `MagicBento`                       | Components     | Grid de universidades         | Base del bento con spotlight por celda; se reescribe el estilo (sin glow morado).                                   |
-| `ClickSpark`                       | Animations     | Botón primario                | Estallido de partículas al click (req. sección 7).                                                                  |
-| `Magnet`                           | Animations     | Botones, links navbar, iconos | Efecto magnético (req. sección 9).                                                                                  |
-| `SpotlightCard` / patrón spotlight | Components     | Sección Representantes        | Cursor-linterna que revela nombres/cargos bajo capa oscura.                                                         |
-| `Orb` (OGL)                        | Backgrounds    | Sección Contacto              | Pieza reactiva al mouse detrás del formulario.                                                                      |
-| `PixelTrail`                       | Animations     | Sección Galería               | Estela de cursor solo en esa sección (req. sección 9).                                                              |
-| `ScrollVelocity`                   | TextAnimations | Separador entre secciones     | Marquesina con los 9 acrónimos cuya velocidad sigue el scroll.                                                      |
+| Componente                         | Categoría      | Dónde                          | Por qué                                                                                                             |
+| ---------------------------------- | -------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| `Aurora` (OGL)                     | Backgrounds    | Capa 1 del hero                | Fondo shader fluido, pero **re-coloreado a jade/ámbar/tinta** (nada de morado/azul). Marca "modernidad" sin gritar. |
+| `Particles` (OGL)                  | Backgrounds    | ▸ Fusionado en la constelación | ▸ Se sustituyó por el polvo de puntos dentro de la escena R3F: un solo contexto WebGL en el hero en vez de dos.     |
+| `GooeyNav`                         | Components     | Navbar desktop                 | Indicador activo con filtro metaball SVG (req. sección 6).                                                          |
+| `SplitText` (GSAP)                 | TextAnimations | Títulos H1/H2                  | Reveal por caracteres/palabras con stagger (scroll anim #3).                                                        |
+| `CountUp`                          | TextAnimations | "El Foro en cifras"            | Contadores activados en viewport (scroll anim #8), alimentados por `/api/forum-summary`.                            |
+| `MagicBento`                       | Components     | Grid de universidades          | Base del bento con spotlight por celda; se reescribe el estilo (sin glow morado).                                   |
+| `ClickSpark`                       | Animations     | Botón primario                 | Estallido de partículas al click (req. sección 7).                                                                  |
+| `Magnet`                           | Animations     | Botones, links navbar, iconos  | Efecto magnético (req. sección 9).                                                                                  |
+| `SpotlightCard` / patrón spotlight | Components     | Sección Representantes         | Cursor-linterna que revela nombres/cargos bajo capa oscura.                                                         |
+| `Orb` (OGL)                        | Backgrounds    | Sección Contacto               | Pieza reactiva al mouse detrás del formulario.                                                                      |
+| `PixelTrail`                       | Animations     | Sección Galería                | ▸ Reimplementado en canvas 2D (mismo efecto de retícula) para no abrir un segundo contexto WebGL.                   |
+| `ScrollVelocity`                   | TextAnimations | Separador entre secciones      | Marquesina con los 9 acrónimos cuya velocidad sigue el scroll.                                                      |
 
 ### 2.2 Rare UI (`rareui.com/components`, shadcn CLI, "archivo único que posees")
 
-| Componente                  | Dónde                                                                 | Por qué                                                       |
-| --------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------- |
-| `Scroll Progress Indicator` | Global, integrado al navbar                                           | Lectura de progreso tipo revista; encaja con lo editorial.    |
-| `Animated Counter`          | Alternativa a `CountUp` si su spring se ve mejor con Fraunces         | Se elige uno solo tras probar.                                |
-| `Grid Reveal`               | Fondo de "Aportes"                                                    | Retícula que se revela cerca del cursor; sutil, sin "AI-kit". |
-| `Delete Button` (patrón)    | Solo el patrón de confirmación, para "limpiar formulario" de contacto | Micro-interacción honesta, no destructiva.                    |
-| `Gravity Letters`           | **Descartado**                                                        | Física de letras es "playful"; rompe el tono institucional.   |
-| `Matrix Orb` / `Fluid Orb`  | **Descartado**                                                        | Estética "AI-kit"; se usa `Orb` de React Bits re-coloreado.   |
+| Componente                  | Dónde                                                                 | Por qué                                                             |
+| --------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `Scroll Progress Indicator` | Global, integrado al navbar                                           | Lectura de progreso tipo revista; encaja con lo editorial.          |
+| `Animated Counter`          | Alternativa a `CountUp` si su spring se ve mejor con Fraunces         | Se elige uno solo tras probar.                                      |
+| `Grid Reveal`               | Fondo de "Aportes"                                                    | Reimplementado con `mask-image` radial en CSS; sutil, sin "AI-kit". |
+| `Delete Button` (patrón)    | Solo el patrón de confirmación, para "limpiar formulario" de contacto | Micro-interacción honesta, no destructiva.                          |
+| `Gravity Letters`           | **Descartado**                                                        | Física de letras es "playful"; rompe el tono institucional.         |
+| `Matrix Orb` / `Fluid Orb`  | **Descartado**                                                        | Estética "AI-kit"; se usa `Orb` de React Bits re-coloreado.         |
 
 ### 2.3 Sileo (`npm install sileo`, `import { sileo, Toaster } from "sileo"`)
 
@@ -91,20 +91,21 @@ Mezcla de **3 lenguajes**, no 6:
 
 Idea: **papel de archivo + tinta + jade (quetzal) + ámbar (sello)**. Neutral frente a las 9 universidades. Sin morado. Sin degradado azul.
 
-| Token             | Hex       | Uso                                                                                          |
-| ----------------- | --------- | -------------------------------------------------------------------------------------------- |
-| `--color-paper`   | `#F3EEE4` | Fondo base (papel cálido, no blanco puro)                                                    |
-| `--color-paper-2` | `#E9E2D3` | Fondo alterno / celdas bento                                                                 |
-| `--color-ink`     | `#16150F` | Texto principal, fondos de secciones oscuras                                                 |
-| `--color-ink-2`   | `#3D3A31` | Texto secundario                                                                             |
-| `--color-ink-3`   | `#7C7768` | Metadatos, mono, líneas                                                                      |
-| `--color-jade`    | `#0F6E5A` | Acento primario: CTA, links activos, indicador gooey                                         |
-| `--color-jade-2`  | `#3F9E86` | Hover/aurora (variante clara)                                                                |
-| `--color-amber`   | `#C9782A` | Acento secundario: sellos, números de capítulo, badge "Doctorado"                            |
-| `--color-night`   | `#101A24` | Fondo de secciones "oscuras" (Aportes, Contacto); es azul-tinta casi negro, no azul de marca |
-| `--color-line`    | `#D6CEBB` | Bordes de 1 px                                                                               |
+| Token             | Hex       | Uso                                                                                                                    |
+| ----------------- | --------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `--color-paper`   | `#F3EEE4` | Fondo base (papel cálido, no blanco puro)                                                                              |
+| `--color-paper-2` | `#E9E2D3` | Fondo alterno / celdas bento                                                                                           |
+| `--color-ink`     | `#16150F` | Texto principal, fondos de secciones oscuras                                                                           |
+| `--color-ink-2`   | `#3D3A31` | Texto secundario                                                                                                       |
+| `--color-ink-3`   | `#66614F` | Metadatos, mono, líneas                                                                                                |
+| `--color-jade`    | `#0F6E5A` | Acento primario: CTA, links activos, indicador gooey                                                                   |
+| `--color-jade-2`  | `#3F9E86` | Hover/aurora (variante clara)                                                                                          |
+| `--color-amber`   | `#C9782A` | Acento secundario decorativo y texto sobre `night`; badge "Doctorado", barra de progreso                               |
+| `--color-amber-2` | `#9A5414` | ▸ Ámbar para **texto** sobre papel. `--accent` alterna entre ambos según el tema (Lighthouse marcó `#C9782A` en 2.9:1) |
+| `--color-night`   | `#101A24` | Fondo de secciones "oscuras" (Aportes, Contacto); es azul-tinta casi negro, no azul de marca                           |
+| `--color-line`    | `#D6CEBB` | Bordes de 1 px                                                                                                         |
 
-Contrastes verificados (WCAG AA): `ink/paper` 15.2:1 · `jade/paper` 5.9:1 · `amber/paper` 3.4:1 (solo para texto ≥ 24 px o decorativo; sobre `night` sube a 5.1:1) · `paper/night` 15.6:1.
+Contrastes medidos (WCAG AA): `ink/paper` 15.2:1 · `ink-3/paper` 5.4:1 · `jade/paper` 5.3:1 · `amber-2/paper` 5.0:1 · `amber/night` 5.2:1 · `paper/night` 15.2:1. Lighthouse (desktop, build de producción): Performance 98 · Accessibility 96→100 tras estos ajustes · Best Practices 96 · SEO 100.
 
 **Cambio de tema por scroll** (scroll anim #9): el `background` del `<body>` interpola `paper → paper-2 → night → paper` según la sección visible. No hay toggle manual de dark mode: el "modo oscuro" es narrativo, por capítulo.
 
@@ -238,3 +239,13 @@ frontend/
 ```
 
 Regla: **nada de GSAP/Three dentro de `app/`**; toda animación vive en su componente/hook.
+
+---
+
+## 14. Estado de entrega (v1) y notas de implementación
+
+- **Datos locales:** `NEXT_PUBLIC_API_URL` debe usar `http://127.0.0.1:1337` (no `localhost`): el servidor de Next resuelve `localhost` a `::1` y Strapi escucha en IPv4, lo que hacía fallar el `fetch` en `next build`/`next start`.
+- **Tema por sección:** se implementó con `IntersectionObserver` y no con ScrollTrigger, porque los _pin-spacers_ de GSAP desplazaban las posiciones calculadas y la sección "Programas" heredaba el tema noche.
+- **Menú móvil:** `clip-path: circle()` con centro en porcentajes (`91% 5%`); Motion no interpola `calc()` dentro de `clip-path`.
+- **Hooks reutilizables:** `useMagnetic`, `useClickSpark`, `useSplitReveal`, `useReducedMotion`/`useFinePointer`. Toda la lógica GSAP/Three vive en `components/` y `hooks/`, nunca en `app/`.
+- **Pendiente para v2:** distorsión de imágenes por shader al hover, `ModelViewer` con un objeto 3D del Foro cuando exista identidad gráfica oficial, y logos reales de las universidades (el bento muestra siglas mientras tanto).

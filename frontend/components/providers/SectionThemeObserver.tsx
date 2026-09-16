@@ -5,24 +5,33 @@ import { usePathname } from 'next/navigation';
 
 export type SectionTheme = 'paper' | 'paper-2' | 'night';
 
-const THEMES: Record<SectionTheme, { bg: string; fg: string; muted: string; line: string }> = {
+const THEMES: Record<
+  SectionTheme,
+  { bg: string; fg: string; muted: string; line: string; accent: string; jade: string }
+> = {
   paper: {
     bg: 'var(--color-paper)',
     fg: 'var(--color-ink)',
     muted: 'var(--color-ink-3)',
     line: 'var(--color-line)',
+    accent: 'var(--color-amber-2)',
+    jade: 'var(--color-jade)',
   },
   'paper-2': {
     bg: 'var(--color-paper-2)',
     fg: 'var(--color-ink)',
     muted: 'var(--color-ink-2)',
     line: '#cfc6b0',
+    accent: 'var(--color-amber-2)',
+    jade: 'var(--color-jade)',
   },
   night: {
     bg: 'var(--color-night)',
     fg: 'var(--color-paper)',
     muted: '#9aa4ad',
     line: '#27333f',
+    accent: 'var(--color-amber)',
+    jade: 'var(--color-jade-2)',
   },
 };
 
@@ -33,6 +42,8 @@ export function applyTheme(theme: SectionTheme) {
   s.setProperty('--fg', t.fg);
   s.setProperty('--fg-muted', t.muted);
   s.setProperty('--line', t.line);
+  s.setProperty('--accent', t.accent);
+  s.setProperty('--accent-jade', t.jade);
   document.documentElement.dataset.theme = theme;
 }
 

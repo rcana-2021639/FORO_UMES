@@ -212,7 +212,7 @@ export function ContactForm() {
 function inputCls(invalid: boolean) {
   return cn(
     'w-full rounded-[2px] border bg-transparent px-3 py-3 text-fg outline-none transition-colors duration-300',
-    'placeholder:text-fg-muted/60 focus:border-jade-2',
+    'placeholder:text-fg-muted focus:border-jade-2',
     invalid ? 'border-amber' : 'border-line'
   );
 }
@@ -238,11 +238,11 @@ function Field({
         <label htmlFor={id} className="mono-label text-fg-muted">
           {label}
         </label>
-        {hint && <span className="mono-label text-fg-muted/60">{hint}</span>}
+        {hint && <span className="mono-label text-fg-muted">{hint}</span>}
       </div>
       {children}
       {error && (
-        <p role="alert" className="mono-label mt-2 text-amber">
+        <p role="alert" className="mono-label mt-2 text-accent">
           {error}
         </p>
       )}

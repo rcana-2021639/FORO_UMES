@@ -133,7 +133,7 @@ export default async function UniversidadPage({ params }: Params) {
               <ul className="mt-6 grid gap-3 sm:grid-cols-2">
                 {programs.map((p) => (
                   <li key={p.documentId} className="rounded-[3px] border border-line p-5">
-                    <span className="mono-label text-amber">{LEVEL_LABEL[p.level]}</span>
+                    <span className="mono-label text-accent">{LEVEL_LABEL[p.level]}</span>
                     <h3 className="mt-3 text-[1.2rem]">{p.name}</h3>
                     <p className="mono-label mt-4 text-fg-muted">
                       {MODALITY_LABEL[p.modality]}

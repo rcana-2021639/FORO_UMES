@@ -5,10 +5,11 @@
   --color-paper-2: #e9e2d3;
   --color-ink: #16150f;
   --color-ink-2: #3d3a31;
-  --color-ink-3: #7c7768;
+  --color-ink-3: #66614f;
   --color-jade: #0f6e5a;
   --color-jade-2: #3f9e86;
   --color-amber: #c9782a;
+  --color-amber-2: #9a5414; /* ámbar para texto pequeño sobre papel (AA 4.97:1) */
   --color-night: #101a24;
   --color-line: #d6cebb;
 
@@ -17,6 +18,10 @@
   --fg: var(--color-ink);
   --fg-muted: var(--color-ink-3);
   --line: var(--color-line);
+  --accent: var(--color-amber-2);
+  --accent-jade: var(
+    --color-jade
+  ); /* jade legible según el tema: oscuro en papel, claro en noche */ /* ámbar legible según el tema: oscuro en papel, claro en noche */
 
   /* Tipografía (variables inyectadas por next/font en <html>) */
   --font-display: var(--font-fraunces), 'Iowan Old Style', Georgia, serif;

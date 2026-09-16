@@ -43,7 +43,7 @@ export function Section({
       <header className="container-x grid gap-6 md:grid-cols-12 md:gap-8">
         <div className="mono-label flex items-baseline gap-3 text-fg-muted md:col-span-2 md:flex-col md:gap-1">
           <span
-            className="font-display text-[2rem] leading-none text-amber"
+            className="font-display text-[2rem] leading-none text-accent"
             style={{ fontVariationSettings: "'opsz' 40" }}
           >
             {folio(number)}

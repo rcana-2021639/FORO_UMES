@@ -126,7 +126,7 @@ export default async function Home() {
         kicker="Aportes"
         title={
           <>
-            Lo que el Foro <em className="italic text-jade-2">produce</em>
+            Lo que el Foro <em className="italic text-accent-jade">produce</em>
           </>
         }
         intro="Resultados, iniciativas y beneficios documentados por las universidades."
@@ -180,7 +180,7 @@ export default async function Home() {
         kicker="Contacto"
         title={
           <>
-            Escríbele <em className="italic text-jade-2">al Foro</em>
+            Escríbele <em className="italic text-accent-jade">al Foro</em>
           </>
         }
         theme="night"

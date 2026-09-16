@@ -65,13 +65,13 @@ export function Navbar() {
         }
       >
         <motion.div layout="position" className="flex items-center gap-3">
-          <Link
-            href="/"
-            className="flex items-center gap-3"
-            aria-label="Foro Interuniversitario de Estudios de Posgrado — inicio"
-          >
+          <Link href="/" className="flex items-center gap-3">
             <Monogram />
-            <span className="hidden font-display text-[1.05rem] leading-none tracking-tight lg:block">
+            <span className="sr-only">Foro de Posgrado, inicio</span>
+            <span
+              aria-hidden
+              className="hidden font-display text-[1.05rem] leading-none tracking-tight lg:block"
+            >
               Foro de Posgrado
             </span>
           </Link>

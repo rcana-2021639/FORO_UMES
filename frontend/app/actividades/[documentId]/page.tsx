@@ -80,7 +80,7 @@ export default async function ActividadPage({ params }: Params) {
               <ul className="divide-y divide-line">
                 {a.contributions.map((c) => (
                   <li key={c.documentId} className="py-4">
-                    <span className="mono-label text-amber">{CONTRIBUTION_LABEL[c.type]}</span>
+                    <span className="mono-label text-accent">{CONTRIBUTION_LABEL[c.type]}</span>
                     <p className="mt-1 text-fg">{c.title}</p>
                   </li>
                 ))}

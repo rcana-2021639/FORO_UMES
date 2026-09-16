@@ -38,9 +38,9 @@ export function MobileMenu({ open, onClose, activeIndex }: Props) {
           aria-modal="true"
           aria-label="Menú"
           className="fixed inset-0 z-[999] flex flex-col bg-ink text-paper md:hidden"
-          initial={{ clipPath: 'circle(0% at calc(100% - 2.25rem) 2.5rem)' }}
-          animate={{ clipPath: 'circle(150% at calc(100% - 2.25rem) 2.5rem)' }}
-          exit={{ clipPath: 'circle(0% at calc(100% - 2.25rem) 2.5rem)' }}
+          initial={{ clipPath: 'circle(0% at 91% 5%)' }}
+          animate={{ clipPath: 'circle(150% at 91% 5%)' }}
+          exit={{ clipPath: 'circle(0% at 91% 5%)' }}
           transition={{ duration: 0.7, ease: [0.76, 0, 0.24, 1] }}
         >
           <div className="container-x flex flex-1 flex-col justify-center gap-1 pt-24 pb-16">
@@ -53,7 +53,7 @@ export function MobileMenu({ open, onClose, activeIndex }: Props) {
                 transition={{ delay: 0.18 + i * 0.05, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                 className="flex items-baseline gap-4 border-b border-paper/15 py-3"
               >
-                <span className="mono-label w-6 text-amber">{folio(i)}</span>
+                <span className="mono-label w-6 text-accent">{folio(i)}</span>
                 <Link
                   href={item.href}
                   onClick={onClose}

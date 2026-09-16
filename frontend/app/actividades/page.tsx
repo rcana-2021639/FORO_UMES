@@ -33,7 +33,7 @@ function ActivityList({ items, heading, id }: { items: Activity[]; heading: stri
                   <span className="mono-label text-fg-muted md:col-span-2">
                     {formatDate(a.date)}
                   </span>
-                  <span className="mono-label text-amber md:col-span-2">
+                  <span className="mono-label text-accent md:col-span-2">
                     {ACTIVITY_LABEL[a.type]}
                   </span>
                   <span className="flex items-center gap-4 md:col-span-6">

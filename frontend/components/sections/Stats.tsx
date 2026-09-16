@@ -43,7 +43,7 @@ export function Stats({ counts, year }: { counts: ForumSummary['counts']; year: 
           <dt className="mono-label text-fg-muted">{it.label}</dt>
           <dd className="mt-8 md:mt-14">
             <Counter value={it.value} delay={i * 0.12} />
-            <p className="mono-label mt-3 text-fg-muted/70">{it.note}</p>
+            <p className="mono-label mt-3 text-fg-muted">{it.note}</p>
           </dd>
           <span
             aria-hidden

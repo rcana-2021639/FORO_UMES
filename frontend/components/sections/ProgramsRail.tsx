@@ -132,7 +132,7 @@ function ProgramCard({ program: p, index }: { program: AcademicProgram; index: n
         <span
           className={cn(
             'mono-label rounded-full px-2 py-0.5',
-            p.level === 'Doctorado' ? 'bg-amber text-paper' : 'border border-line text-fg'
+            p.level === 'Doctorado' ? 'bg-amber-2 text-paper' : 'border border-line text-fg'
           )}
         >
           {LEVEL_LABEL[p.level]}

@@ -40,10 +40,7 @@ export function UniversitiesBento({ universities }: { universities: University[]
             initial={reduced ? false : { opacity: 0, y: 28, scale: 0.98 }}
             animate={inView ? { opacity: 1, y: 0, scale: 1 } : undefined}
             transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1], delay: 0.06 * i }}
-            className={cn(
-              'group relative',
-              big && 'col-span-2 row-span-2 md:col-span-2 md:row-span-2'
-            )}
+            className={cn('group relative', big && 'col-span-2 md:row-span-2')}
             onPointerMove={(e) => {
               const r = e.currentTarget.getBoundingClientRect();
               e.currentTarget.style.setProperty('--mx', `${e.clientX - r.left}px`);
@@ -72,7 +69,7 @@ export function UniversitiesBento({ universities }: { universities: University[]
                 <span className="mono-label text-fg-muted">
                   {String(u.displayOrder).padStart(2, '0')}
                 </span>
-                {joined && <span className="mono-label text-amber">desde {joined}</span>}
+                {joined && <span className="mono-label text-accent">desde {joined}</span>}
               </div>
 
               <div className="relative mt-6">

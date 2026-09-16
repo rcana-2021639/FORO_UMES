@@ -93,7 +93,7 @@ export function ContributionsSticky({ contributions }: { contributions: Contribu
                     <p
                       className={cn(
                         'font-display text-[clamp(1.8rem,3.2vw,2.8rem)] leading-none transition-colors duration-500',
-                        on ? 'text-fg' : 'text-fg-muted/60'
+                        on ? 'text-fg' : 'text-fg-muted'
                       )}
                       style={{ fontVariationSettings: "'opsz' 72, 'SOFT' 20" }}
                     >
@@ -116,7 +116,9 @@ export function ContributionsSticky({ contributions }: { contributions: Contribu
           <div className="md:col-span-7">
             {groups.map((g) => (
               <div key={g.type} data-group={g.type} className="mb-16 last:mb-0">
-                <p className="mono-label mb-4 text-amber md:hidden">{CONTRIBUTION_LABEL[g.type]}</p>
+                <p className="mono-label mb-4 text-accent md:hidden">
+                  {CONTRIBUTION_LABEL[g.type]}
+                </p>
                 <ul className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
                   {g.items.map((c) => (
                     <li key={c.documentId} className="group py-6">
@@ -127,13 +129,13 @@ export function ContributionsSticky({ contributions }: { contributions: Contribu
                         {c.relatedActivity?.documentId && (
                           <Link
                             href={`/actividades/${c.relatedActivity.documentId}`}
-                            className="mono-label text-jade-2 underline-offset-4 hover:underline"
+                            className="mono-label text-accent-jade underline-offset-4 hover:underline"
                           >
                             actividad →
                           </Link>
                         )}
                       </div>
-                      <h3 className="mt-3 text-[1.4rem] text-fg transition-colors duration-300 group-hover:text-jade-2">
+                      <h3 className="mt-3 text-[1.4rem] text-fg transition-colors duration-300 group-hover:text-accent-jade">
                         {c.title}
                       </h3>
                       <p className="mt-2 max-w-[60ch] leading-relaxed text-fg-muted">

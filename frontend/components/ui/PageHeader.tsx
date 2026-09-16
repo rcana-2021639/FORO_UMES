@@ -21,7 +21,7 @@ export function PageHeader({ number, kicker, title, intro, aside }: Props) {
       <div className="mono-label flex items-baseline gap-3 text-fg-muted md:col-span-2 md:flex-col md:gap-1">
         {number !== undefined && (
           <span
-            className="font-display text-[2rem] leading-none text-amber"
+            className="font-display text-[2rem] leading-none text-accent"
             style={{ fontVariationSettings: "'opsz' 40" }}
           >
             {folio(number)}

@@ -62,7 +62,8 @@ export function useSplitReveal<T extends HTMLElement = HTMLElement>({
       type: type === 'chars' ? 'lines,words,chars' : type === 'words' ? 'lines,words' : 'lines',
       mask: 'lines',
       autoSplit: true,
-      aria: 'auto',
+      // aria-label está prohibido en <p>; con líneas el texto sigue íntegro para lectores de pantalla
+      aria: type === 'lines' ? 'none' : 'auto',
       onSplit: (self) => {
         const targets = type === 'chars' ? self.chars : type === 'words' ? self.words : self.lines;
         tween?.kill();

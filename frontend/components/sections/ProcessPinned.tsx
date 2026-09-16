@@ -113,9 +113,9 @@ export function ProcessPinned() {
   return (
     <div ref={root} className="container-x">
       <div className="grid gap-10 md:min-h-[calc(100svh-8rem)] md:grid-cols-12 md:items-center">
-        {/* Número grande con máscara vertical */}
-        <div className="md:col-span-3">
-          <div className="relative h-[1em] overflow-hidden font-display text-[clamp(6rem,14vw,12rem)] leading-none text-amber">
+        {/* Número grande con máscara vertical (solo desktop; en móvil cada paso lleva su número) */}
+        <div className="hidden md:col-span-3 md:block">
+          <div className="relative h-[1em] overflow-hidden font-display text-[clamp(6rem,14vw,12rem)] leading-none text-accent">
             {STEPS.map((_, i) => (
               <span
                 key={i}

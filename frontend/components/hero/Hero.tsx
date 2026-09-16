@@ -74,7 +74,7 @@ export function Hero({ year, universities, programs }: Props) {
       {/* Capa 2 · constelación 3D (1.3×) */}
       <div
         ref={scene}
-        className="absolute inset-y-0 right-0 -z-10 w-full will-change-transform md:w-[58%]"
+        className="absolute top-20 right-0 -z-10 h-[52svh] w-full opacity-80 will-change-transform md:inset-y-0 md:h-auto md:w-[58%] md:opacity-100"
         data-cursor-hide
       >
         <Constellation mobile={!fine} />
@@ -87,7 +87,7 @@ export function Hero({ year, universities, programs }: Props) {
           className="mono-label flex flex-wrap justify-between gap-x-6 gap-y-2 text-fg-muted"
         >
           <span>
-            Acta · Edición <span className="text-amber">{year}</span>
+            Acta · Edición <span className="text-accent">{year}</span>
           </span>
           <span className="hidden sm:inline">Guatemala, C. A.</span>
           <span>

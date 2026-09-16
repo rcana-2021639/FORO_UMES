@@ -44,7 +44,7 @@ export function ErrorScreen({ code, title, text, error, reset, bare }: Props) {
       </div>
       <div className="container-x py-32">
         <p className="mono-label text-fg-muted">
-          Folio <span className="text-amber">{code}</span>
+          Folio <span className="text-accent">{code}</span>
           {folio ? ` · ref ${String(folio).slice(0, 8)}` : ''}
         </p>
         <h1 className="mt-6 max-w-[14ch]">{title}</h1>

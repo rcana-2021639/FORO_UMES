@@ -108,7 +108,7 @@ export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
             </span>
             <h2 className="text-[1.35rem] leading-tight text-fg md:col-span-6">{p.name}</h2>
             <div className="mono-label flex flex-wrap gap-x-4 gap-y-1 text-fg-muted md:col-span-3">
-              <span className={cn(p.level === 'Doctorado' && 'text-amber')}>
+              <span className={cn(p.level === 'Doctorado' && 'text-accent')}>
                 {LEVEL_LABEL[p.level]}
               </span>
               <span>{MODALITY_LABEL[p.modality]}</span>

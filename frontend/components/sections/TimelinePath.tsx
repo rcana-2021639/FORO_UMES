@@ -97,7 +97,9 @@ export function TimelinePath({ milestones }: { milestones: Milestone[] }) {
                 {m.kind === 'university' ? m.kicker : formatMonthYear(m.date)}
               </span>
               <div className="md:col-span-9">
-                {m.kind === 'activity' && <span className="mono-label text-amber">{m.kicker}</span>}
+                {m.kind === 'activity' && (
+                  <span className="mono-label text-accent">{m.kicker}</span>
+                )}
                 <h3 className="mt-1 text-[1.3rem] text-fg">
                   {m.href ? (
                     <Link href={m.href} className="hover:text-jade" data-cursor="Ver">

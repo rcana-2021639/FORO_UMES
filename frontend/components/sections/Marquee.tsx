@@ -64,7 +64,7 @@ export function Marquee({ items, velocity = 60, className }: Props) {
             className="mono-label pr-[3em] text-[0.8rem] text-fg-muted"
           >
             {text}
-            <span className="pl-[3em] text-amber">·</span>
+            <span className="pl-[3em] text-accent">·</span>
           </span>
         ))}
       </motion.div>
