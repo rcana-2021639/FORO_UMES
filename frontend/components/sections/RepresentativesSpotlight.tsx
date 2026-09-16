@@ -18,7 +18,12 @@ export function RepresentativesSpotlight({ reps }: { reps: Representative[] }) {
   const root = useRef<HTMLDivElement>(null);
 
   if (!reps.length)
-    return <p className="text-fg-muted">Los representantes se publicarán próximamente.</p>;
+    return (
+      <p className="max-w-[44ch] text-fg-muted">
+        Las sillas siguen vacías: los representantes aparecerán cuando cada universidad publique el
+        suyo.
+      </p>
+    );
 
   const grid = (revealed: boolean) => (
     <ul className="grid grid-cols-2 gap-px bg-line sm:grid-cols-3 lg:grid-cols-5">
@@ -66,7 +71,7 @@ export function RepresentativesSpotlight({ reps }: { reps: Representative[] }) {
                   : 'opacity-0'
               )}
             >
-              <p className="mono-label text-accent">{acronymOf(r.university)}</p>
+              <p className="ui-label text-accent">{acronymOf(r.university)}</p>
               <p className="mt-1 text-[0.98rem] leading-tight text-ink">{r.fullName}</p>
               {r.position && <p className="mt-1 text-[0.8rem] text-ink-3">{r.position}</p>}
             </div>

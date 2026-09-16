@@ -144,7 +144,7 @@ export function ProcessPinned() {
               }}
               className="mb-10 md:absolute md:inset-0 md:mb-0"
             >
-              <span className="mono-label text-fg-muted md:hidden">Paso {folio(i + 1)}</span>
+              <span className="eyebrow text-fg-muted md:hidden">Paso {i + 1}</span>
               <h3 className="mt-2 text-fg md:mt-0">{s.title}</h3>
               <p className="mt-4 max-w-[46ch] leading-relaxed text-fg-muted">{s.text}</p>
             </div>

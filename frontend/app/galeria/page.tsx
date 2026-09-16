@@ -15,8 +15,7 @@ export default async function GaleriaPage() {
   return (
     <>
       <PageHeader
-        number={9}
-        kicker="Memoria visual"
+        kicker="Lo que quedó en fotos"
         title="Galería"
         intro="Fotografías y videos de encuentros, seminarios y proyectos de las nueve universidades."
       />

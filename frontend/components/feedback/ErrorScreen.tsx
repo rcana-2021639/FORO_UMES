@@ -34,18 +34,18 @@ export function ErrorScreen({ code, title, text, error, reset, bare }: Props) {
   return (
     <div
       className="relative isolate flex min-h-svh flex-col justify-center overflow-hidden"
-      style={bare ? { background: '#f3eee4', color: '#16150f' } : undefined}
+      style={bare ? { background: '#edefe9', color: '#101511' } : undefined}
     >
       <div
         aria-hidden
         className="pointer-events-none absolute -right-[10%] top-1/2 -z-10 h-[70vmin] w-[70vmin] -translate-y-1/2 opacity-60 mix-blend-multiply"
       >
-        <Orb backgroundColor="#f3eee4" hue={0} hoverIntensity={0.2} />
+        <Orb backgroundColor="#edefe9" hue={0} hoverIntensity={0.2} />
       </div>
       <div className="container-x py-32">
-        <p className="mono-label text-fg-muted">
-          Folio <span className="text-accent">{code}</span>
-          {folio ? ` · ref ${String(folio).slice(0, 8)}` : ''}
+        <p className="eyebrow text-fg-muted">
+          Error <span className="text-accent">{code}</span>
+          {folio ? `, referencia ${String(folio).slice(0, 8)}` : ''}
         </p>
         <h1 className="mt-6 max-w-[14ch]">{title}</h1>
         <p className="mt-8 max-w-[46ch] text-[1.05rem] leading-relaxed text-fg-muted">{text}</p>

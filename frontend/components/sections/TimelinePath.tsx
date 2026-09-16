@@ -43,7 +43,7 @@ export function TimelinePath({ milestones }: { milestones: Milestone[] }) {
   if (!milestones.length) {
     return (
       <p className="text-fg-muted">
-        La línea de tiempo se llenará con las primeras actividades publicadas.
+        La línea de tiempo empieza con la primera actividad publicada. Todavía no hay ninguna.
       </p>
     );
   }
@@ -97,12 +97,14 @@ export function TimelinePath({ milestones }: { milestones: Milestone[] }) {
                 {m.kind === 'university' ? m.kicker : formatMonthYear(m.date)}
               </span>
               <div className="md:col-span-9">
-                {m.kind === 'activity' && (
-                  <span className="mono-label text-accent">{m.kicker}</span>
-                )}
+                {m.kind === 'activity' && <span className="ui-label text-accent">{m.kicker}</span>}
                 <h3 className="mt-1 text-[1.3rem] text-fg">
                   {m.href ? (
-                    <Link href={m.href} className="hover:text-jade" data-cursor="Ver">
+                    <Link
+                      href={m.href}
+                      className="transition-colors duration-300 hover:text-accent-jade"
+                      data-cursor="Abrir"
+                    >
                       {m.title}
                     </Link>
                   ) : (

@@ -23,7 +23,7 @@ interface Spark {
 }
 
 export function useClickSpark({
-  color = '#c9782a',
+  color = '#d9a93a',
   size = 9,
   radius = 22,
   count = 8,

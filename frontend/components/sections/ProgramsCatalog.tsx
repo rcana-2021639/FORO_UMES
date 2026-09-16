@@ -39,7 +39,7 @@ export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
   );
 
   const select =
-    'mono-label rounded-[2px] border border-line bg-transparent px-3 py-2 text-fg outline-none focus:border-jade-2';
+    'ui-label rounded-[3px] border border-line bg-transparent px-3 py-2.5 text-fg outline-none transition-colors duration-300 focus:border-accent-jade';
 
   return (
     <div>
@@ -93,7 +93,7 @@ export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
         </select>
       </div>
 
-      <p className="mono-label mt-4 text-fg-muted" aria-live="polite">
+      <p className="ui-label mt-4 text-fg-muted" aria-live="polite">
         {visible.length} de {programs.length} programas
       </p>
 
@@ -103,22 +103,20 @@ export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
             key={p.documentId}
             className="group grid gap-2 py-6 md:grid-cols-12 md:items-baseline md:gap-6"
           >
-            <span className="mono-label text-fg-muted md:col-span-1">
-              {String(i + 1).padStart(2, '0')}
-            </span>
+            <span className="mono-label text-fg-muted md:col-span-1">{i + 1}</span>
             <h2 className="text-[1.35rem] leading-tight text-fg md:col-span-6">{p.name}</h2>
-            <div className="mono-label flex flex-wrap gap-x-4 gap-y-1 text-fg-muted md:col-span-3">
+            <div className="ui-label flex flex-wrap gap-x-4 gap-y-1 text-fg-muted md:col-span-3">
               <span className={cn(p.level === 'Doctorado' && 'text-accent')}>
                 {LEVEL_LABEL[p.level]}
               </span>
               <span>{MODALITY_LABEL[p.modality]}</span>
               {p.duration && <span>{p.duration}</span>}
             </div>
-            <div className="mono-label md:col-span-2 md:text-right">
+            <div className="ui-label md:col-span-2 md:text-right">
               {p.university && (
                 <Link
                   href={`/universidades/${p.university.documentId}`}
-                  className="text-jade underline-offset-4 hover:underline"
+                  className="text-accent-jade underline decoration-transparent underline-offset-4 transition-[text-decoration-color] duration-300 hover:decoration-current"
                 >
                   {acronymOf(p.university)}
                 </Link>
@@ -137,7 +135,9 @@ export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
           </li>
         ))}
         {visible.length === 0 && (
-          <li className="py-10 text-fg-muted">No hay programas con esos filtros.</li>
+          <li className="py-10 text-fg-muted">
+            Ningún programa coincide con esos filtros. Quita alguno y vuelve a intentar.
+          </li>
         )}
       </ol>
     </div>

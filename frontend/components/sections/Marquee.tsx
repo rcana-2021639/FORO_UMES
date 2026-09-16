@@ -49,7 +49,7 @@ export function Marquee({ items, velocity = 60, className }: Props) {
     baseX.set(next);
   });
 
-  const text = items.join('   ·   ');
+  const text = items.join('      ');
 
   return (
     <div
@@ -61,10 +61,10 @@ export function Marquee({ items, velocity = 60, className }: Props) {
           <span
             key={i}
             ref={i === 0 ? copyRef : undefined}
-            className="mono-label pr-[3em] text-[0.8rem] text-fg-muted"
+            className="eyebrow pr-[4em] text-[1.15rem] text-fg-muted"
           >
             {text}
-            <span className="pl-[3em] text-accent">·</span>
+            <span className="pl-[4em] text-accent">◦</span>
           </span>
         ))}
       </motion.div>

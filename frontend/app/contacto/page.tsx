@@ -11,7 +11,10 @@ export const metadata: Metadata = {
 export default function ContactoPage() {
   return (
     <section data-section-theme="night" className="min-h-svh text-fg">
-      <PageHeader number={10} kicker="Contacto" title="Escríbele al Foro" />
+      <PageHeader
+        kicker="Para universidades, prensa y quien busca un posgrado"
+        title="Escríbele a la mesa"
+      />
       <div className="container-x pb-[var(--section-y)]">
         <ContactForm />
       </div>

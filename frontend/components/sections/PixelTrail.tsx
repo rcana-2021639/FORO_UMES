@@ -18,7 +18,7 @@ interface Props {
  * contexto WebGL: el hero ya usa uno y no queremos dos en la misma página.
  * Solo con puntero fino; rAF activo únicamente mientras haya celdas vivas.
  */
-export function PixelTrail({ cell = 22, color = '#0f6e5a', life = 700, className }: Props) {
+export function PixelTrail({ cell = 22, color = '#0b6b5a', life = 700, className }: Props) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {

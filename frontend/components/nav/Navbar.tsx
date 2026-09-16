@@ -37,7 +37,7 @@ export function Navbar() {
     <>
       <a
         href="#contenido"
-        className="mono-label fixed top-2 left-2 z-[10001] -translate-y-20 bg-ink px-3 py-2 text-paper transition-transform focus:translate-y-0"
+        className="ui-label fixed top-2 left-2 z-[10001] -translate-y-20 bg-ink px-3 py-2 text-paper transition-transform focus:translate-y-0"
       >
         Saltar al contenido
       </a>
@@ -94,7 +94,7 @@ export function Navbar() {
                     onFocus={() => setHover(i)}
                     onBlur={() => setHover(null)}
                     className={cn(
-                      'mono-label block rounded-full px-3 py-2 transition-colors duration-300',
+                      'ui-label block rounded-full px-3.5 py-2 transition-colors duration-300',
                       i === target ? 'text-paper delay-75' : 'text-fg hover:text-jade'
                     )}
                   >
@@ -107,8 +107,8 @@ export function Navbar() {
         </motion.nav>
 
         <motion.div layout="position" className="flex items-center gap-2">
-          <span className="mono-label hidden text-fg-muted xl:block">
-            Guatemala · 9 universidades
+          <span className="eyebrow hidden text-[0.95rem] text-fg-muted xl:block">
+            Nueve universidades, una mesa
           </span>
           <button
             type="button"

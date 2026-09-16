@@ -7,14 +7,16 @@ import * as THREE from 'three';
 import { prefersReducedMotion } from '@/hooks/useReducedMotion';
 
 /**
- * Pieza 3D del hero: una constelación de 9 nodos (una por universidad) unidos por aristas,
- * más un polvo de partículas al fondo. Orbita lentamente y se inclina siguiendo al puntero.
- * En móvil baja dpr y partículas; con prefers-reduced-motion no rota ni sigue al puntero.
+ * Pieza 3D del hero y momento de firma del sitio: nueve nodos (uno por universidad) que al
+ * cargar están dispersos y "se sientan a la mesa" — convergen a sus asientos con una curva
+ * cinemática mientras las aristas se dibujan entre ellos. Después orbitan despacio y se
+ * inclinan siguiendo al puntero. En móvil baja dpr y partículas; con prefers-reduced-motion
+ * aparecen ya sentados y no rotan.
  */
 
-const INK = '#16150f';
-const JADE = '#0f6e5a';
-const AMBER = '#c9782a';
+const INK = '#101511';
+const JADE = '#0b6b5a';
+const AMBER = '#d9a93a';
 
 /** Posiciones fijas (no aleatorias) para que la figura sea reconocible entre visitas. */
 const NODES: [number, number, number][] = [
@@ -27,6 +29,19 @@ const NODES: [number, number, number][] = [
   [-0.4, -1.9, -0.2],
   [2.1, -0.2, -1.1],
   [-2.0, 0.1, 1.0],
+];
+
+/** Posiciones de partida (dispersas) desde las que cada nodo llega a su asiento. */
+const SCATTERED: [number, number, number][] = [
+  [0.4, -3.2, 2.5],
+  [4.2, 2.6, -2.8],
+  [-4.4, 3.1, 1.6],
+  [3.6, -3.4, 2.2],
+  [-3.8, -2.9, -2.6],
+  [1.2, 4.4, 2.4],
+  [-1.4, -4.6, -1.2],
+  [5.1, -0.8, -3.2],
+  [-5.2, 0.6, 2.8],
 ];
 
 /** Aristas: hub + anillo + un par de cruces, como una red y no un grafo completo. */
@@ -77,14 +92,56 @@ function Dust({ count }: { count: number }) {
   );
 }
 
+const ASSEMBLY_MS = 2200;
+const DELAY_MS = 350;
+/** cubic-bezier(0.83, 0, 0.17, 1) aproximado: lento al inicio, llega con decisión. */
+const cinematic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+
 function Graph({ reduced }: { reduced: boolean }) {
   const group = useRef<THREE.Group>(null);
+  const nodes = useRef<(THREE.Mesh | null)[]>([]);
+  const lines = useRef<(THREE.Object3D | null)[]>([]);
   const pointer = useThree((s) => s.pointer);
   const target = useRef({ x: 0, y: 0 });
+  const start = useRef<number | null>(null);
+  const done = useRef(reduced);
 
-  useFrame((_, dt) => {
+  useFrame((state, dt) => {
     const g = group.current;
     if (!g) return;
+
+    // Firma: cada nodo viaja de su posición dispersa a su asiento, con un retardo irregular
+    if (!done.current) {
+      if (start.current === null) start.current = state.clock.elapsedTime * 1000;
+      const elapsed = state.clock.elapsedTime * 1000 - start.current - DELAY_MS;
+      let allDone = true;
+      NODES.forEach((seat, i) => {
+        const m = nodes.current[i];
+        if (!m) return;
+        const local = Math.max(0, elapsed - ((i * 137) % 9) * 60);
+        const t = Math.min(1, local / ASSEMBLY_MS);
+        if (t < 1) allDone = false;
+        const e = cinematic(t);
+        m.position.set(
+          THREE.MathUtils.lerp(SCATTERED[i][0], seat[0], e),
+          THREE.MathUtils.lerp(SCATTERED[i][1], seat[1], e),
+          THREE.MathUtils.lerp(SCATTERED[i][2], seat[2], e)
+        );
+        m.scale.setScalar(0.2 + 0.8 * e);
+      });
+      // Las aristas aparecen cuando ambos extremos están casi sentados
+      EDGES.forEach(([a, b], i) => {
+        const l = lines.current[i];
+        if (!l) return;
+        const ta = Math.min(1, Math.max(0, elapsed - ((a * 137) % 9) * 60) / ASSEMBLY_MS);
+        const tb = Math.min(1, Math.max(0, elapsed - ((b * 137) % 9) * 60) / ASSEMBLY_MS);
+        const v = Math.max(0, Math.min(ta, tb) - 0.75) / 0.25;
+        l.visible = v > 0;
+        l.scale.setScalar(v > 0 ? v : 0.0001);
+      });
+      if (allDone) done.current = true;
+    }
+
     if (reduced) return;
     // Rotación base lenta + inclinación hacia el puntero con interpolación suave
     target.current.x = THREE.MathUtils.lerp(target.current.x, pointer.y * 0.35, 0.04);
@@ -96,18 +153,31 @@ function Graph({ reduced }: { reduced: boolean }) {
 
   return (
     <group ref={group} rotation={[0.2, 0.4, 0]}>
-      {EDGES.map(([a, b]) => (
-        <Line
+      {EDGES.map(([a, b], i) => (
+        <group
           key={`${a}-${b}`}
-          points={[NODES[a], NODES[b]]}
-          color={INK}
-          lineWidth={1}
-          transparent
-          opacity={0.32}
-        />
+          ref={(n) => {
+            lines.current[i] = n;
+          }}
+          visible={reduced}
+        >
+          <Line
+            points={[NODES[a], NODES[b]]}
+            color={INK}
+            lineWidth={1}
+            transparent
+            opacity={0.32}
+          />
+        </group>
       ))}
       {NODES.map((p, i) => (
-        <mesh key={i} position={p}>
+        <mesh
+          key={i}
+          position={reduced ? p : SCATTERED[i]}
+          ref={(n) => {
+            nodes.current[i] = n;
+          }}
+        >
           <sphereGeometry args={[i === 0 ? 0.16 : 0.09, 24, 24]} />
           <meshStandardMaterial
             color={i === 0 ? AMBER : i % 3 === 0 ? JADE : INK}

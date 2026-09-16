@@ -106,9 +106,9 @@ const frag = /* glsl */ `
     return vec4(colorIn.rgb / (a + 1e-5), a);
   }
   
-  const vec3 baseColor1 = vec3(0.247, 0.620, 0.525); // jade-2
-  const vec3 baseColor2 = vec3(0.788, 0.471, 0.165); // ámbar
-  const vec3 baseColor3 = vec3(0.059, 0.431, 0.353); // jade
+  const vec3 baseColor1 = vec3(0.341, 0.718, 0.620); // jade-2
+  const vec3 baseColor2 = vec3(0.851, 0.663, 0.227); // oro
+  const vec3 baseColor3 = vec3(0.043, 0.420, 0.353); // jade
   const float innerRadius = 0.6;
   const float noiseScale = 0.65;
   
@@ -194,7 +194,7 @@ export function Orb({
   hoverIntensity = 0.35,
   rotateOnHover = true,
   forceHoverState = false,
-  backgroundColor = '#101a24',
+  backgroundColor = '#0e1a16',
 }: OrbProps) {
   const ctnDom = useRef<HTMLDivElement>(null);
 

@@ -62,7 +62,7 @@ export function Hero({ year, universities, programs }: Props) {
       {/* Capa 1 · aurora (0.2×) en multiply para que se lea como acuarela sobre papel */}
       <div
         ref={aurora}
-        className="absolute inset-x-0 -top-[10%] -z-30 h-[120%] mix-blend-multiply opacity-50 will-change-transform"
+        className="absolute inset-x-0 -top-[10%] -z-30 h-[120%] mix-blend-multiply opacity-55 will-change-transform"
       >
         <AuroraLayer />
       </div>
@@ -81,18 +81,14 @@ export function Hero({ year, universities, programs }: Props) {
       </div>
 
       <div className="container-x relative flex min-h-[100svh] flex-col justify-between pt-28 pb-10">
-        {/* Cabecera del acta (0.6×) */}
-        <div
-          ref={head}
-          className="mono-label flex flex-wrap justify-between gap-x-6 gap-y-2 text-fg-muted"
-        >
-          <span>
-            Acta · Edición <span className="text-accent">{year}</span>
-          </span>
-          <span className="hidden sm:inline">Guatemala, C. A.</span>
-          <span>
-            {universities} universidades · {programs} programas
-          </span>
+        {/* Línea de apertura (0.6×): una frase, no una etiqueta */}
+        <div ref={head} className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2">
+          <p className="eyebrow text-fg-muted">
+            Guatemala, {year}. Nueve universidades en la misma mesa.
+          </p>
+          <p className="mono-label text-fg-muted">
+            {universities} universidades, {programs} programas de posgrado
+          </p>
         </div>
 
         <div ref={body} className="mt-14 md:mt-0">
@@ -104,13 +100,14 @@ export function Hero({ year, universities, programs }: Props) {
               ref={lead}
               className="max-w-[38ch] text-[1.1rem] leading-relaxed text-fg-muted md:col-span-6"
             >
-              Nueve universidades de Guatemala sentadas a una misma mesa para coordinar, fortalecer
-              y dar visibilidad a la formación de posgrado del país.
+              Las direcciones de posgrado de nueve universidades guatemaltecas coordinan aquí
+              criterios, actividades y proyectos. Esta es su mesa pública: lo que estudian, lo que
+              acuerdan y lo que ya cambió.
             </p>
             <div className="flex flex-wrap items-center gap-4 md:col-span-6 md:justify-end">
-              <Button href="/programas">Explorar programas</Button>
+              <Button href="/programas">Ver los programas de posgrado</Button>
               <Button variant="ghost" href="#universidades">
-                Las nueve universidades ↓
+                Conocer a las nueve
               </Button>
             </div>
           </div>
@@ -158,7 +155,7 @@ function ConstellationFallback() {
           y1={pts[a][1]}
           x2={pts[b][0]}
           y2={pts[b][1]}
-          stroke="#16150f"
+          stroke="#101511"
           strokeWidth="0.25"
           opacity="0.5"
         />
@@ -169,7 +166,7 @@ function ConstellationFallback() {
           cx={x}
           cy={y}
           r={i === 0 ? 1.6 : 0.9}
-          fill={i === 0 ? '#c9782a' : '#16150f'}
+          fill={i === 0 ? '#d9a93a' : '#101511'}
         />
       ))}
     </svg>

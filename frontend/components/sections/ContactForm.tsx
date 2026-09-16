@@ -53,7 +53,7 @@ export function ContactForm() {
     const errs = validate(values);
     if (Object.keys(errs).length) {
       setErrors(errs);
-      sileo.warning({ title: 'Revisa el formulario', description: Object.values(errs)[0] });
+      sileo.warning({ title: 'Falta algo en el formulario', description: Object.values(errs)[0] });
       return;
     }
     setSending(true);
@@ -67,10 +67,10 @@ export function ContactForm() {
           website: '',
         }),
         {
-          loading: { title: 'Enviando mensaje', description: 'Un momento…' },
+          loading: { title: 'Llevando tu mensaje a la mesa', description: 'Un momento…' },
           success: {
-            title: 'Mensaje recibido',
-            description: 'El Foro te responderá al correo indicado.',
+            title: 'Recibido',
+            description: 'La secretaría técnica te responderá al correo que dejaste.',
           },
           error: (err) => {
             const d = describeError(err);
@@ -96,7 +96,7 @@ export function ContactForm() {
   const reset = () => {
     setValues({ name: '', email: '', subject: '', message: '' });
     setErrors({});
-    sileo.info({ title: 'Formulario limpio' });
+    sileo.info({ title: 'Formulario en blanco' });
   };
 
   return (
@@ -107,7 +107,7 @@ export function ContactForm() {
           data-cursor=""
         >
           <Orb />
-          <p className="pointer-events-none absolute inset-x-0 bottom-4 text-center mono-label text-fg-muted">
+          <p className="eyebrow pointer-events-none absolute inset-x-0 bottom-4 text-center text-fg-muted">
             Secretaría técnica del Foro
           </p>
         </div>
@@ -120,8 +120,8 @@ export function ContactForm() {
         aria-describedby={`${id}-help`}
       >
         <p id={`${id}-help`} className="mb-8 max-w-[52ch] leading-relaxed text-fg-muted">
-          ¿Representas a una universidad, a un medio o buscas información sobre un programa?
-          Escríbenos. Respondemos al correo que indiques.
+          Si representas a una universidad, escribes desde un medio o buscas un posgrado y no sabes
+          por dónde empezar, este es el canal. La secretaría técnica responde al correo que dejes.
         </p>
 
         <div className="grid gap-6 sm:grid-cols-2">
@@ -198,7 +198,7 @@ export function ContactForm() {
 
         <div className="mt-10 flex flex-wrap items-center gap-4">
           <Button type="submit" loading={sending} loadingLabel="Enviando">
-            {sent ? 'Enviar otro mensaje' : 'Enviar mensaje'}
+            {sent ? 'Enviar otro mensaje' : 'Enviar a la mesa'}
           </Button>
           <Button variant="ghost" onClick={reset} disabled={sending}>
             Limpiar
@@ -211,9 +211,9 @@ export function ContactForm() {
 
 function inputCls(invalid: boolean) {
   return cn(
-    'w-full rounded-[2px] border bg-transparent px-3 py-3 text-fg outline-none transition-colors duration-300',
-    'placeholder:text-fg-muted focus:border-jade-2',
-    invalid ? 'border-amber' : 'border-line'
+    'peer w-full border-0 border-b bg-transparent px-0 py-3 text-[1.05rem] text-fg outline-none transition-colors duration-300',
+    'placeholder:text-fg-muted focus:border-transparent',
+    invalid ? 'border-accent' : 'border-line'
   );
 }
 
@@ -235,14 +235,21 @@ function Field({
   return (
     <div className={className}>
       <div className="mb-2 flex items-baseline justify-between">
-        <label htmlFor={id} className="mono-label text-fg-muted">
+        <label htmlFor={id} className="ui-label text-fg-muted">
           {label}
         </label>
         {hint && <span className="mono-label text-fg-muted">{hint}</span>}
       </div>
-      {children}
+      <div className="relative">
+        {children}
+        {/* Línea jade que se dibuja al enfocar el campo */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute bottom-0 left-0 h-px w-full origin-left scale-x-0 bg-accent-jade transition-transform duration-500 ease-(--ease-snap) peer-focus:scale-x-100"
+        />
+      </div>
       {error && (
-        <p role="alert" className="mono-label mt-2 text-accent">
+        <p role="alert" className="ui-label mt-2 text-accent">
           {error}
         </p>
       )}

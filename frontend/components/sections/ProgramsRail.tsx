@@ -70,7 +70,7 @@ export function ProgramsRail({ programs }: { programs: AcademicProgram[] }) {
             {LEVEL_LABEL[l]}
           </Chip>
         ))}
-        <span className="mono-label ml-auto text-fg-muted">
+        <span className="ui-label ml-auto text-fg-muted">
           {visible.length} programa{visible.length === 1 ? '' : 's'}
         </span>
       </div>
@@ -84,11 +84,14 @@ export function ProgramsRail({ programs }: { programs: AcademicProgram[] }) {
           'md:w-max md:pr-[40vw]'
         )}
       >
-        {visible.map((p, i) => (
-          <ProgramCard key={p.documentId} program={p} index={i} />
+        {visible.map((p) => (
+          <ProgramCard key={p.documentId} program={p} />
         ))}
         {visible.length === 0 && (
-          <p className="text-fg-muted">Aún no hay programas publicados en este nivel.</p>
+          <p className="max-w-[40ch] text-fg-muted">
+            Ningún programa de este nivel está publicado todavía. Prueba otro nivel o vuelve al
+            catálogo completo.
+          </p>
         )}
       </div>
     </div>
@@ -110,8 +113,11 @@ function Chip({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        'mono-label rounded-full border px-3 py-1.5 transition-colors duration-300',
-        active ? 'border-fg bg-fg text-bg' : 'border-line text-fg hover:border-fg'
+        'ui-label relative isolate overflow-hidden rounded-full border px-3.5 py-1.5 transition-[color,border-color] duration-300 ease-(--ease-snap)',
+        'before:absolute before:inset-0 before:-z-10 before:origin-left before:scale-x-0 before:bg-fg before:transition-transform before:duration-500 before:ease-(--ease-snap) hover:before:scale-x-100 hover:text-bg',
+        active
+          ? 'border-fg bg-fg text-bg before:scale-x-100'
+          : 'border-line text-fg hover:border-fg'
       )}
     >
       {children}
@@ -119,31 +125,27 @@ function Chip({
   );
 }
 
-function ProgramCard({ program: p, index }: { program: AcademicProgram; index: number }) {
+function ProgramCard({ program: p }: { program: AcademicProgram }) {
   return (
     <article
       className={cn(
-        'group relative flex w-[78vw] shrink-0 snap-start flex-col justify-between rounded-[3px] border border-line bg-bg p-6 sm:w-[22rem] md:w-[24rem]',
-        'transition-[border-color] duration-500 hover:border-fg/40'
+        'group relative flex w-[78vw] shrink-0 snap-start flex-col justify-between border-t border-fg/70 pt-5 pb-2 sm:w-[22rem] md:w-[24rem]',
+        'lift hover:lift-on hover:bg-[color-mix(in_oklab,var(--fg)_4%,var(--bg))] hover:px-4 rounded-[4px]'
       )}
     >
       <div className="flex items-start justify-between">
-        <span className="mono-label text-fg-muted">{String(index + 1).padStart(2, '0')}</span>
+        <span className="ui-label text-fg-muted">{acronymOf(p.university)}</span>
         <span
           className={cn(
-            'mono-label rounded-full px-2 py-0.5',
-            p.level === 'Doctorado' ? 'bg-amber-2 text-paper' : 'border border-line text-fg'
+            'ui-label rounded-full px-2.5 py-0.5',
+            p.level === 'Doctorado' ? 'bg-fg text-bg' : 'border border-line text-fg'
           )}
         >
           {LEVEL_LABEL[p.level]}
         </span>
       </div>
       <h3 className="mt-10 text-[1.35rem] leading-tight text-fg">{p.name}</h3>
-      <dl className="mono-label mt-6 flex flex-wrap gap-x-4 gap-y-1 text-fg-muted">
-        <div>
-          <dt className="sr-only">Universidad</dt>
-          <dd className="text-fg">{acronymOf(p.university)}</dd>
-        </div>
+      <dl className="ui-label mt-6 flex flex-wrap gap-x-4 gap-y-1 text-fg-muted">
         <div>
           <dt className="sr-only">Modalidad</dt>
           <dd>{MODALITY_LABEL[p.modality]}</dd>
@@ -160,9 +162,9 @@ function ProgramCard({ program: p, index }: { program: AcademicProgram; index: n
           href={p.infoUrl ?? `/universidades/${p.university?.documentId}`}
           target={p.infoUrl ? '_blank' : undefined}
           rel={p.infoUrl ? 'noopener noreferrer' : undefined}
-          className="mono-label mt-6 inline-flex items-center gap-2 text-jade underline-offset-4 hover:underline"
+          className="ui-label mt-6 inline-flex items-center gap-2 text-accent-jade underline decoration-transparent underline-offset-4 transition-[text-decoration-color] duration-300 hover:decoration-current"
         >
-          {p.infoUrl ? 'Más información ↗' : 'Ver universidad →'}
+          {p.infoUrl ? 'Ficha oficial del programa ↗' : 'Ir a la universidad →'}
         </Link>
       )}
     </article>

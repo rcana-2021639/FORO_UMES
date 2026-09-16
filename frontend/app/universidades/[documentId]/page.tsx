@@ -37,7 +37,7 @@ export default async function UniversidadPage({ params }: Params) {
   return (
     <>
       <PageHeader
-        kicker={`Universidad · ${String(u.displayOrder).padStart(2, '0')}`}
+        kicker={`Silla ${u.displayOrder} de nueve`}
         title={u.name}
         intro={u.shortDescription ?? undefined}
         aside={
@@ -51,7 +51,7 @@ export default async function UniversidadPage({ params }: Params) {
 
       <div className="container-x grid gap-12 pb-[var(--section-y)] md:grid-cols-12">
         <aside className="md:col-span-4">
-          <div className="rounded-[3px] border border-line p-6">
+          <div className="rounded-[4px] bg-[color-mix(in_oklab,var(--fg)_5%,var(--bg))] p-6">
             {logo ? (
               <Image
                 src={logo}
@@ -68,7 +68,7 @@ export default async function UniversidadPage({ params }: Params) {
                 {u.acronym}
               </span>
             )}
-            <dl className="mono-label mt-8 space-y-3 text-fg-muted">
+            <dl className="ui-label mt-8 space-y-3 text-fg-muted">
               {u.acronym && (
                 <div className="flex justify-between gap-4 border-b border-line pb-3">
                   <dt>Siglas</dt>
@@ -104,7 +104,7 @@ export default async function UniversidadPage({ params }: Params) {
                   <li key={r.documentId} className="grid gap-2 py-5 md:grid-cols-12">
                     <div className="md:col-span-5">
                       <p className="text-[1.1rem] text-fg">{r.fullName}</p>
-                      {r.position && <p className="mono-label mt-1 text-fg-muted">{r.position}</p>}
+                      {r.position && <p className="ui-label mt-1 text-fg-muted">{r.position}</p>}
                     </div>
                     <div className="md:col-span-7">
                       {r.shortBio && (
@@ -112,7 +112,7 @@ export default async function UniversidadPage({ params }: Params) {
                       )}
                       <a
                         href={`mailto:${r.institutionalEmail}`}
-                        className="mono-label mt-2 inline-block text-jade underline-offset-4 hover:underline"
+                        className="mono-label mt-2 inline-block text-accent-jade underline decoration-transparent underline-offset-4 transition-[text-decoration-color] duration-300 hover:decoration-current"
                       >
                         {r.institutionalEmail}
                       </a>
@@ -121,7 +121,9 @@ export default async function UniversidadPage({ params }: Params) {
                 ))}
               </ul>
             ) : (
-              <p className="mt-6 text-fg-muted">Por confirmar.</p>
+              <p className="mt-6 text-fg-muted">
+                La universidad aún no publica a su representante.
+              </p>
             )}
           </section>
 
@@ -132,10 +134,13 @@ export default async function UniversidadPage({ params }: Params) {
             {programs.length ? (
               <ul className="mt-6 grid gap-3 sm:grid-cols-2">
                 {programs.map((p) => (
-                  <li key={p.documentId} className="rounded-[3px] border border-line p-5">
-                    <span className="mono-label text-accent">{LEVEL_LABEL[p.level]}</span>
+                  <li
+                    key={p.documentId}
+                    className="lift hover:lift-on rounded-[4px] bg-[color-mix(in_oklab,var(--fg)_4%,var(--bg))] p-5"
+                  >
+                    <span className="ui-label text-accent">{LEVEL_LABEL[p.level]}</span>
                     <h3 className="mt-3 text-[1.2rem]">{p.name}</h3>
-                    <p className="mono-label mt-4 text-fg-muted">
+                    <p className="ui-label mt-4 text-fg-muted">
                       {MODALITY_LABEL[p.modality]}
                       {p.duration ? ` · ${p.duration}` : ''}
                     </p>
@@ -144,16 +149,16 @@ export default async function UniversidadPage({ params }: Params) {
                         href={p.infoUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="mono-label mt-4 inline-block text-jade underline-offset-4 hover:underline"
+                        className="ui-label mt-4 inline-block text-accent-jade underline decoration-transparent underline-offset-4 transition-[text-decoration-color] duration-300 hover:decoration-current"
                       >
-                        Más información ↗
+                        Ficha oficial del programa ↗
                       </Link>
                     )}
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="mt-6 text-fg-muted">Programas por confirmar.</p>
+              <p className="mt-6 text-fg-muted">La universidad aún no publica sus programas.</p>
             )}
           </section>
 

@@ -35,15 +35,15 @@ export default async function ActividadPage({ params }: Params) {
   return (
     <>
       <PageHeader
-        kicker={`${ACTIVITY_LABEL[a.type]} · ${formatDate(a.date)}`}
+        kicker={`${ACTIVITY_LABEL[a.type]}, ${formatDate(a.date)}`}
         title={a.title}
         aside={
-          <p className="mono-label text-fg-muted md:text-right">
+          <p className="ui-label text-fg-muted md:text-right">
             {(a.participatingUniversities ?? []).map((u) => (
               <Link
                 key={u.documentId}
                 href={`/universidades/${u.documentId}`}
-                className="ml-3 text-jade hover:underline"
+                className="ml-3 text-accent-jade underline decoration-transparent underline-offset-4 transition-[text-decoration-color] duration-300 hover:decoration-current"
               >
                 {acronymOf(u)}
               </Link>
@@ -68,19 +68,17 @@ export default async function ActividadPage({ params }: Params) {
           {a.description ? (
             <Prose markdown={a.description} />
           ) : (
-            <p className="text-fg-muted">Sin descripción.</p>
+            <p className="text-fg-muted">Esta actividad todavía no tiene descripción.</p>
           )}
         </div>
         <aside className="md:col-span-4">
           {!!a.contributions?.length && (
             <section>
-              <h2 className="mono-label border-b border-line pb-3 text-fg-muted">
-                Aportes derivados
-              </h2>
+              <h2 className="eyebrow border-b border-line pb-3 text-fg-muted">Aportes derivados</h2>
               <ul className="divide-y divide-line">
                 {a.contributions.map((c) => (
                   <li key={c.documentId} className="py-4">
-                    <span className="mono-label text-accent">{CONTRIBUTION_LABEL[c.type]}</span>
+                    <span className="ui-label text-accent">{CONTRIBUTION_LABEL[c.type]}</span>
                     <p className="mt-1 text-fg">{c.title}</p>
                   </li>
                 ))}
@@ -89,7 +87,7 @@ export default async function ActividadPage({ params }: Params) {
           )}
           {!!a.galleryItems?.length && (
             <section className="mt-10">
-              <h2 className="mono-label border-b border-line pb-3 text-fg-muted">Galería</h2>
+              <h2 className="eyebrow border-b border-line pb-3 text-fg-muted">Galería</h2>
               <ul className="mt-4 grid grid-cols-3 gap-2">
                 {a.galleryItems.map((g) => {
                   const src = mediaUrl(g.file?.formats?.thumbnail?.url ?? g.file?.url);

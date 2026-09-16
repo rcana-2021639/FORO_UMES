@@ -28,8 +28,7 @@ export default async function NoticiasPage({
   return (
     <>
       <PageHeader
-        number={7}
-        kicker="Actualidad"
+        kicker="Lo último que se dijo"
         title="Archivo de noticias"
         intro="Comunicados, convocatorias y crónicas de las actividades del Foro, de la más reciente a la más antigua."
       />
@@ -62,7 +61,7 @@ export default async function NoticiasPage({
                       )}
                     </div>
                     <p className="mono-label mt-4 text-fg-muted">{formatDate(n.publishedAt)}</p>
-                    <h2 className="mt-2 text-[1.35rem] leading-tight text-fg transition-colors group-hover:text-jade">
+                    <h2 className="mt-2 text-[1.35rem] leading-tight text-fg transition-colors duration-300 group-hover:text-accent-jade">
                       {n.title}
                     </h2>
                     {n.summary && (
@@ -76,13 +75,15 @@ export default async function NoticiasPage({
             })}
           </ul>
         ) : (
-          <p className="text-fg-muted">Aún no hay noticias publicadas.</p>
+          <p className="max-w-[44ch] text-fg-muted">
+            Todavía no hay noticias publicadas. La primera que salga del panel aparecerá aquí.
+          </p>
         )}
 
         {pageCount > 1 && (
           <nav
             aria-label="Paginación"
-            className="mono-label mt-16 flex items-center justify-between border-t border-line pt-6 text-fg-muted"
+            className="ui-label mt-16 flex items-center justify-between border-t border-line pt-6 text-fg-muted"
           >
             {page > 1 ? (
               <Link href={`/noticias?pagina=${page - 1}`} className="text-fg hover:text-jade">

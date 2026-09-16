@@ -36,11 +36,11 @@ export interface ButtonProps {
 
 const BASE =
   'group relative isolate inline-flex select-none items-center justify-center overflow-visible ' +
-  'rounded-[2px] border font-mono text-[0.72rem] uppercase tracking-[0.1em] ' +
+  'rounded-[3px] border font-sans text-[0.92rem] font-medium tracking-[-0.005em] ' +
   'transition-[border-color,opacity] duration-300 disabled:cursor-not-allowed disabled:opacity-50';
 
 const VARIANT: Record<Variant, string> = {
-  primary: 'h-12 gap-3 border-ink bg-paper px-6 text-ink',
+  primary: 'h-12 gap-3 border-fg bg-bg px-6 text-fg',
   secondary: 'h-12 gap-3 border-line bg-transparent px-6 text-fg hover:border-fg',
   ghost: 'h-10 gap-2 border-transparent px-1 text-fg',
   icon: 'h-11 w-11 border-line bg-transparent text-fg hover:border-fg',
@@ -128,7 +128,7 @@ export function Button({
   const label = loading ? (
     <span className="inline-flex items-baseline">
       {loadingLabel}
-      <span className="ml-0.5 inline-flex w-[1.2em]">
+      <span className="ml-0.5 inline-flex w-[1.1em]">
         <span className="animate-dot">.</span>
         <span className="animate-dot [animation-delay:160ms]">.</span>
         <span className="animate-dot [animation-delay:320ms]">.</span>

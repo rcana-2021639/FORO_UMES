@@ -16,10 +16,9 @@ export default async function UniversidadesPage() {
   return (
     <>
       <PageHeader
-        number={2}
-        kicker="Integrantes"
-        title="Las universidades del Foro"
-        intro="En el orden oficial de la mesa. Entra al perfil de cada una para ver representantes y programas."
+        kicker="Quiénes se sientan"
+        title="Las nueve universidades"
+        intro="En el orden en que se sientan a la mesa. Abre el perfil de cada una para ver quién la representa y qué programas ofrece."
       />
       <div className="container-x pb-[var(--section-y)]">
         <UniversitiesBento universities={universities.data} />

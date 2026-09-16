@@ -50,28 +50,24 @@ export default async function Home() {
 
       <Section
         id="cifras"
-        number={1}
-        kicker="El Foro en cifras"
-        title={
-          <>
-            Una mesa, <em className="italic text-jade">nueve</em> universidades
-          </>
-        }
-        intro="Lo que el Foro coordina hoy, en números que se actualizan desde el panel de cada universidad."
+        kicker="Lo que hay sobre la mesa hoy"
+        title="Nueve sillas, una mesa"
+        intro="Cuatro cifras que cada universidad actualiza desde su propio panel. No hay estimaciones: es lo publicado."
+        rhythm="tight"
       >
         <Stats counts={counts} year={year} />
       </Section>
 
       <Section
         id="universidades"
-        number={2}
-        kicker="Integrantes"
-        title="Las universidades del Foro"
-        intro="En el orden oficial de la mesa. Cada una conserva su identidad y sus programas; el Foro es el espacio común."
+        kicker="Quiénes se sientan"
+        title="Las nueve universidades"
+        intro="En el orden en que se sientan a la mesa. Cada una conserva su identidad y su oferta; el Foro es el espacio que comparten."
         theme="paper-2"
+        rhythm="wide"
         aside={
           <Button variant="secondary" href="/universidades">
-            Ver todas
+            Abrir los nueve perfiles
           </Button>
         }
       >
@@ -80,14 +76,13 @@ export default async function Home() {
 
       <Section
         id="programas"
-        number={3}
-        kicker="Oferta de posgrado"
-        title="Programas de las nueve"
-        intro="Maestrías, doctorados, especializaciones y diplomados. Filtra por nivel y desliza para recorrerlos."
+        kicker="Lo que se puede estudiar"
+        title="Programas de posgrado"
+        intro="Maestrías, doctorados, especializaciones y diplomados de las nueve. Filtra por nivel y sigue bajando para recorrerlos."
         bleed
         aside={
           <Button variant="secondary" href="/programas">
-            Catálogo completo
+            Ver el catálogo completo
           </Button>
         }
       >
@@ -96,9 +91,8 @@ export default async function Home() {
 
       <Section
         id="como-trabaja"
-        number={4}
-        kicker="Método"
-        title="Cómo trabaja el Foro"
+        kicker="Cómo se toma una decisión"
+        title="Así trabaja la mesa"
         theme="paper-2"
         bleed
       >
@@ -107,13 +101,12 @@ export default async function Home() {
 
       <Section
         id="linea-de-tiempo"
-        number={5}
-        kicker="Trayectoria"
-        title="Hitos y actividades"
-        intro="Ingresos de universidades y actividades del Foro, en orden cronológico."
+        kicker="Lo que ya pasó y lo que viene"
+        title="Hitos del Foro"
+        intro="Ingresos de universidades, encuentros, seminarios y proyectos, en el orden en que ocurrieron."
         aside={
           <Button variant="secondary" href="/actividades">
-            Todas las actividades
+            Ver todas las actividades
           </Button>
         }
       >
@@ -122,27 +115,22 @@ export default async function Home() {
 
       <Section
         id="aportes"
-        number={6}
-        kicker="Aportes"
-        title={
-          <>
-            Lo que el Foro <em className="italic text-accent-jade">produce</em>
-          </>
-        }
-        intro="Resultados, iniciativas y beneficios documentados por las universidades."
+        kicker="Lo que sale de la mesa"
+        title="Aportes del Foro"
+        intro="Resultados que ya se pueden medir, iniciativas en marcha y beneficios concretos para estudiantes y programas."
         theme="night"
+        rhythm="wide"
       >
         <ContributionsSticky contributions={contributions.data} />
       </Section>
 
       <Section
         id="noticias"
-        number={7}
-        kicker="Actualidad"
-        title="Últimas noticias"
+        kicker="Lo último que se dijo"
+        title="Noticias del Foro"
         aside={
           <Button variant="secondary" href="/noticias">
-            Archivo
+            Leer el archivo completo
           </Button>
         }
       >
@@ -151,10 +139,9 @@ export default async function Home() {
 
       <Section
         id="representantes"
-        number={8}
-        kicker="Quiénes se sientan a la mesa"
+        kicker="Las personas detrás de cada silla"
         title="Representantes"
-        intro="Direcciones de posgrado de cada universidad. Recorre la retícula con el cursor."
+        intro="Quien dirige el posgrado en cada universidad. Con el cursor, la linterna revela nombre y cargo."
         theme="paper-2"
       >
         <RepresentativesSpotlight reps={reps.data} />
@@ -162,12 +149,12 @@ export default async function Home() {
 
       <Section
         id="galeria"
-        number={9}
-        kicker="Memoria visual"
+        kicker="Lo que quedó en fotos"
         title="Galería"
+        rhythm="tight"
         aside={
           <Button variant="secondary" href="/galeria">
-            Ver galería
+            Ver toda la galería
           </Button>
         }
       >
@@ -176,13 +163,8 @@ export default async function Home() {
 
       <Section
         id="contacto"
-        number={10}
-        kicker="Contacto"
-        title={
-          <>
-            Escríbele <em className="italic text-accent-jade">al Foro</em>
-          </>
-        }
+        kicker="Para universidades, prensa y quien busca un posgrado"
+        title="Escríbele a la mesa"
         theme="night"
       >
         <ContactForm />

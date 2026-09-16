@@ -6,52 +6,65 @@ import { useReducedMotion } from '@/hooks/useReducedMotion';
 import type { ForumSummary } from '@/lib/types';
 
 /**
- * Capítulo 01 · El Foro en cifras. Contadores con spring (scroll anim #8) que arrancan al
- * entrar en viewport; patrón de React Bits `TextAnimations/CountUp` (useInView + useSpring).
+ * Nueve sillas, una mesa. Cuatro cifras sin cajas: un número enorme en Fraunces ligera sobre
+ * una regla que se dibuja, y debajo la frase que lo explica. Contadores con spring
+ * (scroll anim #8), patrón de React Bits `CountUp` (useInView + useSpring).
  */
 export function Stats({ counts, year }: { counts: ForumSummary['counts']; year: number }) {
   const items = [
     {
-      label: 'Universidades integrantes',
       value: counts.universities,
-      note: 'orden oficial del Foro',
+      label: 'universidades',
+      note: 'en el orden en que se sientan a la mesa',
     },
     {
-      label: 'Programas de posgrado',
       value: counts.academicPrograms,
-      note: 'maestrías, doctorados, especializaciones',
+      label: 'programas de posgrado',
+      note: 'maestrías, doctorados, especializaciones y diplomados',
     },
     {
-      label: `Actividades en ${year}`,
       value: counts.activitiesThisYear,
-      note: 'encuentros, seminarios, proyectos',
+      label: `actividades en ${year}`,
+      note: 'encuentros, seminarios, reuniones y proyectos',
     },
     {
-      label: 'Aportes publicados',
       value: counts.contributions,
-      note: 'resultados, iniciativas, beneficios',
+      label: 'aportes publicados',
+      note: 'resultados, iniciativas y beneficios documentados',
     },
   ];
 
   return (
-    <dl className="grid grid-cols-2 gap-px border border-line bg-line lg:grid-cols-4">
+    <dl className="grid grid-cols-2 gap-x-8 gap-y-14 lg:grid-cols-4 lg:gap-x-12">
       {items.map((it, i) => (
-        <div
-          key={it.label}
-          className="group relative bg-bg p-6 transition-colors duration-700 md:p-8"
-        >
-          <dt className="mono-label text-fg-muted">{it.label}</dt>
-          <dd className="mt-8 md:mt-14">
-            <Counter value={it.value} delay={i * 0.12} />
-            <p className="mono-label mt-3 text-fg-muted">{it.note}</p>
+        <div key={it.label} className="group relative">
+          <dd className="relative">
+            <Counter value={it.value} delay={[0, 0.16, 0.26, 0.5][i]} />
+            <Rule delay={[0.1, 0.26, 0.36, 0.6][i]} />
           </dd>
-          <span
-            aria-hidden
-            className="absolute top-0 left-0 h-full w-[2px] origin-top scale-y-0 bg-amber transition-transform duration-700 ease-(--ease-out-expo) group-hover:scale-y-100"
-          />
+          <dt className="mt-4 font-display text-[1.35rem] leading-tight text-fg">{it.label}</dt>
+          <dd className="ui-label mt-1.5 max-w-[26ch] text-fg-muted">{it.note}</dd>
         </div>
       ))}
     </dl>
+  );
+}
+
+/** Regla que se dibuja de izquierda a derecha cuando el número arranca. */
+function Rule({ delay }: { delay: number }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true, margin: '-10% 0px' });
+  const reduced = useReducedMotion();
+  return (
+    <span ref={ref} className="mt-3 block h-px w-full overflow-hidden bg-line">
+      <span
+        className="block h-px w-full origin-left bg-fg"
+        style={{
+          transform: inView || reduced ? 'scaleX(1)' : 'scaleX(0)',
+          transition: reduced ? 'none' : `transform 1.1s var(--ease-cinematic) ${delay}s`,
+        }}
+      />
+    </span>
   );
 }
 
@@ -85,8 +98,8 @@ function Counter({ value, delay }: { value: number; delay: number }) {
   return (
     <span
       ref={ref}
-      className="block font-display text-[clamp(3.5rem,8vw,7rem)] leading-none tracking-tight tabular-nums text-fg"
-      style={{ fontVariationSettings: "'opsz' 144, 'SOFT' 40, 'WONK' 1" }}
+      className="block font-display text-[clamp(4rem,9vw,8rem)] leading-[0.9] font-light tracking-[-0.04em] text-fg tabular-nums"
+      style={{ fontVariationSettings: "'opsz' 144, 'SOFT' 60, 'WONK' 1" }}
     >
       0
     </span>

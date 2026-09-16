@@ -1,27 +1,26 @@
-/* Tokens de diseño — ver DESIGN_NOTES.md §4 y §5 */
+/* Tokens de diseño — ver DESIGN_NOTES.md §4, §5 y §15 (rediseño "la mesa") */
 :root {
-  /* Paleta "acta académica": papel + tinta + jade + ámbar */
-  --color-paper: #f3eee4;
-  --color-paper-2: #e9e2d3;
-  --color-ink: #16150f;
-  --color-ink-2: #3d3a31;
-  --color-ink-3: #66614f;
-  --color-jade: #0f6e5a;
-  --color-jade-2: #3f9e86;
-  --color-amber: #c9782a;
-  --color-amber-2: #9a5414; /* ámbar para texto pequeño sobre papel (AA 4.97:1) */
-  --color-night: #101a24;
-  --color-line: #d6cebb;
+  /* Paleta: piedra caliza + tinta verde + jade + ocre/oro. Nada de crema+terracota. */
+  --color-paper: #edefe9;
+  --color-paper-2: #e0e5db;
+  --color-ink: #101511;
+  --color-ink-2: #3a423c;
+  --color-ink-3: #5f6a63;
+  --color-jade: #0b6b5a;
+  --color-jade-2: #57b79e;
+  --color-amber: #d9a93a; /* oro: decorativo y texto sobre noche */
+  --color-amber-2: #8a5f0c; /* ocre: texto pequeño sobre piedra (AA 4.87:1) */
+  --color-night: #0e1a16;
+  --color-line: #c9cfc4;
 
-  /* Fondo/texto "vivos": los anima useSectionTheme según el capítulo visible */
+  /* Fondo/texto "vivos": los anima SectionThemeObserver según el capítulo visible */
   --bg: var(--color-paper);
   --fg: var(--color-ink);
   --fg-muted: var(--color-ink-3);
   --line: var(--color-line);
   --accent: var(--color-amber-2);
-  --accent-jade: var(
-    --color-jade
-  ); /* jade legible según el tema: oscuro en papel, claro en noche */ /* ámbar legible según el tema: oscuro en papel, claro en noche */
+  --accent-jade: var(--color-jade);
+  --shadow-ink: 16 21 17; /* rgb de la tinta para sombras tintadas, nunca gris neutro */
 
   /* Tipografía (variables inyectadas por next/font en <html>) */
   --font-display: var(--font-fraunces), 'Iowan Old Style', Georgia, serif;
@@ -29,17 +28,21 @@
   --font-mono: var(--font-geist-mono), ui-monospace, 'Cascadia Mono', monospace;
 
   /* Escala fluida */
-  --text-h1: clamp(2.75rem, 8vw, 8rem);
-  --text-h2: clamp(2rem, 5vw, 4.5rem);
+  --text-h1: clamp(2.9rem, 8.4vw, 8.5rem);
+  --text-h2: clamp(2.1rem, 5.2vw, 4.8rem);
   --text-h3: clamp(1.5rem, 2.6vw, 2.25rem);
   --text-body: 1.0625rem;
-  --text-mono: 0.75rem;
+  --text-mono: 0.78rem;
 
-  /* Ritmo */
-  --gutter: clamp(1rem, 4vw, 4rem);
+  /* Ritmo: no todas las secciones respiran igual */
+  --gutter: clamp(1rem, 4vw, 4.5rem);
   --section-y: clamp(5rem, 12vw, 11rem);
+  --section-y-tight: clamp(3rem, 7vw, 6rem);
 
-  /* Movimiento */
-  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+  /* Movimiento: tres curvas con nombre, nunca `ease` */
+  --ease-out-premium: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-snap: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-cinematic: cubic-bezier(0.83, 0, 0.17, 1);
+  --ease-out-expo: var(--ease-out-premium);
+  --ease-in-out-quart: var(--ease-cinematic);
 }

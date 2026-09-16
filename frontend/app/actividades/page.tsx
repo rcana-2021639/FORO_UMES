@@ -16,8 +16,8 @@ const EMPTY = { data: [], meta: { pagination: { page: 1, pageSize: 0, pageCount:
 function ActivityList({ items, heading, id }: { items: Activity[]; heading: string; id: string }) {
   return (
     <section aria-labelledby={id}>
-      <h2 id={id} className="mono-label border-b border-line pb-3 text-fg-muted">
-        {heading} · {items.length}
+      <h2 id={id} className="eyebrow border-b border-line pb-3 text-fg-muted">
+        {heading} ({items.length})
       </h2>
       {items.length ? (
         <ul className="divide-y divide-line">
@@ -33,7 +33,7 @@ function ActivityList({ items, heading, id }: { items: Activity[]; heading: stri
                   <span className="mono-label text-fg-muted md:col-span-2">
                     {formatDate(a.date)}
                   </span>
-                  <span className="mono-label text-accent md:col-span-2">
+                  <span className="ui-label text-accent md:col-span-2">
                     {ACTIVITY_LABEL[a.type]}
                   </span>
                   <span className="flex items-center gap-4 md:col-span-6">
@@ -46,12 +46,12 @@ function ActivityList({ items, heading, id }: { items: Activity[]; heading: stri
                         className="h-14 w-14 rounded-[2px] object-cover"
                       />
                     )}
-                    <span className="text-[1.25rem] leading-tight text-fg transition-colors group-hover:text-jade">
+                    <span className="text-[1.25rem] leading-tight text-fg transition-colors duration-300 group-hover:text-accent-jade">
                       {a.title}
                     </span>
                   </span>
                   <span className="mono-label text-fg-muted md:col-span-2 md:text-right">
-                    {(a.participatingUniversities ?? []).map(acronymOf).join(' · ')}
+                    {(a.participatingUniversities ?? []).map(acronymOf).join(', ')}
                   </span>
                 </Link>
               </li>
@@ -59,7 +59,7 @@ function ActivityList({ items, heading, id }: { items: Activity[]; heading: stri
           })}
         </ul>
       ) : (
-        <p className="py-8 text-fg-muted">Sin actividades en este apartado.</p>
+        <p className="py-8 text-fg-muted">Nada por aquí todavía.</p>
       )}
     </section>
   );
@@ -74,8 +74,7 @@ export default async function ActividadesPage() {
   return (
     <>
       <PageHeader
-        number={5}
-        kicker="Trayectoria"
+        kicker="Lo que ya pasó y lo que viene"
         title="Actividades del Foro"
         intro="Encuentros, conferencias, seminarios, reuniones y proyectos, con las universidades que participan en cada uno."
       />

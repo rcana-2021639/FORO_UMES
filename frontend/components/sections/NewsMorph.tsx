@@ -11,19 +11,23 @@ import { cn } from '@/lib/cn';
 import type { NewsItem } from '@/lib/types';
 
 /**
- * Capítulo 07 · Noticias. Scale/morph ligado al scroll (scroll anim #6, Motion useScroll +
- * useTransform): la tarjeta central crece hasta 1 y las laterales rotan y se separan según
- * el progreso del scroll de la sección.
+ * Noticias del Foro. Sin marcos: la imagen manda y el texto cuelga debajo como pie de foto
+ * editorial. Scale/morph ligado al scroll (scroll anim #6): la nota principal enfoca (escala
+ * y blur → nítida) y las laterales rotan y se separan según el progreso de la sección.
  */
 export function NewsMorph({ news }: { news: NewsItem[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start 90%', 'end 40%'] });
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start 92%', 'end 45%'] });
 
   const [a, b, c] = news;
   return (
-    <div ref={ref} className="grid gap-5 md:grid-cols-12 md:items-stretch">
-      {!a && <p className="text-fg-muted md:col-span-12">Aún no hay noticias publicadas.</p>}
+    <div ref={ref} className="grid gap-x-6 gap-y-10 md:grid-cols-12 md:items-end">
+      {!a && (
+        <p className="max-w-[44ch] text-fg-muted md:col-span-12">
+          Todavía no hay noticias publicadas. La primera que salga del panel aparecerá aquí.
+        </p>
+      )}
       {b && (
         <Card
           item={b}
@@ -72,27 +76,27 @@ function Card({
   featured?: boolean;
 }) {
   const dir = side === 'left' ? -1 : side === 'right' ? 1 : 0;
-  const scale = useTransform(progress, [0, 1], side === 'center' ? [0.88, 1] : [1, 0.94]);
-  const rotate = useTransform(progress, [0, 1], [0, dir * 3]);
-  const y = useTransform(progress, [0, 1], side === 'center' ? [60, 0] : [0, 40]);
-  const x = useTransform(progress, [0, 1], [0, dir * 14]);
+  const scale = useTransform(progress, [0, 1], side === 'center' ? [0.9, 1] : [1, 0.95]);
+  const rotate = useTransform(progress, [0, 1], [0, dir * 2.5]);
+  const y = useTransform(progress, [0, 1], side === 'center' ? [70, 0] : [0, 36]);
+  const x = useTransform(progress, [0, 1], [0, dir * 18]);
+  const blur = useTransform(progress, [0, 0.6, 1], side === 'center' ? [6, 0, 0] : [0, 0, 0]);
+  const filter = useTransform(blur, (b) => `blur(${b}px)`);
   const cover = mediaUrl(item.coverImage?.formats?.medium?.url ?? item.coverImage?.url);
 
   return (
     <motion.article
-      style={reduced ? undefined : { scale, rotate, y, x }}
+      style={reduced ? undefined : { scale, rotate, y, x, filter }}
       className={cn('will-change-transform', className)}
     >
       <Link
         href={`/noticias/${item.documentId}`}
-        data-cursor="Leer"
-        className={cn(
-          'group flex h-full flex-col overflow-hidden rounded-[3px] border border-line bg-bg transition-[border-color] duration-500 hover:border-fg/40'
-        )}
+        data-cursor="Leer la nota"
+        className="group block"
       >
         <div
           className={cn(
-            'relative w-full overflow-hidden bg-paper-2',
+            'relative w-full overflow-hidden rounded-[4px] bg-[color-mix(in_oklab,var(--fg)_6%,var(--bg))]',
             featured ? 'aspect-[16/9]' : 'aspect-[4/3]'
           )}
         >
@@ -102,36 +106,68 @@ function Card({
               alt={item.coverImage?.alternativeText ?? ''}
               fill
               sizes={featured ? '(min-width: 768px) 50vw, 100vw' : '(min-width: 768px) 25vw, 100vw'}
-              className="object-cover transition-transform duration-[1.2s] ease-(--ease-out-expo) group-hover:scale-[1.04]"
+              className="object-cover transition-transform duration-[1.4s] ease-(--ease-out-premium) group-hover:scale-[1.04]"
             />
           ) : (
-            <span
-              aria-hidden
-              className="absolute inset-0 grid place-items-center font-display text-[4rem] text-fg-muted/30"
-              style={{ fontVariationSettings: "'opsz' 144, 'WONK' 1" }}
-            >
-              F
-            </span>
+            <Seal />
           )}
+          {/* Velo jade que se retira al hover, como levantar una hoja */}
+          <span
+            aria-hidden
+            className="absolute inset-0 origin-bottom bg-[color-mix(in_oklab,var(--color-jade)_18%,transparent)] transition-transform duration-700 ease-(--ease-cinematic) group-hover:scale-y-0"
+          />
         </div>
-        <div className="flex flex-1 flex-col p-5 md:p-6">
-          <span className="mono-label text-fg-muted">{formatDate(item.publishedAt)}</span>
-          <h3
-            className={cn(
-              'mt-3 text-fg',
-              featured ? 'text-[clamp(1.5rem,2.6vw,2.2rem)]' : 'text-[1.2rem]'
+        <div className={cn('pt-4', featured && 'md:grid md:grid-cols-6 md:gap-6')}>
+          <p className={cn('mono-label text-fg-muted', featured && 'md:col-span-2')}>
+            {formatDate(item.publishedAt)}
+          </p>
+          <div className={cn(featured && 'md:col-span-4')}>
+            <h3
+              className={cn(
+                'text-fg underline decoration-transparent decoration-1 underline-offset-[6px] transition-[text-decoration-color] duration-500 group-hover:decoration-[color:var(--accent-jade)]',
+                featured ? 'text-[clamp(1.6rem,2.8vw,2.4rem)]' : 'mt-2 text-[1.2rem] md:mt-0'
+              )}
+            >
+              {item.title}
+            </h3>
+            {featured && item.summary && (
+              <p className="mt-4 max-w-[58ch] leading-relaxed text-fg-muted">
+                {excerpt(item.summary, 200)}
+              </p>
             )}
-          >
-            {item.title}
-          </h3>
-          {featured && item.summary && (
-            <p className="mt-4 max-w-[58ch] leading-relaxed text-fg-muted">
-              {excerpt(item.summary, 200)}
-            </p>
-          )}
-          <span className="mono-label mt-auto pt-6 text-jade">Leer noticia →</span>
+          </div>
         </div>
       </Link>
     </motion.article>
+  );
+}
+
+/** Placeholder sin foto: el anillo de la mesa, no una letra suelta. */
+function Seal() {
+  return (
+    <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full" aria-hidden>
+      <circle
+        cx="50"
+        cy="50"
+        r="22"
+        fill="none"
+        stroke="var(--fg)"
+        strokeWidth="0.4"
+        opacity="0.35"
+      />
+      {Array.from({ length: 9 }, (_, i) => {
+        const a = (i / 9) * Math.PI * 2 - Math.PI / 2;
+        return (
+          <circle
+            key={i}
+            cx={50 + 22 * Math.cos(a)}
+            cy={50 + 22 * Math.sin(a)}
+            r="1.4"
+            fill="var(--fg)"
+            opacity="0.5"
+          />
+        );
+      })}
+    </svg>
   );
 }

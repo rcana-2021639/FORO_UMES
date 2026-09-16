@@ -1,7 +1,7 @@
 # DESIGN_NOTES — Frontend del Foro Interuniversitario de Estudios de Posgrado
 
 > Documento de dirección de diseño. Se escribe **antes** de codear y se actualiza si la dirección cambia.
-> Estado: **aprobado y construido** (v1). Las notas marcadas con ▸ registran desvíos respecto a la propuesta inicial y su motivo.
+> Estado: **construido y rediseñado** (v1.1, ver §15). Las notas marcadas con ▸ registran desvíos respecto a la propuesta inicial y su motivo.
 
 ---
 
@@ -249,3 +249,24 @@ Regla: **nada de GSAP/Three dentro de `app/`**; toda animación vive en su compo
 - **Menú móvil:** `clip-path: circle()` con centro en porcentajes (`91% 5%`); Motion no interpola `calc()` dentro de `clip-path`.
 - **Hooks reutilizables:** `useMagnetic`, `useClickSpark`, `useSplitReveal`, `useReducedMotion`/`useFinePointer`. Toda la lógica GSAP/Three vive en `components/` y `hooks/`, nunca en `app/`.
 - **Pendiente para v2:** distorsión de imágenes por shader al hover, `ModelViewer` con un objeto 3D del Foro cuando exista identidad gráfica oficial, y logos reales de las universidades (el bento muestra siglas mientras tanto).
+
+---
+
+## 15. Rediseño total (v1.1): de "acta con folios" a "la mesa"
+
+Auditoría honesta de v1 con la checklist anti-genérico, y qué se intervino en los seis ejes a la vez.
+
+| Eje             | Lo que delataba plantilla en v1                                                                         | Decisión v1.1                                                                                                                                                                                                                                                |
+| --------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Color**       | Papel crema `#F3EEE4` + ámbar `#C9782A`: el clúster "crema + terracota". Aurora verde→durazno de stock. | Piedra caliza `#EDEFE9` / `#E0E5DB`, tinta verde-negra `#101511`, jade `#0B6B5A`, ocre `#8A5F0C` (texto) / oro `#D9A93A` (sobre noche), noche verde `#0E1A16`. Aurora jade + piedra.                                                                         |
+| **Tipografía**  | Una palabra en itálica por titular; etiquetas en MAYÚSCULAS mono en cada bloque.                        | Fraunces a peso 300 (`SOFT 50`) en display; kickers en itálica de frase completa (`.eyebrow`); Geist sentence-case para UI (`.ui-label`); mono **solo** para datos.                                                                                          |
+| **Layout**      | Folios `01…10` en capítulos que no son secuencia; separadores "A · B · C"; todo con borde 1 px/3 px.    | Marca de asiento (arco) en vez de número; cifras sin cajas con regla que se dibuja; bento de losas sin borde; programas como horario (regla superior); ritmo `tight/normal/wide`.                                                                            |
+| **Interacción** | Hover = cambiar `border-color`.                                                                         | `lift` (−4 px + sombra tintada de tinta), flecha que se dibuja y entra, velo jade que se levanta en noticias, chips con relleno que crece, inputs con subrayado que se dibuja.                                                                               |
+| **Motion**      | Bento/galería/noticias con fade + `translateY` y stagger lineal `0.06·i`.                               | Firma: la constelación **se sienta a la mesa** al cargar (dispersa → asientos, curva cinemática, aristas al llegar). Bento: barrido de máscara; galería: máscara ascendente; noticias: enfoque (blur→nítido). `stagger()` no lineal. Tres curvas con nombre. |
+| **Copy**        | "Últimas noticias", "Galería", "Ver todas", "Archivo".                                                  | "Nueve sillas, una mesa", "Quiénes se sientan", "Lo que sale de la mesa", "Las personas detrás de cada silla", "Escríbele a la mesa"; CTAs y vacíos con voz propia.                                                                                          |
+
+Se conserva: arquitectura de 10 capítulos con datos reales, navbar gooey, botón líquido, pin + scrub, path SVG, spotlight, Sileo, R3F.
+
+**Elemento de firma, en una frase:** nueve puntos dispersos que, al abrir el sitio, se sientan uno a uno alrededor de una mesa mientras el nombre del Foro se imprime letra a letra.
+
+Lighthouse desktop (build): Performance 98 · Accessibility 100 · Best Practices 100 · SEO 100.

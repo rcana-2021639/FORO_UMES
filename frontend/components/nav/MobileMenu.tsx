@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { NAV_ITEMS } from '@/lib/nav';
-import { folio } from '@/lib/format';
 import { cn } from '@/lib/cn';
 
 interface Props {
@@ -53,7 +52,6 @@ export function MobileMenu({ open, onClose, activeIndex }: Props) {
                 transition={{ delay: 0.18 + i * 0.05, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                 className="flex items-baseline gap-4 border-b border-paper/15 py-3"
               >
-                <span className="mono-label w-6 text-accent">{folio(i)}</span>
                 <Link
                   href={item.href}
                   onClick={onClose}
@@ -69,12 +67,12 @@ export function MobileMenu({ open, onClose, activeIndex }: Props) {
               </motion.div>
             ))}
             <motion.p
-              className="mono-label mt-10 text-paper/60"
+              className="eyebrow mt-10 text-paper/60"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.6 }}
             >
-              Foro Interuniversitario de Estudios de Posgrado · Guatemala
+              Nueve universidades de Guatemala, una mesa.
             </motion.p>
           </div>
         </motion.div>

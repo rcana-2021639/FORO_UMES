@@ -25,10 +25,9 @@ export default async function ProgramasPage() {
   return (
     <>
       <PageHeader
-        number={3}
-        kicker="Oferta de posgrado"
+        kicker="Lo que se puede estudiar"
         title="Catálogo de programas"
-        intro="Toda la oferta de las nueve universidades en una sola lista. Filtra por nivel, modalidad o universidad."
+        intro="Toda la oferta de posgrado de las nueve universidades en una sola lista. Filtra por nivel, modalidad o universidad, o busca por nombre."
       />
       <div className="container-x pb-[var(--section-y)]">
         <ProgramsCatalog programs={programs} />

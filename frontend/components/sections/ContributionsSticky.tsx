@@ -77,7 +77,10 @@ export function ContributionsSticky({ contributions }: { contributions: Contribu
       />
 
       {groups.length === 0 ? (
-        <p className="text-fg-muted">Los aportes del Foro se publicarán aquí.</p>
+        <p className="max-w-[44ch] text-fg-muted">
+          Ningún aporte publicado todavía. Cuando una universidad documente el primero, aparecerá en
+          esta columna.
+        </p>
       ) : (
         <div className="relative grid gap-10 md:grid-cols-12 md:gap-8">
           <aside className="md:sticky md:top-32 md:col-span-5 md:self-start">
@@ -116,9 +119,7 @@ export function ContributionsSticky({ contributions }: { contributions: Contribu
           <div className="md:col-span-7">
             {groups.map((g) => (
               <div key={g.type} data-group={g.type} className="mb-16 last:mb-0">
-                <p className="mono-label mb-4 text-accent md:hidden">
-                  {CONTRIBUTION_LABEL[g.type]}
-                </p>
+                <p className="eyebrow mb-4 text-accent md:hidden">{CONTRIBUTION_LABEL[g.type]}</p>
                 <ul className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
                   {g.items.map((c) => (
                     <li key={c.documentId} className="group py-6">
@@ -129,9 +130,9 @@ export function ContributionsSticky({ contributions }: { contributions: Contribu
                         {c.relatedActivity?.documentId && (
                           <Link
                             href={`/actividades/${c.relatedActivity.documentId}`}
-                            className="mono-label text-accent-jade underline-offset-4 hover:underline"
+                            className="ui-label text-accent-jade underline decoration-transparent underline-offset-4 transition-[text-decoration-color] duration-300 hover:decoration-current"
                           >
-                            actividad →
+                            ver la actividad →
                           </Link>
                         )}
                       </div>

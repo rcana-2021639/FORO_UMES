@@ -137,8 +137,8 @@ interface Props {
 }
 
 export function AuroraLayer({
-  colorStops = ['#3f9e86', '#d9a266', '#6b7a8c'],
-  amplitude = 0.8,
+  colorStops = ['#57b79e', '#e6d8a4', '#0b6b5a'],
+  amplitude = 0.7,
   blend = 0.55,
   speed = 0.6,
   className,

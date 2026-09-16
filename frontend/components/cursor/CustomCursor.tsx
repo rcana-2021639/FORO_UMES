@@ -92,7 +92,7 @@ export function CustomCursor() {
       >
         {label && (
           <motion.span
-            className="mono-label whitespace-nowrap text-[0.6rem]"
+            className="ui-label whitespace-nowrap text-[0.68rem]"
             initial={{ opacity: 0, scale: 0.7 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.05 }}

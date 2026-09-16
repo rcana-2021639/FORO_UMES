@@ -39,7 +39,7 @@ export default async function NoticiaPage({ params }: Params) {
   return (
     <article>
       <PageHeader
-        kicker={`Noticia · ${formatDate(n.publishedAt)}`}
+        kicker={`Publicada el ${formatDate(n.publishedAt)}`}
         title={n.title}
         intro={n.summary ?? undefined}
       />
