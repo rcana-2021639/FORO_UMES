@@ -16,6 +16,15 @@ export function GooeyDefs() {
           />
           <feComposite in="SourceGraphic" in2="goo" operator="atop" />
         </filter>
+        {/* Variante suave para la estela de píxeles: menos umbral, sin composite (todo el canvas es goo) */}
+        <filter id="gooey-soft">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur" />
+          <feColorMatrix
+            in="blur"
+            mode="matrix"
+            values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 14 -6"
+          />
+        </filter>
         <filter id="grain-filter">
           <feTurbulence
             type="fractalNoise"

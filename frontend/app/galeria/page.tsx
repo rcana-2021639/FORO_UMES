@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { GalleryMasonry } from '@/components/sections/GalleryMasonry';
+import { GalleryShowcase } from '@/components/sections/GalleryShowcase';
 import { api, safe } from '@/lib/api';
 
 export const metadata: Metadata = {
@@ -12,13 +13,18 @@ const EMPTY = { data: [], meta: { pagination: { page: 1, pageSize: 0, pageCount:
 
 export default async function GaleriaPage() {
   const gallery = await safe(api.gallery({ 'pagination[pageSize]': 50 }), EMPTY);
+
   return (
     <>
       <PageHeader
         kicker="Lo que quedó en fotos"
         title="Galería"
-        intro="Fotografías y videos de encuentros, seminarios y proyectos de las nueve universidades."
+        intro="Fotografías y videos de encuentros, seminarios y proyectos de las nueve universidades. Arrastra el carrusel o haz click en la del centro para abrirla."
       />
+      {/* Carrusel interactivo con fotos y videos; debajo, todo el archivo en mosaico */}
+      <div className="mb-14 md:mb-20">
+        <GalleryShowcase items={gallery.data} height={620} />
+      </div>
       <div className="container-x pb-[var(--section-y)]">
         <GalleryMasonry items={gallery.data} />
       </div>

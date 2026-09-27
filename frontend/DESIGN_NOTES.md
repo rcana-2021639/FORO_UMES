@@ -1,7 +1,7 @@
 # DESIGN_NOTES — Frontend del Foro Interuniversitario de Estudios de Posgrado
 
 > Documento de dirección de diseño. Se escribe **antes** de codear y se actualiza si la dirección cambia.
-> Estado: **construido y rediseñado** (v1.1, ver §15). Las notas marcadas con ▸ registran desvíos respecto a la propuesta inicial y su motivo.
+> Estado: **v3.0 "Blanco y violeta"** (ver §23; §19–§22 describen v2.0 y siguen vigentes en lo que no contradiga a §23). Las notas marcadas con ▸ registran desvíos respecto a la propuesta inicial y su motivo.
 
 ---
 
@@ -270,3 +270,203 @@ Se conserva: arquitectura de 10 capítulos con datos reales, navbar gooey, botó
 **Elemento de firma, en una frase:** nueve puntos dispersos que, al abrir el sitio, se sientan uno a uno alrededor de una mesa mientras el nombre del Foro se imprime letra a letra.
 
 Lighthouse desktop (build): Performance 98 · Accessibility 100 · Best Practices 100 · SEO 100.
+
+---
+
+## 16. v1.2: segundo acento y piezas de React Bits recoloreadas
+
+Auditoría de v1.1 antes de tocar nada:
+
+1. **Paleta monotonal.** Piedra + jade + oro; sin segundo acento. El sitio se leía "verde-gris" de arriba abajo.
+2. **Programas.** 18 tarjetas planas idénticas en un riel horizontal que fijaba la sección ~5 pantallas. Cero jerarquía.
+3. **Representantes.** Sin fotos publicadas, la linterna solo mostraba nueve bloques negros con iniciales.
+4. **Aportes.** Sticky narrativa con 2 ítems: columna izquierda vacía; la retícula del fondo casi invisible.
+5. **Galería.** El único video era un bloque con glifo play, sin miniatura.
+
+Qué se intervino, por eje:
+
+| Eje             | Decisión v1.2                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Color**       | Violeta como **segundo acento**: `--color-violet #5B3FA6` (texto sobre piedra, 6.6:1), `--color-violet-2 #B9A6FF` (sobre oscuro), `--color-violet-3 #2A1F4D` (losas), `--color-dusk #15112A` (crepúsculo). Va en **detalles**: selección de texto, chips activos, insignia de doctorado, borde del navbar (jade→violeta), barra de progreso, estela de píxeles, un nodo de la constelación, parada pálida en la aurora, reglas de las cifras. La única superficie violeta es el capítulo **Contacto** (tema `dusk`). Los componentes de React Bits que traían morado/cian de stock se recolorean a esta paleta, nunca al revés. |
+| **Tipografía**  | Sin cambios de sistema. Fraunces entra en piezas nuevas (título de ScrollExpand, nombres en las tarjetas de programas, etiquetas de los paneles de Aportes) con `opsz` a medida.                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| **Layout**      | Programas: **carrusel de profundidad** con tarjetas de contenido (no riel fijado). Aportes: **tres paneles en acordeón** (jade / violeta / ocre) que se abren al 55 %. Representantes: retícula de **tarjetas que se dan la vuelta**. Galería: **marco que se abre con el scroll** hasta pantalla completa, y masonry debajo. `Section` gana un slot `backdrop` para capas de sección completa.                                                                                                                                                                                                                                 |
+| **Interacción** | Universidades: hover/foco **pixela** la losa hacia su reverso (descripción + "Abrir perfil"). Programas: click en la tarjeta del frente abre la ficha; en otra, la trae al frente; arrastre, rueda horizontal, flechas y teclado; **estrella de guardar** (localStorage, compartida con el catálogo, filtro "Guardados"). Navbar: **estallido de partículas** jade/violeta/oro bajo el filtro gooey al elegir sección. Chispas al click ahora **globales**, con color por capítulo (`--spark`).                                                                                                                                 |
+| **Motion**      | GlowCursor (OGL) en Contacto: estela jade→violeta en `screen` sobre crepúsculo, dormida hasta que el puntero se mueve y solo en viewport. MorphSlider (OGL + GSAP, transición "melt") en `/galeria` cuando hay ≥ 2 imágenes. PixelTrail con filtro gooey suave. Todo respeta `prefers-reduced-motion` y puntero fino.                                                                                                                                                                                                                                                                                                           |
+| **Copy**        | "Filtra por nivel, recorre las tarjetas y guarda con la estrella las que quieras comparar", "Tres carpetas sobre la mesa", "Cada silla es una tarjeta: dale la vuelta para ver cargo y correo", vacíos con voz propia ("No has guardado programas todavía…").                                                                                                                                                                                                                                                                                                                                                                   |
+
+Mapa de piezas de React Bits (todas reescritas en TS, recoloreadas, con reduced-motion):
+
+| Pieza              | Dónde                            | Adaptación                                                                                            |
+| ------------------ | -------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `DepthCarousel`    | Programas (portada)              | Tarjetas de contenido; el fondo se funde hacia `--bg` en vez de `brightness()`; click abre.           |
+| `PixelSwap`        | Universidades                    | Estado controlado por hover/foco del padre; patrón espiral en la silla grande.                        |
+| `FlipCard`         | Representantes                   | Sin arrastre (compite con el scroll); `role=button` + teclado; reverso violeta-tinta.                 |
+| `AccordionGallery` | Aportes                          | Paneles de contenido, no fotos; tintas jade/violeta/ocre con grano; vertical bajo 768 px.             |
+| `ScrollExpand`     | Galería (portada)                | `media` es un nodo (next/image); miniatura de YouTube/Vimeo para videos; título en Fraunces con halo. |
+| `GlowCursor`       | Contacto (portada y `/contacto`) | Escucha en la sección (`data-fx-root`); canvas creado por el renderer (StrictMode); dpr ≤ 1.25.       |
+| `ClickSpark`       | Global (`ClickSparkLayer`)       | Un canvas fijo; color por capítulo vía `--spark`; sustituye al canvas por botón.                      |
+| `PixelTrail`       | Galería                          | Ya en canvas 2D; ahora violeta y con `#gooey-soft`.                                                   |
+| `GooeyNav`         | Navbar                           | Solo el estallido de partículas, bajo el filtro gooey existente; sin `Math.random` en render.         |
+| `PulseHeart`       | Programas (carrusel y catálogo)  | Estrella propia (sin `@hugeicons`); anillo de puntos y latido con sobreimpulso.                       |
+| `MorphSlider`      | `/galeria`                       | Solo transición "melt"; overlay crepúsculo; se monta solo con ≥ 2 imágenes.                           |
+
+Notas de implementación:
+
+- `html { overflow-x: clip }` y `.depth-carousel { overflow: clip }`: las tarjetas 3D desbordan a los lados y un foco por teclado desplazaba el documento.
+- Los WebGL de OGL crean su propio `<canvas>` dentro del efecto: en dev, React monta dos veces y un contexto perdido no se reutiliza.
+- `next.config.ts` permite `img.youtube.com`, `i.ytimg.com` y `vumbnail.com` para las miniaturas.
+
+**Elemento de firma (sin cambios):** nueve puntos que se sientan a la mesa. Lo nuevo es que ahora una de las sillas es violeta.
+
+---
+
+## 17. v1.3 — "Que se lea a la primera" (revisión tras uso real)
+
+Motivo: en pruebas con el sitio ya construido, varias piezas se veían "básicas" o no explicaban qué se estaba viendo (niveles de posgrado, cómo trabaja la mesa, la línea de tiempo), el capítulo de contacto se trababa y el scroll se quedaba fijo al volver a la portada.
+
+| Cambio                     | Decisión                                                                                                                                                                                                                                                                                                                                  |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Cursor**                 | Se elimina el cursor custom (`CustomCursor`, `data-cursor*`, `data-cursor-mode`). Cursor nativo en todo el sitio.                                                                                                                                                                                                                         |
+| **Navbar**                 | Sin línea de progreso ni borde inferior: la barra al hacer scroll se separa solo con sombra tintada. "Inicio" y el monograma, ya en la portada, suben al principio con Lenis.                                                                                                                                                             |
+| **Scroll**                 | Lenis con `naiveDimensions: true`: `<html>` mide 100 % del viewport, así que su ResizeObserver nunca veía crecer el documento al cambiar de ruta y el límite se quedaba en la altura de la página anterior. Al cambiar de ruta: `scrollTo(0, {force})`, `ScrollTrigger.refresh()` y `lenis.resize()`.                                     |
+| **Paleta**                 | Marfil cálido `#F4F1EA` / `#E9E3D6`, tinta `#0D1411`, esmeralda `#0A6A57` + `#3FC9A3`, oro `#E6AD3C`, violeta eléctrico `#5A3DC9` / `#C2B1FF`, más **coral** `#E0603C` y **cielo** `#6FB7C9`. Superficies `--surface-1/2/3` derivadas de `--fg`/`--bg`. Dos halos radiales fijos (esmeralda arriba-izquierda, violeta derecha) en `body`. |
+| **Nueve sillas, una mesa** | Capítulo en tema `night`. Mesa SVG con nueve asientos que se encienden en orden y orbitan; cuatro losas de cristal con halo de color por cifra.                                                                                                                                                                                           |
+| **Programas**              | `LevelTabs`: una losa por nivel (inicial, plural, cuántos hay, qué es y cuánto dura). Mismo componente en portada y catálogo; tarjetas del carrusel coloreadas por nivel (`lib/levels.ts`). Catálogo agrupado por nivel con cabecera de color, búsqueda, píldoras de modalidad y tarjetas.                                                |
+| **Así trabaja la mesa**    | `ProcessSteps` sustituye al pin de 250 %: tres pasos pulsables con autoavance (barra de 6,5 s, se pausa al pasar el cursor), teclado, y la figura de nueve puntos que se recompone con GSAP.                                                                                                                                              |
+| **Hitos**                  | Eje central dibujado con el scroll, marcadores de año, tarjetas alternadas (jade = ingreso, violeta = actividad) que entran desde su lado.                                                                                                                                                                                                |
+| **Perfil de universidad**  | `UniversityProfile`: cabecera con tinta propia (según la silla), logo en losa clara, franja de cifras, representantes con foto o iniciales, programas agrupados por nivel con pestañas.                                                                                                                                                   |
+| **Contacto**               | Fuera `Orb` y `GlowCursor` (dos contextos WebGL en la misma sección: se trababa). `SoftOrb`: manchas con blur y anillo de asientos, solo transforms/opacity. También en las pantallas de error.                                                                                                                                           |
+| **Hero**                   | La constelación "átomo" pasa a ser **la mesa redonda**: nueve asientos sobre un anillo visto en diagonal, estrella {9/4} entre ellos, tablero translúcido, respiración y giro lento.                                                                                                                                                      |
+
+---
+
+## 18. v1.4 — "Todo con volumen" (piezas 3D de React Bits)
+
+Segunda revisión tras uso: las secciones seguían leyéndose planas. Se incorporan las piezas que el equipo entregó de React Bits (DepthText, FoldText, VariableProximity, ElasticMesh, MagicRings, TearTicket) más una primitiva propia (`Tilt`) y se reparten donde aportan sentido, no decoración.
+
+| Pieza                       | Archivo                               | Dónde                                                                                                                                                           |
+| --------------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Tilt` (propia)             | `components/fx/Tilt.tsx`              | Losa que se inclina con el puntero, brillo y sombra; hijos `data-depth` flotan en Z. Cifras, pestañas de nivel, hitos, noticias, perfiles, bento, contacto.     |
+| `DepthText`                 | `components/fx/DepthText.tsx`         | Texto apilado en capas (letras "sobrepuestas"). Cifras de portada, nombres de nivel, números de paso, años de los hitos, "mesa" en contacto, cifras del perfil. |
+| `FoldText`                  | `components/fx/FoldText.tsx`          | Títulos que se despliegan por bisagra: todos los capítulos (`Section`), títulos de noticias, nombre de la universidad, título del paso activo.                  |
+| `VariableProximity`         | `components/fx/VariableProximity.tsx` | "¿Qué traes a la mesa?" en Contacto: los ejes de Fraunces (wght/opsz/SOFT/WONK) responden a la distancia del puntero, letra a letra.                            |
+| `ElasticMesh` (OGL)         | `components/fx/ElasticMesh.tsx`       | Portada de la nota más reciente (portada y `/noticias`): superficie elástica que se hunde bajo el puntero. Pausa fuera de viewport; dpr ≤ 1.5.                  |
+| `MagicRings` (three)        | `components/fx/MagicRings.tsx`        | Fondo de Aportes (`RingsBackdrop`), cabecera del perfil de universidad y el orbe de Contacto (con `clickBurst`). Escucha el puntero en `window`.                |
+| `TearTicket`                | `components/fx/TearTicket.tsx`        | `/actividades`: cada actividad es un boleto con talón (fecha) que se arranca; al arrancarlo se abre la actividad.                                               |
+| `AuroraLayer` (modo oscuro) | `components/fx/DuskAurora.tsx`        | Aurora violeta → jade → oro en `screen` bajo el crepúsculo de Contacto (portada y `/contacto`).                                                                 |
+
+Cambios de sección:
+
+- **Nueve sillas, una mesa**: vuelve al marfil. Cuatro losas con `Tilt` y el número en `DepthText` que cuenta desde cero; debajo, "el canto de la mesa": una regla que se dibuja y nueve marcas que saltan una a una. Sin "sillas ocupadas".
+- **Programas**: `LevelTabs` en 3D (Tilt + DepthText por nivel). Carrusel con tarjetas de 400×500 y **zonas laterales** de ancho completo con solo `‹ ›` (toda la franja es clicable).
+- **Así trabaja la mesa**: escenario 3D con perspectiva; la tarjeta activa al frente, las otras retiradas y giradas; número en `DepthText`, título en `FoldText`; figura de nueve puntos sobre un **plano inclinado que flota**.
+- **Hitos**: tarjetas que entran girando desde su lado, `Tilt` con parallax, años en `DepthText` flotando, pulso de luz que recorre el eje, nodos que respiran.
+- **Aportes**: la animación de los paneles no se toca. Se añaden `MagicRings` de fondo, etiquetas en `DepthText`, sello giratorio por carpeta y entrada escalonada de cada aporte.
+- **Noticias (portada)**: "Última publicación" con `ElasticMesh`; laterales en `Tilt` con folio; todo entra con el scroll (rotateX/rotateY).
+- **Contacto**: aurora oscura de fondo, anillos con estallido al click bajo la palabra "mesa", titular con `VariableProximity`, tres públicos como losas `Tilt`, formulario en losa de cristal.
+- **Perfil de universidad**: anillos en la cabecera, nombre en `FoldText`, logo en losa `Tilt` que flota entre dos anillos giratorios, cifras en `DepthText`, representantes y programas en `Tilt`.
+- **Universidades (bento)**: celdas en `Tilt`, entrada rotateX escalonada, número de silla en `DepthText`; el `PixelSwap` del reverso se mantiene.
+- **Actividades**: boletos `TearTicket` con tinta por tipo, filtros por tipo, próximas/anteriores con conteo en `DepthText`.
+- **Archivo de noticias**: la más reciente a lo grande con `ElasticMesh`; fichas numeradas en `Tilt` con entrada rotateX; paginación con boletos.
+
+Rendimiento: cada canvas WebGL pausa fuera de viewport y con la pestaña oculta; `Tilt` solo anima mientras el puntero se mueve y se apaga con puntero grueso o reduced-motion; `DepthText` congela su órbita fuera de pantalla.
+
+---
+
+## 19. v2.0 — "Piedra y nácar": neutralidad real
+
+**Motivo.** El Foro no es de ninguna universidad: ningún color general puede evocar a una de las nueve. La auditoría de las nueve identidades (§20) mostró que la paleta v1.x chocaba con casi todas: esmeralda ≈ UVG/UMES, oro ≈ USAC/URL/Galileo/UNIS, violeta ≈ índigo URL, coral ≈ naranja UNI. Además la portada medía ~14 300 px (16 pantallas) y abría **6 contextos WebGL** a la vez.
+
+**Regla de color.** Neutros cálidos (piedra y grafito) más una **luz nácar** que es la mezcla de todo y no pertenece a nadie. Los colores institucionales solo aparecen en lo que _es_ de cada universidad (§20).
+
+| Token                                 | Hex                                           | Uso                                                                                        |
+| ------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `paper` / `paper-2`                   | `#F6F4F0` / `#ECE8E1`                         | Fondo y fondo alterno                                                                      |
+| `ink` / `ink-2` / `ink-3`             | `#1C1B19` / `#45423D` / `#6B655C`             | Texto (15.7 / 9.1 / 5.3:1 sobre paper)                                                     |
+| `line`                                | `#D6D0C6`                                     | Bordes de 1 px                                                                             |
+| `night` / `dusk`                      | `#161513` / `#1B1922`                         | Grafito cálido; `dusk` es 4 % más frío, para el cierre (Contacto)                          |
+| `sage` · `lilac` · `clay-2` · `slate` | `#3F6558` · `#5A5383` · `#85513C` · `#4E5F66` | Tintas apagadas de **texto/superficie** (≥ 5.3:1); son los colores de nivel de programa    |
+| `sage-2` · `lilac-2` · `clay` · `sky` | `#B9DDCF` · `#CCC3F0` · `#EBC2AC` · `#BFD4DC` | **Luz** nácar: halos y detalle sobre grafito (≥ 10:1 sobre night)                          |
+| `--pearl`                             | degradado lilac-2 → clay → sage-2 → sky       | Firma del sitio: botón primario al hover, índice activo, chip "Próxima", portadas sin foto |
+
+- El primario de acción es la tinta; la vibra la pone el nácar al interactuar (hover, activo, selección), no un color de marca.
+- Fondo ambiental: tres halos nácar en `body::before`, **fijo y compuesto en GPU** (antes era `background-attachment: fixed`, que repinta todo el body en cada frame de scroll). En capítulos oscuros `--ambient` baja a 0.18.
+- `lib/palette.ts` espeja los tokens para WebGL, canvas y SVG; ningún componente lleva hex sueltos.
+
+## 20. Colores de las nueve universidades (solo en lo suyo)
+
+Medidos en cada sitio oficial (colores pintados en pantalla ponderados por área, más CSS, y bandera o escudo cuando la fuente los describe). Viven en `lib/universities.ts` y se aplican con `brandVars()` como variables `--u-*`.
+
+| Silla | Universidad | Principal              | Acento                   | Nota                                                          |
+| ----- | ----------- | ---------------------- | ------------------------ | ------------------------------------------------------------- |
+| 1     | USAC        | `#001D5E` azul marino  | `#C9A227` oro del escudo |                                                               |
+| 2     | URL         | `#150F5D` índigo       | `#FFC61F` amarillo       |                                                               |
+| 3     | UVG         | `#078B45` verde        | `#93BB4E` verde hoja     | Cabecera en `#05653A`: el verde de marca da 4.4:1 con blanco  |
+| 4     | UMG         | `#003168` azul         | `#A1252B` rojo           |                                                               |
+| 5     | UNIS        | `#540013` corinto      | `#EFA800` oro            | La bandera es azul y corinto; el oro es el acento de su sitio |
+| 6     | UPANA       | `#001B42` azul marino  | `#9FD140` lima           |                                                               |
+| 7     | UMES        | `#0A4735` verde bosque | `#E6DECA` arena          |                                                               |
+| 8     | Galileo     | `#041B64` azul marino  | `#B89A59` dorado         | Bandera: marino, terracota y celeste                          |
+| 9     | UNI         | `#006C8F` petróleo     | `#EE6946` naranja        | Cabecera en `#005A78`                                         |
+
+Dónde aparecen: cabecera y cuerpo del perfil (`/universidades/[id]`), el reverso de su losa al pasar el cursor, su asiento en la mesa del hero al señalarlo, un punto de 8 px junto a "Silla NN" y la navegación silla anterior/siguiente. En reposo, todas las vistas generales son neutras y todas las losas miden lo mismo (antes la USAC ocupaba 2×2).
+
+## 21. Portada en seis bloques (flujo de 15 segundos)
+
+1. **Inicio**: qué es (título + una frase), **tres caminos** ("Busco un posgrado", "Quiero conocer una universidad", "Quiero escribirle al Foro") y cuatro cifras. La mesa SVG no es decoración: cada asiento es una universidad y enlaza a su perfil.
+2. **Universidades**: 3×3 de losas iguales (2 columnas en móvil).
+3. **Programas**: niveles + carrusel.
+4. **Qué pasa en el Foro**: actividades (con la fecha como protagonista y "Próxima"), noticias y galería, cada una con salida a su página.
+5. **Así trabaja la mesa**: tres pasos + "Lo que ya salió de la mesa" (aportes).
+6. **Escríbele a la mesa**: elegir quién escribe rellena el asunto y lleva al mensaje.
+
+Índice lateral fijo (`SectionRail`, ≥ 1280 px) con un punto por bloque; los nombres aparecen al acercar el cursor. Los hitos pasan a `/actividades`; los representantes, a cada perfil. Resultado: **~7 400 px** (≈ 8 pantallas) frente a 14 300.
+
+## 22. Rendimiento: tres niveles de efectos (`lib/quality.ts`)
+
+| Nivel   | Cuándo                                                                                             | Qué cambia                                                                                                                                  |
+| ------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `full`  | Equipo capaz                                                                                       | Todo: Lenis, PixelSwap, inclinación 3D, DepthText con órbita                                                                                |
+| `lite`  | ≤ 4 núcleos, ≤ 4 GB, ahorro de datos, pantalla táctil, o **< ~40 fps medidos** en los primeros 2 s | Mismas entradas y estados; sin WebGL, sin Tilt, sin backdrop-blur, DepthText a 6 capas y quieto, scroll nativo, bucles decorativos en pausa |
+| `still` | `prefers-reduced-motion`                                                                           | Sin movimiento; el contenido aparece fijo                                                                                                   |
+
+- Lo decide un script inline en `<head>` antes de pintar (sin parpadeo). `?efectos=full|lite|still` en la URL fuerza un nivel para pruebas.
+- Portada: de 6 contextos WebGL a **0** (hero en SVG + GSAP; contacto con orbe y luz en CSS). WebGL queda solo donde aporta y en `full`: `ElasticMesh` sobre una foto real de noticia y `MorphSlider` con ≥ 2 imágenes en la galería (en `lite`, fundido encadenado).
+- Fuera de los bucles por frame: `filter: blur()` animado en las tarjetas de proceso, glows SVG con `feGaussianBlur` en movimiento y el rAF de DepthText fuera de pantalla (ahora se detiene del todo).
+- Sin uso tras v2.0 (no entran al bundle; se pueden borrar): `Constellation`, `AuroraLayer`, `DuskAurora`, `RingsBackdrop`, `MagicRings`, `Stats`, `Marquee`, `NewsMorph`, `RepresentativesSpotlight`, `ContributionsSticky`, `FlipCard`.
+
+---
+
+## 23. v3.0 — "Blanco y violeta"
+
+**Motivo.** La v2.0 neutra se sentía plana ("muy simple, aburrida"). Nueva regla de color: **predomina el blanco y el morado está muy presente** en todas sus tonalidades. Ninguna de las nueve universidades usa morado (§20), así que el sitio sigue siendo neutral entre ellas. El concepto "mesa/silla" se retira de la interfaz: los usuarios no lo entendían.
+
+**Paleta** (`styles/tokens.css`): blanco `#FDFCFF` / `#F5F2FC`, tinta violácea `#1E1830`, escala `violet-50…950` (texto AA desde 600), más orquídea `#8E4FB8`, ciruela `#7A3D8F`, mora `#8A3F7A`, índigo `#4B4AA8` y pervinca `#D7DAFF`. `--violet-glow` (600 → orquídea → 400) es la firma: botón principal, "Posgrado" del título, cifras, indicador activo. Los alias heredados (`sage`, `lilac`, `clay`…) apuntan ahora a tonos violeta para que todo el sitio cambie de una vez. Niveles de programa: Maestría violet-600, Doctorado violet-800, Especialización índigo, Diplomado mora.
+
+**Por bloque:**
+
+| Bloque              | Cambio                                                                                                                                                                                                                                                                                                                                        |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Navbar              | Barra de cristal fija (sin transformarse al hacer scroll). Hover: píldora lavanda que se desliza (`layoutId`, muelle 520/42 sin rebote). Página actual: texto violeta + barrita en degradado que también se desliza. Fuera: filtro gooey, partículas, efecto magnético.                                                                       |
+| Inicio              | Sin la mesa giratoria. Campo de luz violeta (3 orbes con `transform`, retícula de puntos), "Posgrado" en degradado, dos botones, **vitrina de programas reales** que se baraja sola (`ProgramDeck`), tres caminos, cifras en degradado y **cinta con las nueve universidades** en movimiento continuo.                                        |
+| Universidades       | Sin "Silla N": arriba va el dominio web de cada una. El giro por píxeles se conserva con **intención de hover** (120 ms) y un **tope de 2 transiciones simultáneas** en toda la página; barrer el cursor ya no acumula cientos de clones.                                                                                                     |
+| Perfil              | Sin la leyenda "colores institucionales" ni "silla". "Oferta de posgrado" en el color de la universidad: filtros con contador, cada nivel explica qué es y cuánto dura, tarjetas con modalidad, duración y ficha oficial; los grupos pequeños van lado a lado.                                                                                |
+| Programas           | Flechas `Chevron` grandes de trazo fino con rótulo ("Anterior/Siguiente"). El índice lateral solo captura el cursor en sus puntos: antes su etiqueta invisible tapaba la flecha derecha.                                                                                                                                                      |
+| Qué pasa en el Foro | Vuelven las animaciones de firma: línea de tiempo que se dibuja y enciende cada fecha, noticia que se endereza al acercarse, marco de galería que se abre con el scroll.                                                                                                                                                                      |
+| Así trabaja el Foro | Tarjetas en progresión violeta (profundo → luminoso); flechas chevron sin círculo a los lados de las tarjetas.                                                                                                                                                                                                                                |
+| Contacto            | Sin orbe ni "mesa", sin recuadros: "¿Quién escribe?" como tres palabras grandes que se subrayan y rellenan el asunto; campos de una línea con etiqueta flotante y línea violeta que se dibuja; "Enviar mensaje →". La sección lleva su propio fondo oscuro (`.section-dark`): el texto nunca queda claro sobre claro mientras cambia el tema. |
+
+Estilos nuevos en `styles/v3.css`, cargado **después** de `globals.css` desde el layout.
+
+## 24. v3.1 — Más movimiento en portada, programas y galería
+
+| Pieza                          | Decisión                                                                                                                                                                                                                                                                                                                                                                                   |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Vitrina de programas (portada) | `components/hero/CardSwap.tsx` (React Bits `CardSwap`, GSAP, easing elástico). Adaptado: mata el timeline al desmontar, se detiene fuera de pantalla, con la pestaña oculta o con el cursor encima, y queda quieto con menos movimiento. El mazo alterna niveles y universidades.                                                                                                          |
+| Cifras                         | `RollingNumber`: odómetro (cada columna da una vuelta antes de detenerse), regla que se dibuja, etiqueta que sube desde una máscara y destello violeta al llegar.                                                                                                                                                                                                                          |
+| Programas                      | Pestañas de nivel que entran una a una con inclinación 3D; tarjetas del catálogo que se "reparten" al entrar y **cada vez que cambia un filtro** (la retícula lleva `key` con la combinación de filtros); cabeceras con el cuadro que gira a su sitio; carrusel de portada que entra abriéndose en perspectiva. Ojo: `AnimatePresence initial={false}` anulaba la entrada; no usarlo aquí. |
+| Qué pasa en el Foro            | Vuelve a ser tres capítulos: **Hitos** (`TimelinePath`), **Noticias** (`NewsMorph`) y **Galería**. `NewsMorph` solo monta `ElasticMesh` con foto real y en modo completo.                                                                                                                                                                                                                  |
+| Galería                        | `components/fx/FlexCarousel.tsx` (React Bits, OGL/WebGL2, lente líquida) dentro de `GalleryShowcase`: fotos (click en la del centro = ampliar) y videos (miniatura 16:9 de YouTube/Vimeo o primer fotograma de los subidos; click = reproductor). En modo liviano o sin WebGL2: tira con scroll-snap y el mismo reproductor. También en la cabecera de `/galeria`.                         |
+| Contacto                       | Declaración de quién recibe el mensaje, opciones numeradas con su descripción al acercarse, datos prácticos, campos numerados, barra de progreso de campos obligatorios ("Listo para enviar"), botón que se enciende al completar y "Hola" enorme casi invisible de fondo.                                                                                                                 |
+
+Nota de pruebas: el backend limita a 120 peticiones/min por IP. Varios builds seguidos más capturas desde la misma máquina lo superan y las páginas estáticas salen sin datos hasta la siguiente revalidación; no es un error del frontend.

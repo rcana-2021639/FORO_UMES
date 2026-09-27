@@ -7,7 +7,7 @@ import { prefersReducedMotion } from '@/hooks/useReducedMotion';
 /**
  * Capa 1 del hero: aurora en OGL. Shader tomado de React Bits `Backgrounds/Aurora`
  * (github.com/DavidHDev/react-bits, src/ts-tailwind), con estos cambios:
- * - paleta jade / ámbar / noche (nada de morado) y `lightMode` para fundirse con el papel
+ * - paleta jade / violeta pálido / jade oscuro y `lightMode` para fundirse con la piedra
  * - se pausa fuera de viewport y con la pestaña oculta; dpr máx. 1.5
  * - con prefers-reduced-motion dibuja un único fotograma estático
  */
@@ -134,14 +134,17 @@ interface Props {
   blend?: number;
   speed?: number;
   className?: string;
+  /** `light` se funde con el marfil (multiply); `dark` es la aurora luminosa sobre fondo oscuro. */
+  mode?: 'light' | 'dark';
 }
 
 export function AuroraLayer({
-  colorStops = ['#57b79e', '#e6d8a4', '#0b6b5a'],
+  colorStops = ['#ebcff2', '#d4c6ff', '#6443c4'],
   amplitude = 0.7,
   blend = 0.55,
   speed = 0.6,
   className,
+  mode = 'light',
 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -178,7 +181,7 @@ export function AuroraLayer({
         uColorStops: { value: stops },
         uResolution: { value: [ctn.offsetWidth, ctn.offsetHeight] },
         uBlend: { value: blend },
-        uLightMode: { value: 1 },
+        uLightMode: { value: mode === 'light' ? 1 : 0 },
       },
     });
     const mesh = new Mesh(gl, { geometry, program });
@@ -222,7 +225,7 @@ export function AuroraLayer({
       if (gl.canvas.parentNode === ctn) ctn.removeChild(gl.canvas);
       gl.getExtension('WEBGL_lose_context')?.loseContext();
     };
-  }, [amplitude, blend, colorStops, speed]);
+  }, [amplitude, blend, colorStops, speed, mode]);
 
   return <div ref={ref} aria-hidden className={className ?? 'h-full w-full'} />;
 }

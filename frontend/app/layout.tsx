@@ -1,13 +1,17 @@
 import type { Metadata, Viewport } from 'next';
+import Script from 'next/script';
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
+import '@/styles/v3.css';
 import { SmoothScroll } from '@/components/providers/SmoothScroll';
 import { ToasterMount } from '@/components/feedback/ToasterMount';
-import { CustomCursor } from '@/components/cursor/CustomCursor';
 import { GooeyDefs } from '@/components/ui/GooeyDefs';
 import { SectionThemeObserver } from '@/components/providers/SectionThemeObserver';
 import { Navbar } from '@/components/nav/Navbar';
 import { Footer } from '@/components/nav/Footer';
+import { ClickSparkLayer } from '@/components/fx/ClickSparkLayer';
+import { QualityProbe } from '@/components/providers/QualityProbe';
+import { QUALITY_SCRIPT } from '@/lib/quality-script';
 
 const fraunces = Fraunces({
   variable: '--font-fraunces',
@@ -34,7 +38,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#edefe9',
+  themeColor: '#fdfcff',
   width: 'device-width',
   initialScale: 1,
 };
@@ -44,6 +48,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="es"
       className={`${fraunces.variable} ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      data-quality="full"
+      suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col">
         <GooeyDefs />
@@ -55,8 +61,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Footer />
         </SmoothScroll>
         <SectionThemeObserver />
-        <CustomCursor />
+        <ClickSparkLayer />
         <ToasterMount />
+        <QualityProbe />
+        <Script id="quality" strategy="beforeInteractive">
+          {QUALITY_SCRIPT}
+        </Script>
       </body>
     </html>
   );

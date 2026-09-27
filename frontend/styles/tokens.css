@@ -1,26 +1,78 @@
-/* Tokens de diseño — ver DESIGN_NOTES.md §4, §5 y §15 (rediseño "la mesa") */
+/* Tokens de diseño — ver DESIGN_NOTES.md §23 (v3.0, "Blanco y violeta") */
 :root {
-  /* Paleta: piedra caliza + tinta verde + jade + ocre/oro. Nada de crema+terracota. */
-  --color-paper: #edefe9;
-  --color-paper-2: #e0e5db;
-  --color-ink: #101511;
-  --color-ink-2: #3a423c;
-  --color-ink-3: #5f6a63;
-  --color-jade: #0b6b5a;
-  --color-jade-2: #57b79e;
-  --color-amber: #d9a93a; /* oro: decorativo y texto sobre noche */
-  --color-amber-2: #8a5f0c; /* ocre: texto pequeño sobre piedra (AA 4.87:1) */
-  --color-night: #0e1a16;
-  --color-line: #c9cfc4;
+  /* Base blanca con un soplo de violeta: el blanco predomina, el morado está muy presente.
+     Ninguna de las nueve universidades usa morado, así que sigue siendo neutral entre ellas. */
+  --color-paper: #fdfcff;
+  --color-paper-2: #f5f2fc;
+  --color-ink: #1e1830;
+  --color-ink-2: #463f5c;
+  --color-ink-3: #6b6485;
+  --color-line: #e4dff0;
+  --color-night: #1a1330;
+  --color-dusk: #130d24;
+
+  /* Escala violeta (texto AA sobre blanco desde 600; luz sobre noche hasta 300) */
+  --color-violet-50: #f6f2ff;
+  --color-violet-100: #ece4ff;
+  --color-violet-200: #d4c6ff;
+  --color-violet-300: #b8a2fa;
+  --color-violet-400: #9a7bf0;
+  --color-violet-500: #7c5ae0;
+  --color-violet-600: #6443c4;
+  --color-violet-700: #4f339e;
+  --color-violet-800: #3a2677;
+  --color-violet-900: #261a4f;
+  --color-violet-950: #160f30;
+
+  /* Familia: orquídea, ciruela, mora e índigo violáceo, para que haya matices y no un solo morado */
+  --color-orchid: #8e4fb8;
+  --color-orchid-2: #ebcff2;
+  --color-plum: #7a3d8f;
+  --color-mulberry: #8a3f7a;
+  --color-indigo: #4b4aa8;
+  --color-periwinkle: #d7daff;
+
+  /* Alias heredados (v1–v2): los componentes existentes los usan; ahora caen dentro del violeta */
+  --color-sage: var(--color-plum);
+  --color-sage-2: var(--color-orchid-2);
+  --color-lilac: var(--color-violet-600);
+  --color-lilac-2: var(--color-violet-200);
+  --color-lilac-3: var(--color-violet-900);
+  --color-clay: #f3d9f0;
+  --color-clay-2: var(--color-mulberry);
+  --color-coral: #e8b4e0;
+  --color-sky: var(--color-periwinkle);
+  --color-slate: var(--color-indigo);
+
+  /* Firma de color: el degradado violeta del sitio */
+  --pearl: linear-gradient(
+    115deg,
+    var(--color-violet-200) 0%,
+    var(--color-orchid-2) 45%,
+    var(--color-periwinkle) 100%
+  );
+  --violet-glow: linear-gradient(
+    120deg,
+    var(--color-violet-600),
+    var(--color-orchid) 55%,
+    var(--color-violet-400)
+  );
 
   /* Fondo/texto "vivos": los anima SectionThemeObserver según el capítulo visible */
   --bg: var(--color-paper);
   --fg: var(--color-ink);
   --fg-muted: var(--color-ink-3);
   --line: var(--color-line);
-  --accent: var(--color-amber-2);
-  --accent-jade: var(--color-jade);
-  --shadow-ink: 16 21 17; /* rgb de la tinta para sombras tintadas, nunca gris neutro */
+  --accent: var(--color-violet-600);
+  --accent-sage: var(--color-plum);
+  --accent-lilac: var(--color-violet-600);
+  --spark: var(--color-violet-500);
+  --shadow-ink: 38 26 79; /* violeta 900: las sombras son tintadas, nunca gris neutro */
+
+  /* Superficies: losas sobre el fondo vivo (claro u oscuro), siempre derivadas de --fg/--bg */
+  --surface-1: color-mix(in oklab, var(--color-violet-500) 4%, var(--bg));
+  --surface-2: color-mix(in oklab, var(--color-violet-500) 8%, var(--bg));
+  --surface-3: color-mix(in oklab, var(--color-violet-500) 13%, var(--bg));
 
   /* Tipografía (variables inyectadas por next/font en <html>) */
   --font-display: var(--font-fraunces), 'Iowan Old Style', Georgia, serif;
@@ -36,8 +88,8 @@
 
   /* Ritmo: no todas las secciones respiran igual */
   --gutter: clamp(1rem, 4vw, 4.5rem);
-  --section-y: clamp(5rem, 12vw, 11rem);
-  --section-y-tight: clamp(3rem, 7vw, 6rem);
+  --section-y: clamp(4.5rem, 10vw, 9rem);
+  --section-y-tight: clamp(3rem, 6vw, 5rem);
 
   /* Movimiento: tres curvas con nombre, nunca `ease` */
   --ease-out-premium: cubic-bezier(0.16, 1, 0.3, 1);

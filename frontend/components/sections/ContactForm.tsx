@@ -1,13 +1,30 @@
 'use client';
 
-import dynamic from 'next/dynamic';
-import { useId, useState, type FormEvent } from 'react';
+import { useId, useRef, useState, type FormEvent } from 'react';
+import { motion } from 'motion/react';
 import { sileo } from 'sileo';
-import { Button } from '@/components/ui/Button';
 import { api, ApiError, describeError } from '@/lib/api';
+import { EASE } from '@/lib/motion';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { cn } from '@/lib/cn';
 
-const Orb = dynamic(() => import('./Orb').then((m) => m.Orb), { ssr: false });
+const AUDIENCES = [
+  {
+    who: 'Universidad',
+    what: 'Incorporación, convenios y actividades conjuntas.',
+    subject: 'Universidad: ',
+  },
+  {
+    who: 'Prensa',
+    what: 'Comunicados, entrevistas y material gráfico.',
+    subject: 'Prensa: ',
+  },
+  {
+    who: 'Estudiante',
+    what: 'Orientación sobre programas y requisitos.',
+    subject: 'Orientación sobre posgrados',
+  },
+];
 
 const LIMITS = { name: [2, 200], email: [0, 255], subject: [0, 250], message: [10, 2000] } as const;
 
@@ -27,12 +44,14 @@ function validate(v: Record<Field, string>): Errors {
 }
 
 /**
- * Capítulo 10 · Contacto. POST /api/contact con `sileo.promise` (pendiente → éxito/error).
- * Los errores 4xx/5xx del backend llegan como ApiError y se muestran con `sileo.error`.
- * Incluye el honeypot `website` (vacío) que exige el backend.
+ * Contacto: sin recuadros. Todo flota sobre el violeta profundo del cierre: a la izquierda, a
+ * quién le escribes (tres palabras que se subrayan al elegirlas y rellenan el asunto); a la
+ * derecha, campos de una sola línea con etiqueta flotante. POST /api/contact con `sileo.promise`
+ * y el honeypot `website` que exige el backend.
  */
 export function ContactForm() {
   const id = useId();
+  const reduced = useReducedMotion();
   const [values, setValues] = useState<Record<Field, string>>({
     name: '',
     email: '',
@@ -42,6 +61,14 @@ export function ContactForm() {
   const [errors, setErrors] = useState<Errors>({});
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [audience, setAudience] = useState<number | null>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
+
+  const pick = (i: number) => {
+    setAudience(i);
+    setValues((v) => ({ ...v, subject: AUDIENCES[i].subject }));
+    nameRef.current?.focus({ preventScroll: true });
+  };
 
   const set = (f: Field) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setValues((v) => ({ ...v, [f]: e.target.value }));
@@ -67,7 +94,7 @@ export function ContactForm() {
           website: '',
         }),
         {
-          loading: { title: 'Llevando tu mensaje a la mesa', description: 'Un momento…' },
+          loading: { title: 'Enviando tu mensaje', description: 'Un momento…' },
           success: {
             title: 'Recibido',
             description: 'La secretaría técnica te responderá al correo que dejaste.',
@@ -85,6 +112,7 @@ export function ContactForm() {
         }
       );
       setSent(true);
+      setAudience(null);
       setValues({ name: '', email: '', subject: '', message: '' });
     } catch {
       /* ya notificado por sileo.promise */
@@ -93,65 +121,115 @@ export function ContactForm() {
     }
   };
 
-  const reset = () => {
-    setValues({ name: '', email: '', subject: '', message: '' });
-    setErrors({});
-    sileo.info({ title: 'Formulario en blanco' });
-  };
+  const done = [
+    values.name.trim().length >= LIMITS.name[0],
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email),
+    values.message.trim().length >= LIMITS.message[0],
+  ].filter(Boolean).length;
+  const ready = done === 3;
+
+  const enter = (i: number) =>
+    reduced
+      ? {}
+      : {
+          initial: { opacity: 0, y: 24 },
+          whileInView: { opacity: 1, y: 0 },
+          viewport: { once: true, margin: '-10% 0px' },
+          transition: { duration: 1, ease: EASE.premium, delay: 0.08 * i },
+        };
 
   return (
-    <div className="relative grid gap-12 md:grid-cols-12">
-      <div className="relative md:col-span-5">
-        <div
-          className="relative aspect-square w-full max-w-[26rem] md:sticky md:top-32"
-          data-cursor=""
-        >
-          <Orb />
-          <p className="eyebrow pointer-events-none absolute inset-x-0 bottom-4 text-center text-fg-muted">
-            Secretaría técnica del Foro
-          </p>
-        </div>
-      </div>
+    <div className="contact grid gap-16 lg:grid-cols-12 lg:gap-12">
+      {/* A quién le escribes */}
+      <motion.div {...enter(0)} className="lg:col-span-5">
+        <p className="contact__lead">
+          Tu mensaje llega a la secretaría técnica que coordina a las nueve universidades.
+        </p>
+        <p className="contact__kicker mt-10">¿Quién escribe?</p>
+        <ul className="mt-4" role="radiogroup" aria-label="Quién escribe">
+          {AUDIENCES.map((a, i) => (
+            <li key={a.who} className="contact__who-row">
+              <button
+                type="button"
+                role="radio"
+                aria-checked={audience === i}
+                onClick={() => pick(i)}
+                className="contact__who"
+              >
+                <span className="contact__who-n" aria-hidden>
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <span className="contact__who-word">{a.who}</span>
+                <span className="contact__who-arrow" aria-hidden>
+                  →
+                </span>
+              </button>
+              <span className="contact__who-what" aria-hidden>
+                {a.what}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className="contact__hint" aria-live="polite">
+          {audience === null
+            ? 'Elige una opción y dejamos el asunto listo. También puedes escribir directamente.'
+            : AUDIENCES[audience].what}
+        </p>
+        <dl className="contact__facts">
+          <div>
+            <dt>Quién responde</dt>
+            <dd>La secretaría técnica del Foro</dd>
+          </div>
+          <div>
+            <dt>Dónde</dt>
+            <dd>Al correo que dejes en el formulario</dd>
+          </div>
+        </dl>
+      </motion.div>
 
-      <form
+      {/* Formulario sin recuadros */}
+      <motion.form
+        {...enter(1)}
         onSubmit={onSubmit}
         noValidate
-        className="md:col-span-7"
+        className="lg:col-span-7"
         aria-describedby={`${id}-help`}
       >
-        <p id={`${id}-help`} className="mb-8 max-w-[52ch] leading-relaxed text-fg-muted">
-          Si representas a una universidad, escribes desde un medio o buscas un posgrado y no sabes
-          por dónde empezar, este es el canal. La secretaría técnica responde al correo que dejes.
+        <p id={`${id}-help`} className="sr-only">
+          Todos los campos son obligatorios salvo el asunto.
         </p>
-
-        <div className="grid gap-6 sm:grid-cols-2">
-          <Field id={`${id}-name`} label="Nombre" error={errors.name}>
+        <div className="grid gap-x-10 gap-y-5 sm:grid-cols-2 sm:gap-y-9">
+          <FloatField id={`${id}-name`} n="01" label="Nombre" error={errors.name}>
             <input
+              ref={nameRef}
               id={`${id}-name`}
               name="name"
               autoComplete="name"
+              placeholder=" "
               required
               value={values.name}
               onChange={set('name')}
-              className={inputCls(!!errors.name)}
               aria-invalid={!!errors.name}
+              className="contact__input"
             />
-          </Field>
-          <Field id={`${id}-email`} label="Correo" error={errors.email}>
+          </FloatField>
+          <FloatField id={`${id}-email`} n="02" label="Correo" error={errors.email}>
             <input
               id={`${id}-email`}
               name="email"
               type="email"
               autoComplete="email"
+              placeholder=" "
               required
               value={values.email}
               onChange={set('email')}
-              className={inputCls(!!errors.email)}
               aria-invalid={!!errors.email}
+              className="contact__input"
             />
-          </Field>
-          <Field
+          </FloatField>
+          <FloatField
             id={`${id}-subject`}
+            n="03"
             label="Asunto (opcional)"
             error={errors.subject}
             className="sm:col-span-2"
@@ -159,30 +237,33 @@ export function ContactForm() {
             <input
               id={`${id}-subject`}
               name="subject"
+              placeholder=" "
               value={values.subject}
               onChange={set('subject')}
-              className={inputCls(!!errors.subject)}
               aria-invalid={!!errors.subject}
+              className="contact__input"
             />
-          </Field>
-          <Field
+          </FloatField>
+          <FloatField
             id={`${id}-message`}
+            n="04"
             label="Mensaje"
             error={errors.message}
-            className="sm:col-span-2"
             hint={`${values.message.length}/2000`}
+            className="sm:col-span-2"
           >
             <textarea
               id={`${id}-message`}
               name="message"
-              rows={6}
+              rows={4}
+              placeholder=" "
               required
               value={values.message}
               onChange={set('message')}
-              className={cn(inputCls(!!errors.message), 'resize-y')}
               aria-invalid={!!errors.message}
+              className="contact__input resize-y"
             />
-          </Field>
+          </FloatField>
           {/* Honeypot: los humanos no lo ven ni lo llenan */}
           <div className="absolute -left-[9999px] h-0 w-0 overflow-hidden" aria-hidden>
             <label htmlFor={`${id}-website`}>Sitio web</label>
@@ -196,29 +277,43 @@ export function ContactForm() {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-wrap items-center gap-4">
-          <Button type="submit" loading={sending} loadingLabel="Enviando">
-            {sent ? 'Enviar otro mensaje' : 'Enviar a la mesa'}
-          </Button>
-          <Button variant="ghost" onClick={reset} disabled={sending}>
-            Limpiar
-          </Button>
+        <div className="contact__progress mt-10" aria-live="polite">
+          <span className="contact__progress-track" aria-hidden>
+            <span className="contact__progress-fill" style={{ transform: `scaleX(${done / 3})` }} />
+          </span>
+          <span className="mono-label">
+            {ready ? 'Listo para enviar' : `${done} de 3 campos obligatorios`}
+          </span>
         </div>
-      </form>
+
+        <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4">
+          <button
+            type="submit"
+            className="contact__send"
+            data-ready={ready}
+            disabled={sending}
+            aria-busy={sending}
+          >
+            <span>{sending ? 'Enviando…' : sent ? 'Enviar otro mensaje' : 'Enviar mensaje'}</span>
+            <span className="contact__send-line" aria-hidden />
+            <span className="contact__send-arrow" aria-hidden>
+              →
+            </span>
+          </button>
+          {sent && !sending && (
+            <span className="ui-label text-[var(--color-violet-200)]">
+              Mensaje enviado. Te responderemos pronto.
+            </span>
+          )}
+        </div>
+      </motion.form>
     </div>
   );
 }
 
-function inputCls(invalid: boolean) {
-  return cn(
-    'peer w-full border-0 border-b bg-transparent px-0 py-3 text-[1.05rem] text-fg outline-none transition-colors duration-300',
-    'placeholder:text-fg-muted focus:border-transparent',
-    invalid ? 'border-accent' : 'border-line'
-  );
-}
-
-function Field({
+function FloatField({
   id,
+  n,
   label,
   error,
   hint,
@@ -226,6 +321,7 @@ function Field({
   children,
 }: {
   id: string;
+  n: string;
   label: string;
   error?: string;
   hint?: string;
@@ -233,26 +329,24 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div className={className}>
-      <div className="mb-2 flex items-baseline justify-between">
-        <label htmlFor={id} className="ui-label text-fg-muted">
-          {label}
-        </label>
-        {hint && <span className="mono-label text-fg-muted">{hint}</span>}
+    <div className={cn('contact__field', error && 'is-invalid', className)}>
+      {children}
+      <label htmlFor={id} className="contact__label">
+        <span className="contact__label-n" aria-hidden>
+          {n}
+        </span>
+        {label}
+      </label>
+      <div className="mt-2 flex min-h-[1.2em] items-start justify-between gap-4">
+        {error ? (
+          <p role="alert" className="ui-label text-[#f3b4d8]">
+            {error}
+          </p>
+        ) : (
+          <span />
+        )}
+        {hint && <span className="mono-label opacity-60">{hint}</span>}
       </div>
-      <div className="relative">
-        {children}
-        {/* Línea jade que se dibuja al enfocar el campo */}
-        <span
-          aria-hidden
-          className="pointer-events-none absolute bottom-0 left-0 h-px w-full origin-left scale-x-0 bg-accent-jade transition-transform duration-500 ease-(--ease-snap) peer-focus:scale-x-100"
-        />
-      </div>
-      {error && (
-        <p role="alert" className="ui-label mt-2 text-accent">
-          {error}
-        </p>
-      )}
     </div>
   );
 }

@@ -1,12 +1,11 @@
 'use client';
 
-import dynamic from 'next/dynamic';
 import { useEffect } from 'react';
 import { sileo } from 'sileo';
 import { Button } from '@/components/ui/Button';
 import { describeError } from '@/lib/api';
 
-const Orb = dynamic(() => import('@/components/sections/Orb').then((m) => m.Orb), { ssr: false });
+import { SoftOrb } from '@/components/ui/SoftOrb';
 
 interface Props {
   code: string;
@@ -34,13 +33,13 @@ export function ErrorScreen({ code, title, text, error, reset, bare }: Props) {
   return (
     <div
       className="relative isolate flex min-h-svh flex-col justify-center overflow-hidden"
-      style={bare ? { background: '#edefe9', color: '#101511' } : undefined}
+      style={bare ? { background: '#fdfcff', color: '#1e1830' } : undefined}
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute -right-[10%] top-1/2 -z-10 h-[70vmin] w-[70vmin] -translate-y-1/2 opacity-60 mix-blend-multiply"
+        className="pointer-events-none absolute -right-[10%] top-1/2 -z-10 w-[70vmin] -translate-y-1/2 opacity-70"
       >
-        <Orb backgroundColor="#edefe9" hue={0} hoverIntensity={0.2} />
+        <SoftOrb follow={false} />
       </div>
       <div className="container-x py-32">
         <p className="eyebrow text-fg-muted">

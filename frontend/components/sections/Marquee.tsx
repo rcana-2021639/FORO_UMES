@@ -64,7 +64,7 @@ export function Marquee({ items, velocity = 60, className }: Props) {
             className="eyebrow pr-[4em] text-[1.15rem] text-fg-muted"
           >
             {text}
-            <span className="pl-[4em] text-accent">◦</span>
+            <span className="pl-[4em] text-accent-lilac">◦</span>
           </span>
         ))}
       </motion.div>

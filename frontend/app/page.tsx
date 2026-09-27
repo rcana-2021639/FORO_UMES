@@ -1,25 +1,35 @@
 import { Hero } from '@/components/hero/Hero';
 import { Section } from '@/components/ui/Section';
 import { Button } from '@/components/ui/Button';
-import { Marquee } from '@/components/sections/Marquee';
-import { Stats } from '@/components/sections/Stats';
 import { UniversitiesBento } from '@/components/sections/UniversitiesBento';
 import { ProgramsRail } from '@/components/sections/ProgramsRail';
-import { ProcessPinned } from '@/components/sections/ProcessPinned';
 import { TimelinePath } from '@/components/sections/TimelinePath';
-import { buildMilestones } from '@/lib/milestones';
-import { ContributionsSticky } from '@/components/sections/ContributionsSticky';
 import { NewsMorph } from '@/components/sections/NewsMorph';
-import { RepresentativesSpotlight } from '@/components/sections/RepresentativesSpotlight';
-import { GalleryMasonry } from '@/components/sections/GalleryMasonry';
+import { GalleryShowcase } from '@/components/sections/GalleryShowcase';
+import { buildMilestones } from '@/lib/milestones';
+import { ProcessSteps } from '@/components/sections/ProcessSteps';
+import { ContributionsStrip } from '@/components/sections/ContributionsStrip';
 import { ContactForm } from '@/components/sections/ContactForm';
+import { SectionRail } from '@/components/nav/SectionRail';
 import { api, safe } from '@/lib/api';
 
 const EMPTY = { data: [], meta: { pagination: { page: 1, pageSize: 0, pageCount: 0, total: 0 } } };
 
+/** Capítulos de la portada, en el orden en que alguien los necesita. */
+const RAIL = [
+  { id: 'inicio', label: 'Inicio' },
+  { id: 'universidades', label: 'Universidades' },
+  { id: 'programas', label: 'Programas' },
+  { id: 'hitos', label: 'Hitos' },
+  { id: 'noticias', label: 'Noticias' },
+  { id: 'galeria', label: 'Galería' },
+  { id: 'como-trabaja', label: 'Cómo trabaja' },
+  { id: 'contacto', label: 'Escríbele al Foro' },
+];
+
 export default async function Home() {
   const year = new Date().getFullYear();
-  const [summary, universities, programs, activities, contributions, news, reps, gallery] =
+  const [summary, universities, programs, activities, contributions, news, gallery] =
     await Promise.all([
       safe(api.summary(), null),
       safe(api.universities(), EMPTY),
@@ -27,8 +37,7 @@ export default async function Home() {
       safe(api.activities({ 'pagination[pageSize]': 12 }), EMPTY),
       safe(api.contributions(), EMPTY),
       safe(api.news({ 'pagination[pageSize]': 3 }), EMPTY),
-      safe(api.representatives(), EMPTY),
-      safe(api.gallery({ 'pagination[pageSize]': 12 }), EMPTY),
+      safe(api.gallery({ 'pagination[pageSize]': 13 }), EMPTY),
     ]);
 
   const counts = summary?.data.counts ?? {
@@ -37,37 +46,53 @@ export default async function Home() {
     activitiesThisYear: activities.data.filter((a) => a.date.startsWith(String(year))).length,
     contributions: contributions.data.length,
   };
-  const acronyms = universities.data.map((u) => u.acronym ?? u.name);
-  const milestones = buildMilestones(universities.data, activities.data);
+  const heroUniversities = universities.data.map((u) => ({
+    acronym: u.acronym ?? u.name.slice(0, 4),
+    name: u.name,
+    href: `/universidades/${u.documentId}`,
+  }));
+  // Vitrina: niveles alternados y universidades distintas, para que el mazo muestre variedad
+  const byLevel = new Map<string, typeof programs.data>();
+  programs.data
+    .filter((p) => p.university)
+    .forEach((p) => byLevel.set(p.level, [...(byLevel.get(p.level) ?? []), p]));
+  const queues = [...byLevel.values()];
+  const picked: typeof programs.data = [];
+  const seenUni = new Set<string>();
+  for (let round = 0; picked.length < 6 && round < 20; round++) {
+    for (const q of queues) {
+      const p = q.find((x) => !seenUni.has(x.university!.documentId)) ?? q[0];
+      if (!p || picked.includes(p)) continue;
+      picked.push(p);
+      seenUni.add(p.university!.documentId);
+      q.splice(q.indexOf(p), 1);
+      if (picked.length >= 6) break;
+    }
+  }
+  const deck = picked.map((p) => ({
+    id: p.documentId,
+    name: p.name,
+    level: p.level,
+    modality: p.modality,
+    university: p.university?.acronym ?? p.university?.name ?? '',
+    href: `/universidades/${p.university?.documentId}`,
+  }));
 
   return (
     <>
-      <Hero year={year} universities={counts.universities} programs={counts.academicPrograms} />
+      <SectionRail items={RAIL} />
 
-      <Marquee
-        items={acronyms.length ? acronyms : ['Foro Interuniversitario de Estudios de Posgrado']}
-      />
-
-      <Section
-        id="cifras"
-        kicker="Lo que hay sobre la mesa hoy"
-        title="Nueve sillas, una mesa"
-        intro="Cuatro cifras que cada universidad actualiza desde su propio panel. No hay estimaciones: es lo publicado."
-        rhythm="tight"
-      >
-        <Stats counts={counts} year={year} />
-      </Section>
+      <Hero year={year} counts={counts} universities={heroUniversities} programs={deck} />
 
       <Section
         id="universidades"
-        kicker="Quiénes se sientan"
+        kicker="Quiénes forman el Foro"
         title="Las nueve universidades"
-        intro="En el orden en que se sientan a la mesa. Cada una conserva su identidad y su oferta; el Foro es el espacio que comparten."
+        intro="Todas participan en igualdad de condiciones. Pasa el cursor por una para verla con sus colores y entra a su perfil: oferta, representantes y contacto."
         theme="paper-2"
-        rhythm="wide"
         aside={
           <Button variant="secondary" href="/universidades">
-            Abrir los nueve perfiles
+            Ver los nueve perfiles
           </Button>
         }
       >
@@ -76,9 +101,9 @@ export default async function Home() {
 
       <Section
         id="programas"
-        kicker="Lo que se puede estudiar"
+        kicker="Qué se puede estudiar"
         title="Programas de posgrado"
-        intro="Maestrías, doctorados, especializaciones y diplomados de las nueve. Filtra por nivel y sigue bajando para recorrerlos."
+        intro="Elige un nivel, recorre las tarjetas y guarda con la estrella los que quieras comparar."
         bleed
         aside={
           <Button variant="secondary" href="/programas">
@@ -90,38 +115,18 @@ export default async function Home() {
       </Section>
 
       <Section
-        id="como-trabaja"
-        kicker="Cómo se toma una decisión"
-        title="Así trabaja la mesa"
-        theme="paper-2"
-        bleed
-      >
-        <ProcessPinned />
-      </Section>
-
-      <Section
-        id="linea-de-tiempo"
+        id="hitos"
         kicker="Lo que ya pasó y lo que viene"
         title="Hitos del Foro"
         intro="Ingresos de universidades, encuentros, seminarios y proyectos, en el orden en que ocurrieron."
+        theme="paper-2"
         aside={
           <Button variant="secondary" href="/actividades">
             Ver todas las actividades
           </Button>
         }
       >
-        <TimelinePath milestones={milestones} />
-      </Section>
-
-      <Section
-        id="aportes"
-        kicker="Lo que sale de la mesa"
-        title="Aportes del Foro"
-        intro="Resultados que ya se pueden medir, iniciativas en marcha y beneficios concretos para estudiantes y programas."
-        theme="night"
-        rhythm="wide"
-      >
-        <ContributionsSticky contributions={contributions.data} />
+        <TimelinePath milestones={buildMilestones(universities.data, activities.data)} />
       </Section>
 
       <Section
@@ -138,34 +143,48 @@ export default async function Home() {
       </Section>
 
       <Section
-        id="representantes"
-        kicker="Las personas detrás de cada silla"
-        title="Representantes"
-        intro="Quien dirige el posgrado en cada universidad. Con el cursor, la linterna revela nombre y cargo."
-        theme="paper-2"
-      >
-        <RepresentativesSpotlight reps={reps.data} />
-      </Section>
-
-      <Section
         id="galeria"
-        kicker="Lo que quedó en fotos"
+        kicker="Lo que quedó en fotos y videos"
         title="Galería"
-        rhythm="tight"
+        intro="Arrastra el carrusel, usa las flechas del teclado o haz click en la foto del centro para ampliarla; los videos se abren en un reproductor."
+        theme="paper-2"
+        bleed
         aside={
           <Button variant="secondary" href="/galeria">
             Ver toda la galería
           </Button>
         }
       >
-        <GalleryMasonry items={gallery.data} />
+        <GalleryShowcase items={gallery.data} />
+      </Section>
+
+      <Section
+        id="como-trabaja"
+        kicker="Cómo se decide"
+        title="Así trabaja el Foro"
+        intro="Tres pasos, siempre los mismos. Pulsa cualquiera o deja que avance solo; debajo está lo que ya salió de ellos."
+        bleed
+      >
+        <ProcessSteps />
+        <div className="container-x mt-16 md:mt-20">
+          <h3 className="mb-6 font-display text-[1.6rem] [font-variation-settings:'opsz'_36]">
+            Lo que ya dio resultados
+          </h3>
+          <ContributionsStrip contributions={contributions.data} />
+        </div>
       </Section>
 
       <Section
         id="contacto"
         kicker="Para universidades, prensa y quien busca un posgrado"
-        title="Escríbele a la mesa"
-        theme="night"
+        title="Escríbele al Foro"
+        theme="dusk"
+        backdrop={
+          <>
+            <div className="dusk-glow" />
+            <span className="contact-bigword">Hola</span>
+          </>
+        }
       >
         <ContactForm />
       </Section>

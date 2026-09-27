@@ -13,7 +13,7 @@ export function Prose({ markdown }: { markdown: string }) {
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-jade underline underline-offset-4"
+              className="text-sage underline underline-offset-4"
             >
               {children}
             </a>

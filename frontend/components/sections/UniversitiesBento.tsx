@@ -2,156 +2,181 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, useInView } from 'motion/react';
+import { PixelSwap } from '@/components/ui/PixelSwap';
 import { mediaUrl } from '@/lib/api';
-import { yearOf } from '@/lib/format';
-import { cn } from '@/lib/cn';
+import { excerpt, yearOf } from '@/lib/format';
 import { EASE, stagger } from '@/lib/motion';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { useQuality } from '@/lib/quality';
+import { brandOf } from '@/lib/universities';
 import type { University } from '@/lib/types';
 
 /**
- * Las nueve universidades. Bento asimétrico (la primera del orden ocupa 2×2) sin bordes: cada
- * celda es una losa de piedra más oscura que se "coloca sobre la mesa" con un barrido de
- * máscara (clip-path) y stagger irregular (scroll anim #7). En hover la losa se levanta con
- * sombra tintada de tinta, el spotlight jade sigue al cursor y la flecha entra deslizándose.
- * Patrón de React Bits `MagicBento`, reescrito sin glow morado ni partículas.
+ * Las nueve universidades en una retícula de losas iguales: ninguna silla es más grande que
+ * otra (el Foro es neutral). En reposo las losas son de piedra; al pasar el cursor o el foco se
+ * dan la vuelta por píxeles (React Bits `PixelSwap`) y muestran el reverso con el color
+ * institucional de esa universidad: un adelanto de su perfil. En modo liviano el reverso entra
+ * con un barrido de máscara en CSS en vez de los píxeles.
  */
 export function UniversitiesBento({ universities }: { universities: University[] }) {
   const ref = useRef<HTMLUListElement>(null);
-  const inView = useInView(ref, { once: true, margin: '-12% 0px' });
+  const inView = useInView(ref, { once: true, margin: '-10% 0px' });
   const reduced = useReducedMotion();
+  const lite = useQuality() !== 'full';
 
   return (
     <ul
       ref={ref}
-      className="grid auto-rows-[minmax(11rem,auto)] grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6"
+      className="grid auto-rows-[10.5rem] grid-cols-2 gap-2.5 [perspective:1600px] sm:auto-rows-[13.5rem] sm:gap-3 lg:grid-cols-3"
     >
       {universities.length === 0 && (
         <li className="col-span-full max-w-[44ch] text-fg-muted">
-          Todavía no hay universidades publicadas. Cuando el Foro cargue la primera, ocupará esta
-          silla.
+          Todavía no hay universidades publicadas. Aparecerán aquí en cuanto el Foro las cargue.
         </li>
       )}
-      {universities.map((u, i) => {
-        const big = i === 0;
-        const joined = yearOf(u.joinedForumAt);
-        const logo = mediaUrl(u.logo?.formats?.small?.url ?? u.logo?.url);
-        return (
-          <motion.li
-            key={u.documentId}
-            initial={reduced ? false : { clipPath: 'inset(0 100% 0 0)', opacity: 0.6 }}
-            animate={inView ? { clipPath: 'inset(0 0% 0 0)', opacity: 1 } : undefined}
-            transition={{ duration: 1.1, ease: EASE.premium, delay: stagger(i, 0.06) }}
-            className={cn('group relative', big && 'col-span-2 md:row-span-2')}
-            onPointerMove={(e) => {
-              const r = e.currentTarget.getBoundingClientRect();
-              e.currentTarget.style.setProperty('--mx', `${e.clientX - r.left}px`);
-              e.currentTarget.style.setProperty('--my', `${e.clientY - r.top}px`);
-            }}
-          >
-            <Link
-              href={`/universidades/${u.documentId}`}
-              data-cursor="Abrir perfil"
-              className={cn(
-                'lift hover:lift-on focus-visible:lift-on relative flex h-full flex-col justify-between overflow-hidden rounded-[4px] p-5',
-                big
-                  ? 'bg-[color-mix(in_oklab,var(--fg)_6%,var(--bg))] md:p-8'
-                  : 'bg-[color-mix(in_oklab,var(--fg)_4%,var(--bg))]'
-              )}
-            >
-              {/* Spotlight jade que sigue al cursor */}
-              <span
-                aria-hidden
-                className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-700 ease-(--ease-out-premium) group-hover:opacity-100"
-                style={{
-                  background:
-                    'radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), color-mix(in oklab, var(--color-jade) 14%, transparent), transparent 72%)',
-                }}
-              />
-              <div className="relative flex items-start justify-between gap-3">
-                <span className="mono-label text-fg-muted">{u.displayOrder}</span>
-                {joined && <span className="ui-label text-accent">desde {joined}</span>}
-              </div>
-
-              <div className="relative mt-6">
-                {logo ? (
-                  <Image
-                    src={logo}
-                    alt=""
-                    width={big ? 160 : 72}
-                    height={big ? 160 : 72}
-                    className={cn(
-                      'object-contain mix-blend-multiply',
-                      big ? 'h-24 w-auto' : 'h-10 w-auto'
-                    )}
-                  />
-                ) : (
-                  <span
-                    className={cn(
-                      'block font-display leading-none font-light tracking-[-0.03em] text-fg',
-                      big ? 'text-[clamp(3.2rem,7.5vw,6.5rem)]' : 'text-[2.1rem]'
-                    )}
-                    style={{ fontVariationSettings: "'opsz' 96, 'SOFT' 50" }}
-                  >
-                    {u.acronym ?? u.name.slice(0, 3)}
-                  </span>
-                )}
-                <p
-                  className={cn(
-                    'mt-3 leading-snug text-fg',
-                    big ? 'max-w-[26ch] text-[1.25rem]' : 'text-[0.92rem]'
-                  )}
-                >
-                  {u.name}
-                </p>
-                {big && u.shortDescription && (
-                  <p className="mt-4 hidden max-w-[44ch] text-[0.95rem] leading-relaxed text-fg-muted md:block">
-                    {u.shortDescription}
-                  </p>
-                )}
-              </div>
-
-              {/* Flecha que entra deslizándose desde la derecha */}
-              <span
-                aria-hidden
-                className="absolute right-4 bottom-4 flex items-center gap-2 text-fg-muted"
-              >
-                <span className="ui-label translate-x-2 opacity-0 transition-[transform,opacity] duration-500 ease-(--ease-snap) group-hover:translate-x-0 group-hover:opacity-100">
-                  perfil
-                </span>
-                <Arrow />
-              </span>
-            </Link>
-          </motion.li>
-        );
-      })}
+      {universities.map((u, i) => (
+        <Cell key={u.documentId} u={u} i={i} inView={inView} reduced={reduced} lite={lite} />
+      ))}
     </ul>
   );
 }
 
-function Arrow() {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      className="h-4 w-4 overflow-visible"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.4"
-      aria-hidden
+function Cell({
+  u,
+  i,
+  inView,
+  reduced,
+  lite,
+}: {
+  u: University;
+  i: number;
+  inView: boolean;
+  reduced: boolean;
+  lite: boolean;
+}) {
+  const [on, setOn] = useState(false);
+  // Si el archivo del logo no carga (seed incompleto, CDN caído), la sigla ocupa su lugar
+  const [logoBroken, setLogoBroken] = useState(false);
+  const joined = yearOf(u.joinedForumAt);
+  const logo = logoBroken ? null : mediaUrl(u.logo?.formats?.small?.url ?? u.logo?.url);
+  const b = brandOf(u.acronym);
+  const domain = u.website?.replace(/^https?:\/\/(www\.)?/, '').replace(/\/.*$/, '') ?? '';
+  const hoverTimer = useRef(0);
+  // Intención de hover: la losa solo se da la vuelta si el cursor se detiene sobre ella. Barrer
+  // el cursor por encima de todas ya no dispara nueve transiciones a la vez.
+  const enter = () => {
+    window.clearTimeout(hoverTimer.current);
+    hoverTimer.current = window.setTimeout(() => setOn(true), 120);
+  };
+  useEffect(() => () => window.clearTimeout(hoverTimer.current), []);
+  const leave = () => {
+    window.clearTimeout(hoverTimer.current);
+    setOn(false);
+  };
+
+  const front = (
+    <div className="flex h-full flex-col justify-between bg-[color-mix(in_oklab,var(--fg)_4%,var(--bg))] p-4 sm:p-6">
+      <div className="flex items-center justify-between gap-3">
+        <span className="mono-label flex items-center gap-2 text-fg-muted">
+          {/* Una sola marca de su color: identifica sin teñir la losa */}
+          <span aria-hidden className="h-2 w-2 rounded-full" style={{ background: b.primary }} />
+          {domain || 'Guatemala'}
+        </span>
+        {joined && <span className="ui-label hidden text-fg-muted sm:inline">desde {joined}</span>}
+      </div>
+      <div>
+        {logo ? (
+          <Image
+            src={logo}
+            alt=""
+            width={96}
+            height={96}
+            onError={() => setLogoBroken(true)}
+            className="h-12 w-auto object-contain mix-blend-multiply"
+          />
+        ) : (
+          <span
+            className="block font-display text-[2rem] leading-none font-light tracking-[-0.03em] text-fg sm:text-[2.6rem]"
+            style={{ fontVariationSettings: "'opsz' 96, 'SOFT' 50" }}
+          >
+            {u.acronym ?? u.name.slice(0, 3)}
+          </span>
+        )}
+        <p className="mt-2 line-clamp-2 max-w-[30ch] text-[0.82rem] leading-snug text-fg sm:text-[0.98rem]">
+          {u.name}
+        </p>
+      </div>
+    </div>
+  );
+
+  const back = (
+    <div
+      className="flex h-full flex-col justify-between p-4 sm:p-6"
+      style={{ background: b.surface, color: b.onSurface }}
     >
-      <path
-        d="M3 10h13"
-        strokeLinecap="round"
-        className="origin-left scale-x-0 transition-transform duration-500 ease-(--ease-snap) group-hover:scale-x-100"
-      />
-      <path
-        d="M11 5l5 5-5 5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="-translate-x-2 transition-transform duration-500 ease-(--ease-snap) group-hover:translate-x-0"
-      />
-    </svg>
+      <div className="flex items-center justify-between gap-3">
+        <span className="mono-label opacity-80">{u.acronym ?? domain}</span>
+        <span
+          className="ui-label hidden rounded-full px-2.5 py-0.5 sm:inline"
+          style={{ background: b.accent, color: b.onAccent }}
+        >
+          {joined ? `En el Foro desde ${joined}` : 'Perfil completo'}
+        </span>
+      </div>
+      <div>
+        <p
+          className="line-clamp-3 font-display text-[0.9rem] leading-[1.3] sm:line-clamp-4 sm:text-[1.02rem]"
+          style={{ fontVariationSettings: "'opsz' 24, 'SOFT' 40" }}
+        >
+          {u.shortDescription ? excerpt(u.shortDescription, 150) : u.name}
+        </p>
+        <span
+          className="ui-label mt-4 inline-flex items-center gap-2 border-b pb-0.5"
+          style={{ borderColor: b.accent }}
+        >
+          Abrir perfil <span aria-hidden>→</span>
+        </span>
+      </div>
+    </div>
+  );
+
+  return (
+    <motion.li
+      initial={reduced ? false : { opacity: 0, rotateX: -28, y: 36, transformOrigin: '50% 100%' }}
+      animate={inView ? { opacity: 1, rotateX: 0, y: 0 } : undefined}
+      transition={{ duration: 1, ease: EASE.premium, delay: stagger(i, 0.05) }}
+      className="group relative"
+      onPointerEnter={enter}
+      onPointerLeave={leave}
+      onFocusCapture={() => setOn(true)}
+      onBlurCapture={() => setOn(false)}
+    >
+      <Link
+        href={`/universidades/${u.documentId}`}
+        aria-label={`${u.name}: abrir perfil`}
+        className="uni-tile relative block h-full overflow-hidden rounded-[14px] border border-line/70"
+        style={{ '--u-ring': b.primary } as React.CSSProperties}
+      >
+        {lite || reduced ? (
+          <div className="relative h-full">
+            {front}
+            <div className="uni-tile__back absolute inset-0" data-on={on}>
+              {back}
+            </div>
+          </div>
+        ) : (
+          <PixelSwap
+            active={on}
+            pixelSize={42}
+            pattern={i % 2 ? 'diagonal' : 'spiral'}
+            duration={760}
+            firstContent={front}
+            secondContent={back}
+          />
+        )}
+      </Link>
+    </motion.li>
   );
 }

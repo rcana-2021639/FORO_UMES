@@ -4,7 +4,7 @@ export default function NotFound() {
   return (
     <ErrorScreen
       code="404"
-      title="Aquí no hay ninguna silla"
+      title="Esta página no existe"
       text="La página que buscas no existe o fue retirada. Revisa la dirección o vuelve a la portada."
     />
   );

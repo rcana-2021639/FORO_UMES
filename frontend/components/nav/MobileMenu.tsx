@@ -36,7 +36,7 @@ export function MobileMenu({ open, onClose, activeIndex }: Props) {
           role="dialog"
           aria-modal="true"
           aria-label="Menú"
-          className="fixed inset-0 z-[999] flex flex-col bg-ink text-paper md:hidden"
+          className="fixed inset-0 z-[999] flex flex-col bg-[linear-gradient(160deg,var(--color-violet-950),var(--color-violet-800))] text-paper md:hidden"
           initial={{ clipPath: 'circle(0% at 91% 5%)' }}
           animate={{ clipPath: 'circle(150% at 91% 5%)' }}
           exit={{ clipPath: 'circle(0% at 91% 5%)' }}
@@ -58,7 +58,7 @@ export function MobileMenu({ open, onClose, activeIndex }: Props) {
                   aria-current={i === activeIndex ? 'page' : undefined}
                   className={cn(
                     'font-display text-[2.6rem] leading-none tracking-tight',
-                    i === activeIndex ? 'italic text-jade-2' : 'text-paper'
+                    i === activeIndex ? 'italic text-violet-200' : 'text-paper'
                   )}
                   style={{ fontVariationSettings: "'opsz' 72, 'SOFT' 30" }}
                 >
@@ -72,7 +72,7 @@ export function MobileMenu({ open, onClose, activeIndex }: Props) {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.6 }}
             >
-              Nueve universidades de Guatemala, una mesa.
+              Nueve universidades de Guatemala, una sola oferta de posgrado.
             </motion.p>
           </div>
         </motion.div>

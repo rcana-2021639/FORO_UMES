@@ -10,18 +10,21 @@ function subscribe(cb: () => void) {
   return () => mq.removeEventListener('change', cb);
 }
 
+// El nivel 'still' (lib/quality.ts, p. ej. forzado con ?efectos=still) cuenta como menos movimiento
+const still = () => document.documentElement.dataset.quality === 'still';
+
 /** true si el usuario pidió menos movimiento. En SSR devuelve false. */
 export function useReducedMotion() {
   return useSyncExternalStore(
     subscribe,
-    () => window.matchMedia(QUERY).matches,
+    () => window.matchMedia(QUERY).matches || still(),
     () => false
   );
 }
 
 /** Versión sincrónica para código imperativo (GSAP, OGL) fuera de React. */
 export const prefersReducedMotion = () =>
-  typeof window !== 'undefined' && window.matchMedia(QUERY).matches;
+  typeof window !== 'undefined' && (window.matchMedia(QUERY).matches || still());
 
 /** Puntero fino = mouse/trackpad. Define si se monta el cursor custom y los efectos magnéticos. */
 export const hasFinePointer = () =>

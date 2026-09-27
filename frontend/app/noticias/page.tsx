@@ -1,9 +1,7 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
-import Image from 'next/image';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { api, mediaUrl, safe } from '@/lib/api';
-import { excerpt, formatDate } from '@/lib/format';
+import { NewsArchive } from '@/components/sections/NewsArchive';
+import { api, safe } from '@/lib/api';
 
 export const metadata: Metadata = {
   title: 'Noticias',
@@ -30,80 +28,10 @@ export default async function NoticiasPage({
       <PageHeader
         kicker="Lo último que se dijo"
         title="Archivo de noticias"
-        intro="Comunicados, convocatorias y crónicas de las actividades del Foro, de la más reciente a la más antigua."
+        intro="Comunicados, convocatorias y crónicas de las actividades del Foro, de la más reciente a la más antigua. La primera abre a lo grande; el resto, en fichas numeradas."
       />
       <div className="container-x pb-[var(--section-y)]">
-        {news.data.length ? (
-          <ul className="grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-            {news.data.map((n, i) => {
-              const cover = mediaUrl(n.coverImage?.formats?.medium?.url ?? n.coverImage?.url);
-              return (
-                <li key={n.documentId} className="group">
-                  <Link href={`/noticias/${n.documentId}`} data-cursor="Leer" className="block">
-                    <div className="relative aspect-[4/3] overflow-hidden rounded-[3px] border border-line bg-paper-2">
-                      {cover ? (
-                        <Image
-                          src={cover}
-                          alt={n.coverImage?.alternativeText ?? ''}
-                          fill
-                          sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw"
-                          className="object-cover transition-transform duration-[1.2s] ease-(--ease-out-expo) group-hover:scale-[1.04]"
-                          priority={i < 3}
-                        />
-                      ) : (
-                        <span
-                          aria-hidden
-                          className="absolute inset-0 grid place-items-center font-display text-[4rem] text-fg-muted/30"
-                          style={{ fontVariationSettings: "'opsz' 144, 'WONK' 1" }}
-                        >
-                          F
-                        </span>
-                      )}
-                    </div>
-                    <p className="mono-label mt-4 text-fg-muted">{formatDate(n.publishedAt)}</p>
-                    <h2 className="mt-2 text-[1.35rem] leading-tight text-fg transition-colors duration-300 group-hover:text-accent-jade">
-                      {n.title}
-                    </h2>
-                    {n.summary && (
-                      <p className="mt-2 text-[0.95rem] leading-relaxed text-fg-muted">
-                        {excerpt(n.summary, 140)}
-                      </p>
-                    )}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        ) : (
-          <p className="max-w-[44ch] text-fg-muted">
-            Todavía no hay noticias publicadas. La primera que salga del panel aparecerá aquí.
-          </p>
-        )}
-
-        {pageCount > 1 && (
-          <nav
-            aria-label="Paginación"
-            className="ui-label mt-16 flex items-center justify-between border-t border-line pt-6 text-fg-muted"
-          >
-            {page > 1 ? (
-              <Link href={`/noticias?pagina=${page - 1}`} className="text-fg hover:text-jade">
-                ← Más recientes
-              </Link>
-            ) : (
-              <span />
-            )}
-            <span>
-              Página {page} de {pageCount}
-            </span>
-            {page < pageCount ? (
-              <Link href={`/noticias?pagina=${page + 1}`} className="text-fg hover:text-jade">
-                Anteriores →
-              </Link>
-            ) : (
-              <span />
-            )}
-          </nav>
-        )}
+        <NewsArchive news={news.data} page={page} pageCount={pageCount} />
       </div>
     </>
   );

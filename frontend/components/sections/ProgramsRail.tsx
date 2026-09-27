@@ -1,172 +1,198 @@
 'use client';
 
-import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { gsap, ScrollTrigger } from '@/lib/gsap';
-import { prefersReducedMotion } from '@/hooks/useReducedMotion';
+import { useRouter } from 'next/navigation';
+import { useMemo, useState } from 'react';
+import { motion } from 'motion/react';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { EASE } from '@/lib/motion';
+import { DepthCarousel, type DepthItem } from '@/components/ui/DepthCarousel';
+import { PulseStar } from '@/components/ui/PulseStar';
+import { LevelTabs, countByLevel, type LevelFilter } from '@/components/ui/LevelTabs';
+import { useSavedPrograms } from '@/hooks/useSavedPrograms';
 import { LEVEL_LABEL, MODALITY_LABEL, acronymOf } from '@/lib/format';
+import { LEVEL_META } from '@/lib/levels';
 import { cn } from '@/lib/cn';
-import type { AcademicProgram, ProgramLevel } from '@/lib/types';
-
-const LEVELS: ProgramLevel[] = ['Maestria', 'Doctorado', 'Especializacion', 'Diplomado'];
+import type { AcademicProgram } from '@/lib/types';
 
 /**
- * Capítulo 03 · Programas. Scroll horizontal (scroll anim #4): la sección se fija y el scroll
- * vertical desplaza el riel de tarjetas. Bajo 768 px o con reduced-motion es un carrusel nativo
- * con scroll-snap (no se esconde nada).
+ * Capítulo 03 · Programas. Arriba, el selector de nivel a lo grande (una losa por nivel con
+ * cuántos programas hay y qué significa); abajo, el carrusel de profundidad (React Bits
+ * `DepthCarousel`) con tarjetas coloreadas por nivel: la del frente se abre al hacer click,
+ * las demás se traen al frente. Estrella de "guardar" en cada tarjeta.
  */
 export function ProgramsRail({ programs }: { programs: AcademicProgram[] }) {
-  const [level, setLevel] = useState<ProgramLevel | 'all'>('all');
-  const root = useRef<HTMLDivElement>(null);
-  const track = useRef<HTMLDivElement>(null);
+  const [level, setLevel] = useState<LevelFilter>('all');
+  const router = useRouter();
+  const { saved, has, toggle } = useSavedPrograms();
+  const reduced = useReducedMotion();
 
-  const visible = useMemo(
-    () => (level === 'all' ? programs : programs.filter((p) => p.level === level)),
-    [programs, level]
-  );
+  const counts = useMemo(() => countByLevel(programs, saved), [programs, saved]);
+  const visible = useMemo(() => {
+    if (level === 'all') return programs;
+    if (level === 'saved') return programs.filter((p) => saved.includes(p.documentId));
+    return programs.filter((p) => p.level === level);
+  }, [programs, level, saved]);
 
-  useEffect(() => {
-    const el = root.current;
-    const rail = track.current;
-    if (!el || !rail) return;
-    const mm = gsap.matchMedia();
-    mm.add('(min-width: 768px) and (prefers-reduced-motion: no-preference)', () => {
-      const distance = () => rail.scrollWidth - el.clientWidth;
-      const tween = gsap.to(rail, {
-        x: () => -distance(),
-        ease: 'none',
-        scrollTrigger: {
-          trigger: el,
-          start: 'top top+=96',
-          end: () => `+=${distance()}`,
-          pin: true,
-          scrub: 0.8,
-          invalidateOnRefresh: true,
-          anticipatePin: 1,
-        },
-      });
-      return () => tween.scrollTrigger?.kill();
-    });
-    return () => mm.revert();
-  }, [visible.length]);
+  const open = (p: AcademicProgram) => {
+    if (p.infoUrl) window.open(p.infoUrl, '_blank', 'noopener,noreferrer');
+    else if (p.university) router.push(`/universidades/${p.university.documentId}`);
+  };
 
-  useEffect(() => {
-    // Cambió el filtro: el riel cambia de ancho → recalcular
-    if (!prefersReducedMotion()) ScrollTrigger.refresh();
-  }, [visible.length]);
+  const items: DepthItem[] = visible.map((p) => ({
+    key: p.documentId,
+    label: p.name,
+    onOpen: p.infoUrl || p.university ? () => open(p) : undefined,
+    content: (
+      <ProgramCard
+        program={p}
+        saved={has(p.documentId)}
+        onToggleSave={() => toggle(p.documentId)}
+      />
+    ),
+  }));
+
+  const heading =
+    level === 'all'
+      ? 'Toda la oferta'
+      : level === 'saved'
+        ? 'Tus programas guardados'
+        : LEVEL_META[level].plural;
 
   return (
-    <div ref={root} className="relative">
-      <div
-        className="container-x mb-8 flex flex-wrap items-center gap-2"
-        role="group"
-        aria-label="Filtrar por nivel"
-      >
-        <Chip active={level === 'all'} onClick={() => setLevel('all')}>
-          Todos
-        </Chip>
-        {LEVELS.map((l) => (
-          <Chip key={l} active={level === l} onClick={() => setLevel(l)}>
-            {LEVEL_LABEL[l]}
-          </Chip>
-        ))}
-        <span className="ui-label ml-auto text-fg-muted">
-          {visible.length} programa{visible.length === 1 ? '' : 's'}
+    <div className="relative">
+      <div className="container-x">
+        <p className="ui-label mb-4 text-fg-muted">
+          Elige un nivel para ver solo esos programas. Cada color se repite en las tarjetas de
+          abajo.
+        </p>
+        <LevelTabs value={level} onChange={setLevel} counts={counts} />
+      </div>
+
+      <div className="container-x mt-10 flex flex-wrap items-baseline justify-between gap-2">
+        <h3
+          className="text-[1.6rem] text-fg"
+          style={{ fontVariationSettings: "'opsz' 48, 'SOFT' 30" }}
+        >
+          {heading}
+        </h3>
+        <span className="ui-label text-fg-muted" aria-live="polite">
+          {visible.length} programa{visible.length === 1 ? '' : 's'} · arrastra o usa las flechas
         </span>
       </div>
 
-      <div
-        ref={track}
-        data-cursor="Desliza"
-        className={cn(
-          'flex gap-4 px-[var(--gutter)] will-change-transform',
-          'max-md:snap-x max-md:snap-mandatory max-md:overflow-x-auto max-md:pb-6 max-md:[scrollbar-width:none]',
-          'md:w-max md:pr-[40vw]'
-        )}
-      >
-        {visible.map((p) => (
-          <ProgramCard key={p.documentId} program={p} />
-        ))}
-        {visible.length === 0 && (
-          <p className="max-w-[40ch] text-fg-muted">
-            Ningún programa de este nivel está publicado todavía. Prueba otro nivel o vuelve al
-            catálogo completo.
-          </p>
-        )}
-      </div>
+      {items.length ? (
+        // El carrusel entra abriéndose en perspectiva, y vuelve a hacerlo al cambiar de nivel
+        <motion.div
+          key={level}
+          className="[perspective:1600px]"
+          initial={reduced ? false : { opacity: 0, x: 90, rotateY: -22, scale: 0.88 }}
+          whileInView={{ opacity: 1, x: 0, rotateY: 0, scale: 1 }}
+          viewport={{ once: true, margin: '-10% 0px' }}
+          transition={{ duration: 1.2, ease: EASE.premium }}
+        >
+          <DepthCarousel
+            items={items}
+            ariaLabel="Programas de posgrado"
+            cardWidth={400}
+            cardHeight={500}
+            depth={240}
+            spread={150}
+            tilt={18}
+            visibleCards={5}
+            falloff={0.2}
+            blur={3}
+          />
+        </motion.div>
+      ) : (
+        <p className="container-x mt-8 max-w-[44ch] text-fg-muted">
+          {level === 'saved'
+            ? 'No has guardado programas todavía. Marca la estrella en una tarjeta para tenerla aquí.'
+            : 'Ningún programa de este nivel está publicado todavía. Prueba otro nivel o vuelve al catálogo completo.'}
+        </p>
+      )}
+      <p className="ui-label container-x mt-2 text-center text-fg-muted">
+        Click en la tarjeta del frente para abrir la ficha oficial o el perfil de la universidad
+      </p>
     </div>
   );
 }
 
-function Chip({
-  active,
-  onClick,
-  children,
+function ProgramCard({
+  program: p,
+  saved,
+  onToggleSave,
 }: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
+  program: AcademicProgram;
+  saved: boolean;
+  onToggleSave: () => void;
 }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={cn(
-        'ui-label relative isolate overflow-hidden rounded-full border px-3.5 py-1.5 transition-[color,border-color] duration-300 ease-(--ease-snap)',
-        'before:absolute before:inset-0 before:-z-10 before:origin-left before:scale-x-0 before:bg-fg before:transition-transform before:duration-500 before:ease-(--ease-snap) hover:before:scale-x-100 hover:text-bg',
-        active
-          ? 'border-fg bg-fg text-bg before:scale-x-100'
-          : 'border-line text-fg hover:border-fg'
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
-function ProgramCard({ program: p }: { program: AcademicProgram }) {
+  const meta = LEVEL_META[p.level];
   return (
     <article
-      className={cn(
-        'group relative flex w-[78vw] shrink-0 snap-start flex-col justify-between border-t border-fg/70 pt-5 pb-2 sm:w-[22rem] md:w-[24rem]',
-        'lift hover:lift-on hover:bg-[color-mix(in_oklab,var(--fg)_4%,var(--bg))] hover:px-4 rounded-[4px]'
-      )}
+      className="relative flex h-full flex-col justify-between overflow-hidden p-7 text-paper md:p-8"
+      style={{
+        background: `linear-gradient(160deg, ${meta.color}, color-mix(in oklab, ${meta.color} 55%, var(--color-ink)))`,
+      }}
     >
-      <div className="flex items-start justify-between">
-        <span className="ui-label text-fg-muted">{acronymOf(p.university)}</span>
-        <span
-          className={cn(
-            'ui-label rounded-full px-2.5 py-0.5',
-            p.level === 'Doctorado' ? 'bg-fg text-bg' : 'border border-line text-fg'
+      {/* Grano y luz para que la losa no sea un color plano */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(255,255,255,0.22),transparent_55%)]"
+      />
+      {/* Marca de agua: la inicial del nivel al fondo */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -right-4 -bottom-10 font-display text-[11rem] leading-none font-light tracking-[-0.06em] text-paper/10 select-none"
+        style={{ fontVariationSettings: "'opsz' 144, 'SOFT' 80" }}
+      >
+        {meta.glyph}
+      </span>
+
+      <div className="relative flex items-start justify-between gap-3">
+        <div>
+          <span className="ui-label inline-block rounded-full bg-paper/20 px-2.5 py-0.5">
+            {LEVEL_LABEL[p.level]}
+          </span>
+          <span className="mono-label mt-2 block text-paper/70">{acronymOf(p.university)}</span>
+        </div>
+        <PulseStar
+          active={saved}
+          onToggle={onToggleSave}
+          label={saved ? 'Quitar de guardados' : 'Guardar programa'}
+          size={34}
+          className="border-paper/30 text-paper/85 hover:border-clay hover:text-clay"
+        />
+      </div>
+
+      <h3
+        className="relative mt-8 text-[1.85rem] leading-[1.06] text-paper"
+        style={{ fontVariationSettings: "'opsz' 48, 'SOFT' 30" }}
+      >
+        {p.name}
+      </h3>
+
+      <div className="relative mt-auto">
+        <dl className="ui-label flex flex-wrap gap-x-4 gap-y-1 text-paper/80">
+          <div>
+            <dt className="sr-only">Modalidad</dt>
+            <dd>{MODALITY_LABEL[p.modality]}</dd>
+          </div>
+          {p.duration && (
+            <div>
+              <dt className="sr-only">Duración</dt>
+              <dd>{p.duration}</dd>
+            </div>
           )}
+        </dl>
+        <span
+          className={cn('mt-5 flex items-center justify-between border-t border-paper/25 pt-4')}
         >
-          {LEVEL_LABEL[p.level]}
+          <span className="ui-label">{p.infoUrl ? 'Ficha oficial' : 'Ir a la universidad'}</span>
+          <span className="font-display text-[1.3rem] leading-none" aria-hidden>
+            {p.infoUrl ? '↗' : '→'}
+          </span>
         </span>
       </div>
-      <h3 className="mt-10 text-[1.35rem] leading-tight text-fg">{p.name}</h3>
-      <dl className="ui-label mt-6 flex flex-wrap gap-x-4 gap-y-1 text-fg-muted">
-        <div>
-          <dt className="sr-only">Modalidad</dt>
-          <dd>{MODALITY_LABEL[p.modality]}</dd>
-        </div>
-        {p.duration && (
-          <div>
-            <dt className="sr-only">Duración</dt>
-            <dd>{p.duration}</dd>
-          </div>
-        )}
-      </dl>
-      {(p.infoUrl || p.university) && (
-        <Link
-          href={p.infoUrl ?? `/universidades/${p.university?.documentId}`}
-          target={p.infoUrl ? '_blank' : undefined}
-          rel={p.infoUrl ? 'noopener noreferrer' : undefined}
-          className="ui-label mt-6 inline-flex items-center gap-2 text-accent-jade underline decoration-transparent underline-offset-4 transition-[text-decoration-color] duration-300 hover:decoration-current"
-        >
-          {p.infoUrl ? 'Ficha oficial del programa ↗' : 'Ir a la universidad →'}
-        </Link>
-      )}
     </article>
   );
 }

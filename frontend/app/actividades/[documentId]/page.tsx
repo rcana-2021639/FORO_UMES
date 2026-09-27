@@ -43,7 +43,7 @@ export default async function ActividadPage({ params }: Params) {
               <Link
                 key={u.documentId}
                 href={`/universidades/${u.documentId}`}
-                className="ml-3 text-accent-jade underline decoration-transparent underline-offset-4 transition-[text-decoration-color] duration-300 hover:decoration-current"
+                className="ml-3 text-accent-sage underline decoration-transparent underline-offset-4 transition-[text-decoration-color] duration-300 hover:decoration-current"
               >
                 {acronymOf(u)}
               </Link>

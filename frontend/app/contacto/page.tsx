@@ -10,12 +10,20 @@ export const metadata: Metadata = {
 
 export default function ContactoPage() {
   return (
-    <section data-section-theme="night" className="min-h-svh text-fg">
+    <section
+      data-section-theme="dusk"
+      data-fx-root
+      className="section-dark section-dark--dusk section-dark--solid relative isolate min-h-svh text-fg"
+    >
+      <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+        <div className="dusk-glow" />
+        <span className="contact-bigword">Hola</span>
+      </div>
       <PageHeader
         kicker="Para universidades, prensa y quien busca un posgrado"
-        title="Escríbele a la mesa"
+        title="Escríbele al Foro"
       />
-      <div className="container-x pb-[var(--section-y)]">
+      <div className="container-x relative z-10 pb-[var(--section-y)]">
         <ContactForm />
       </div>
     </section>

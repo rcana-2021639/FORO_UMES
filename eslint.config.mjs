@@ -15,6 +15,9 @@ export default tseslint.config(
       'public/**',
       'coverage/**',
       'frontend/**',
+      // Worktrees de otras herramientas anidados en el repo (p. ej. Kilo Code): tienen su
+      // propio tsconfig y confunden la detección de raíz de typescript-eslint
+      '.kilo/**',
     ],
   },
   js.configs.recommended,

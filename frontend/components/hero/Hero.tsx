@@ -1,174 +1,225 @@
 'use client';
 
-import dynamic from 'next/dynamic';
-import { useEffect, useRef } from 'react';
-import { AuroraLayer } from './AuroraLayer';
-import { Button } from '@/components/ui/Button';
+import Link from 'next/link';
+import { useEffect, useRef, useState } from 'react';
+import { ProgramDeck, type DeckProgram } from './ProgramDeck';
+import { RollingNumber } from '@/components/ui/RollingNumber';
 import { useSplitReveal } from '@/hooks/useSplitReveal';
-import { gsap, ScrollTrigger } from '@/lib/gsap';
-import { prefersReducedMotion } from '@/hooks/useReducedMotion';
-import { useFinePointer } from '@/hooks/useReducedMotion';
+import { gsap } from '@/lib/gsap';
+import { getQuality } from '@/lib/quality';
 
-const Constellation = dynamic(() => import('./Constellation'), {
-  ssr: false,
-  loading: () => <ConstellationFallback />,
-});
+export interface HeroUniversity {
+  acronym: string;
+  name: string;
+  href: string;
+}
 
 interface Props {
   year: number;
-  universities: number;
-  programs: number;
+  counts: {
+    universities: number;
+    academicPrograms: number;
+    activitiesThisYear: number;
+    contributions: number;
+  };
+  universities: HeroUniversity[];
+  programs: DeckProgram[];
 }
 
-/**
- * Portada del "acta" (DESIGN_NOTES §7, capítulo 00).
- * Capas con parallax a velocidades distintas (scroll anim #1): aurora 0.2× · polvo/constelación
- * 1.3× · título 1× · cabecera mono 0.6×. Título con SplitText por caracteres (scroll anim #3).
- */
-export function Hero({ year, universities, programs }: Props) {
-  const root = useRef<HTMLElement>(null);
-  const aurora = useRef<HTMLDivElement>(null);
-  const scene = useRef<HTMLDivElement>(null);
-  const head = useRef<HTMLDivElement>(null);
-  const body = useRef<HTMLDivElement>(null);
-  const fine = useFinePointer();
+/** Los tres motivos por los que alguien llega al sitio. Es lo primero que hay que poder elegir. */
+const PATHS = [
+  {
+    n: '01',
+    title: 'Busco un posgrado',
+    text: 'Maestrías, doctorados, especializaciones y diplomados de las nueve.',
+    href: '/programas',
+  },
+  {
+    n: '02',
+    title: 'Quiero conocer una universidad',
+    text: 'Su perfil, quién la representa y qué ofrece.',
+    href: '#universidades',
+  },
+  {
+    n: '03',
+    title: 'Quiero escribirle al Foro',
+    text: 'Universidades, prensa o estudiantes: la secretaría responde.',
+    href: '#contacto',
+  },
+] as const;
 
-  const title = useSplitReveal<HTMLHeadingElement>({ type: 'chars', immediate: true, delay: 0.2 });
-  const lead = useSplitReveal<HTMLParagraphElement>({ type: 'lines', immediate: true, delay: 0.9 });
+/**
+ * Portada. Campo de luz violeta propio (orbes que derivan, retícula de puntos), el nombre del
+ * Foro con "Posgrado" en degradado, y a la derecha una vitrina de programas reales que se baraja
+ * sola. Debajo: tres caminos, cuatro cifras y una cinta con las nueve universidades.
+ */
+export function Hero({ year, counts, universities, programs }: Props) {
+  const root = useRef<HTMLElement>(null);
+  const deck = useRef<HTMLDivElement>(null);
+  const title = useSplitReveal<HTMLHeadingElement>({ type: 'words', immediate: true, delay: 0.1 });
 
   useEffect(() => {
-    if (prefersReducedMotion() || !root.current) return;
+    const q = getQuality();
+    if (q === 'still' || !root.current) return;
     const ctx = gsap.context(() => {
-      const st = {
-        trigger: root.current,
-        start: 'top top',
-        end: 'bottom top',
-        scrub: 0.6,
-      } satisfies ScrollTrigger.Vars;
-      gsap.to(aurora.current, { yPercent: 20, ease: 'none', scrollTrigger: st });
-      gsap.to(scene.current, { yPercent: -30, scale: 1.08, ease: 'none', scrollTrigger: st });
-      gsap.to(head.current, { yPercent: 60, autoAlpha: 0, ease: 'none', scrollTrigger: st });
-      gsap.to(body.current, { yPercent: 12, ease: 'none', scrollTrigger: st });
+      gsap.from('[data-hero-in]', {
+        y: 26,
+        autoAlpha: 0,
+        duration: 1,
+        ease: 'expo.out',
+        stagger: 0.07,
+        delay: 0.45,
+      });
+      gsap.from(deck.current, {
+        y: 60,
+        rotate: 6,
+        autoAlpha: 0,
+        duration: 1.4,
+        ease: 'expo.out',
+        delay: 0.35,
+      });
+      if (q === 'full') {
+        gsap.to('[data-hero-orb]', {
+          yPercent: (i) => [-18, 12, -8][i] ?? 0,
+          ease: 'none',
+          scrollTrigger: { trigger: root.current, start: 'top top', end: 'bottom top', scrub: 0.6 },
+        });
+      }
     }, root);
     return () => ctx.revert();
   }, []);
 
+  const stats = [
+    { value: counts.universities, label: 'universidades' },
+    { value: counts.academicPrograms, label: 'programas de posgrado' },
+    { value: counts.activitiesThisYear, label: `actividades en ${year}` },
+    { value: counts.contributions, label: 'aportes publicados' },
+  ];
+  const ribbon = universities.length
+    ? universities
+    : [{ acronym: 'Foro', name: 'Foro Interuniversitario', href: '/' }];
+
   return (
     <section
       ref={root}
-      className="relative isolate min-h-[100svh] overflow-clip"
+      id="inicio"
+      data-section-theme="paper"
+      className="hero-field relative isolate overflow-clip pt-28 md:pt-32"
       aria-labelledby="hero-title"
     >
-      {/* Capa 1 · aurora (0.2×) en multiply para que se lea como acuarela sobre papel */}
-      <div
-        ref={aurora}
-        className="absolute inset-x-0 -top-[10%] -z-30 h-[120%] mix-blend-multiply opacity-55 will-change-transform"
-      >
-        <AuroraLayer />
-      </div>
-      {/* Grano de papel */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-20 opacity-[0.07] [filter:url(#grain-filter)]"
-      />
-      {/* Capa 2 · constelación 3D (1.3×) */}
-      <div
-        ref={scene}
-        className="absolute top-20 right-0 -z-10 h-[52svh] w-full opacity-80 will-change-transform md:inset-y-0 md:h-auto md:w-[58%] md:opacity-100"
-        data-cursor-hide
-      >
-        <Constellation mobile={!fine} />
+      {/* Campo de luz: tres orbes que derivan despacio (transform, sin filtros) */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <span data-hero-orb className="hero-orb hero-orb--a" />
+        <span data-hero-orb className="hero-orb hero-orb--b" />
+        <span data-hero-orb className="hero-orb hero-orb--c" />
+        <span className="hero-dots" />
       </div>
 
-      <div className="container-x relative flex min-h-[100svh] flex-col justify-between pt-28 pb-10">
-        {/* Línea de apertura (0.6×): una frase, no una etiqueta */}
-        <div ref={head} className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2">
-          <p className="eyebrow text-fg-muted">
-            Guatemala, {year}. Nueve universidades en la misma mesa.
+      <div className="container-x grid gap-12 lg:grid-cols-12 lg:items-center lg:gap-x-10">
+        <div className="lg:col-span-7">
+          <p data-hero-in className="hero-pill">
+            <span className="hero-pill__live" aria-hidden />
+            Guatemala, {year} · {counts.universities} universidades, una sola oferta de posgrado
           </p>
-          <p className="mono-label text-fg-muted">
-            {universities} universidades, {programs} programas de posgrado
-          </p>
-        </div>
-
-        <div ref={body} className="mt-14 md:mt-0">
-          <h1 id="hero-title" ref={title} className="max-w-[12ch] text-fg">
-            Foro Interuniversitario de Estudios de Posgrado
+          <h1
+            id="hero-title"
+            ref={title}
+            className="mt-6 max-w-[13ch] text-[clamp(2.7rem,6.6vw,6.4rem)] leading-[0.96] text-fg"
+          >
+            Foro Interuniversitario de Estudios de{' '}
+            <span className="text-violet-grad">Posgrado</span>
           </h1>
-          <div className="mt-10 grid gap-8 md:grid-cols-12 md:items-end">
-            <p
-              ref={lead}
-              className="max-w-[38ch] text-[1.1rem] leading-relaxed text-fg-muted md:col-span-6"
-            >
-              Las direcciones de posgrado de nueve universidades guatemaltecas coordinan aquí
-              criterios, actividades y proyectos. Esta es su mesa pública: lo que estudian, lo que
-              acuerdan y lo que ya cambió.
-            </p>
-            <div className="flex flex-wrap items-center gap-4 md:col-span-6 md:justify-end">
-              <Button href="/programas">Ver los programas de posgrado</Button>
-              <Button variant="ghost" href="#universidades">
-                Conocer a las nueve
-              </Button>
-            </div>
+          <p
+            data-hero-in
+            className="mt-6 max-w-[46ch] text-[1.14rem] leading-relaxed text-fg-muted"
+          >
+            Las direcciones de posgrado de nueve universidades de Guatemala coordinan aquí su
+            oferta, sus actividades y sus proyectos.
+          </p>
+          <div data-hero-in className="mt-8 flex flex-wrap items-center gap-3">
+            <Link href="/programas" className="cta-violet">
+              Explorar programas <span aria-hidden>→</span>
+            </Link>
+            <Link href="#universidades" className="cta-ghost">
+              Conocer las universidades
+            </Link>
           </div>
         </div>
+
+        <div ref={deck} className="lg:col-span-5">
+          <ProgramDeck programs={programs} total={counts.academicPrograms} />
+        </div>
+
+        {/* Tres caminos: la decisión principal de la portada */}
+        <ol className="grid gap-3 md:grid-cols-3 lg:col-span-12" aria-label="Por dónde empezar">
+          {PATHS.map((p) => (
+            <li key={p.n} data-hero-in>
+              <Link href={p.href} className="path-card group">
+                <span className="path-card__n" aria-hidden>
+                  {p.n}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-display text-[1.3rem] leading-tight text-fg [font-variation-settings:'opsz'_36,'SOFT'_40]">
+                    {p.title}
+                  </span>
+                  <span className="ui-label mt-1.5 block text-fg-muted">{p.text}</span>
+                </span>
+                <span className="path-card__arrow" aria-hidden>
+                  →
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ol>
+
+        {/* Cifras: odómetro, regla que se dibuja y destello al llegar */}
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-4 lg:col-span-12">
+          {stats.map((s, i) => (
+            <HeroStat key={s.label} value={s.value} label={s.label} index={i} />
+          ))}
+        </dl>
       </div>
+
+      {/* Cinta con las nueve universidades: movimiento continuo, pausa al pasar el cursor */}
+      <nav aria-label="Universidades del Foro" className="uni-ribbon mt-16 md:mt-20">
+        <div className="uni-ribbon__track">
+          {[0, 1].map((copy) => (
+            <ul key={copy} className="uni-ribbon__list" aria-hidden={copy === 1}>
+              {ribbon.map((u) => (
+                <li key={`${copy}-${u.href}`}>
+                  <Link href={u.href} tabIndex={copy === 1 ? -1 : 0} className="uni-ribbon__item">
+                    <span className="font-display text-[1.35rem] [font-variation-settings:'opsz'_36]">
+                      {u.acronym}
+                    </span>
+                    <span className="ui-label opacity-75">{u.name}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ))}
+        </div>
+      </nav>
     </section>
   );
 }
 
-/** Fallback estático (SSR, carga y reduced-motion): la misma figura como SVG plano. */
-function ConstellationFallback() {
-  const pts = [
-    [50, 50],
-    [70, 38],
-    [30, 36],
-    [65, 68],
-    [34, 64],
-    [54, 22],
-    [45, 78],
-    [80, 54],
-    [22, 50],
-  ];
-  const edges = [
-    [0, 1],
-    [0, 2],
-    [0, 3],
-    [0, 4],
-    [0, 5],
-    [0, 6],
-    [1, 5],
-    [1, 7],
-    [2, 5],
-    [2, 8],
-    [3, 6],
-    [3, 7],
-    [4, 6],
-    [4, 8],
-  ];
+function HeroStat({ value, label, index }: { value: number; label: string; index: number }) {
+  const [landed, setLanded] = useState(false);
+  // Cada cifra arranca un poco después de la anterior; la primera espera a que entre el título
+  const delay = 0.9 + index * 0.22;
   return (
-    <svg viewBox="0 0 100 100" className="h-full w-full opacity-60" aria-hidden>
-      {edges.map(([a, b]) => (
-        <line
-          key={`${a}${b}`}
-          x1={pts[a][0]}
-          y1={pts[a][1]}
-          x2={pts[b][0]}
-          y2={pts[b][1]}
-          stroke="#101511"
-          strokeWidth="0.25"
-          opacity="0.5"
-        />
-      ))}
-      {pts.map(([x, y], i) => (
-        <circle
-          key={i}
-          cx={x}
-          cy={y}
-          r={i === 0 ? 1.6 : 0.9}
-          fill={i === 0 ? '#d9a93a' : '#101511'}
-        />
-      ))}
-    </svg>
+    <div className="hero-stat" data-landed={landed} style={{ '--i': index } as React.CSSProperties}>
+      <span aria-hidden className="hero-stat__rule" />
+      <dt className="sr-only">{label}</dt>
+      <dd>
+        <span className="hero-stat__num text-violet-grad block font-display text-[clamp(2.4rem,4vw,3.6rem)] leading-none [font-variation-settings:'opsz'_96,'SOFT'_50]">
+          <span aria-hidden className="hero-stat__flash" />
+          <RollingNumber value={value} delay={delay} onLand={() => setLanded(true)} />
+        </span>
+        <span aria-hidden className="hero-stat__label ui-label mt-2 block text-fg-muted">
+          <span>{label}</span>
+        </span>
+      </dd>
+    </div>
   );
 }

@@ -2,117 +2,111 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useRef, useState } from 'react';
-import { motion, useMotionValueEvent, useScroll, useSpring } from 'motion/react';
-import { GooeyIndicator } from './GooeyIndicator';
+import { useState } from 'react';
+import { motion, useMotionValueEvent, useScroll } from 'motion/react';
+import { getLenis } from '@/components/providers/SmoothScroll';
 import { MobileMenu } from './MobileMenu';
-import { Magnetic } from '@/components/ui/Magnetic';
 import { cn } from '@/lib/cn';
 import { NAV_ITEMS } from '@/lib/nav';
 
-const SPRING = { type: 'spring', stiffness: 260, damping: 28, mass: 0.8 } as const;
+/** Muelle firme y sin rebote: el indicador llega rápido y se asienta sin temblar. */
+const SLIDE = { type: 'spring', stiffness: 520, damping: 42, mass: 0.7 } as const;
 
 /**
- * Navbar (DESIGN_NOTES §8): pill flotante de cristal arriba → barra completa al hacer scroll
- * (Motion `layout`), indicador gooey con spring, links magnéticos, menú móvil de página completa
- * y línea de progreso de lectura.
+ * Navbar: barra de cristal flotante que no cambia de forma al hacer scroll (solo gana cuerpo y
+ * sombra). Al pasar el cursor, una píldora lavanda se desliza de enlace en enlace; la página
+ * actual se marca con texto violeta y una barrita en degradado que también se desliza al
+ * cambiar de ruta. Sin filtros gooey, partículas ni efecto magnético.
  */
 export function Navbar() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [hover, setHover] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
-  const listRef = useRef<HTMLUListElement>(null);
 
-  const { scrollY, scrollYProgress } = useScroll();
-  const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 30, restDelta: 0.001 });
-  useMotionValueEvent(scrollY, 'change', (v) => setScrolled(v > 80));
+  const { scrollY } = useScroll();
+  useMotionValueEvent(scrollY, 'change', (v) => setScrolled(v > 24));
+
+  // Ya en la portada, "Inicio" y el monograma suben al principio en vez de no hacer nada
+  const goTop = (e: React.MouseEvent, href: string) => {
+    if (href !== '/' || pathname !== '/') return;
+    e.preventDefault();
+    const lenis = getLenis();
+    if (lenis) lenis.scrollTo(0, { duration: 1.2 });
+    else window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const activeIndex = NAV_ITEMS.findIndex((i) =>
     i.href === '/' ? pathname === '/' : pathname.startsWith(i.href)
   );
-  const target = hover ?? activeIndex;
 
   return (
     <>
       <a
         href="#contenido"
-        className="ui-label fixed top-2 left-2 z-[10001] -translate-y-20 bg-ink px-3 py-2 text-paper transition-transform focus:translate-y-0"
+        className="ui-label fixed top-2 left-2 z-[10001] -translate-y-20 rounded-full bg-violet-800 px-4 py-2 text-paper transition-transform focus:translate-y-0"
       >
         Saltar al contenido
       </a>
 
-      <motion.header
-        layout
-        transition={SPRING}
-        className={cn(
-          'fixed z-[1000] flex items-center justify-between border backdrop-blur-xl',
-          'bg-[color-mix(in_oklab,var(--bg)_72%,transparent)] supports-[not(backdrop-filter:blur(1px))]:bg-bg',
-          scrolled
-            ? 'inset-x-0 top-0 rounded-none border-x-0 border-t-0 border-b-line px-[var(--gutter)] py-3'
-            : 'inset-x-3 top-3 rounded-full border-transparent px-4 py-2 md:inset-x-auto md:left-1/2 md:w-[min(64rem,calc(100%-2rem))] md:-translate-x-1/2'
-        )}
-        style={
-          scrolled
-            ? undefined
-            : {
-                // Borde de 1 px con gradiente jade→ámbar (glass), sin caja de sombra genérica
-                backgroundImage:
-                  'linear-gradient(color-mix(in oklab,var(--bg) 72%,transparent),color-mix(in oklab,var(--bg) 72%,transparent)),linear-gradient(100deg,color-mix(in oklab,var(--color-jade) 35%,transparent),color-mix(in oklab,var(--color-amber) 35%,transparent))',
-                backgroundOrigin: 'border-box',
-                backgroundClip: 'padding-box, border-box',
-              }
-        }
-      >
-        <motion.div layout="position" className="flex items-center gap-3">
-          <Link href="/" className="flex items-center gap-3">
-            <Monogram />
-            <span className="sr-only">Foro de Posgrado, inicio</span>
-            <span
-              aria-hidden
-              className="hidden font-display text-[1.05rem] leading-none tracking-tight lg:block"
-            >
+      <header className="nav-shell" data-scrolled={scrolled}>
+        <div className="nav-bar">
+          <Link
+            href="/"
+            onClick={(e) => goTop(e, '/')}
+            className="nav-brand"
+            aria-label="Foro de Posgrado, inicio"
+          >
+            <span className="nav-brand__mark" aria-hidden>
+              F
+            </span>
+            <span aria-hidden className="hidden lg:block">
               Foro de Posgrado
             </span>
           </Link>
-        </motion.div>
 
-        <motion.nav layout="position" aria-label="Principal" className="hidden md:block">
-          <div className="relative">
-            <GooeyIndicator container={listRef} activeIndex={activeIndex} hoverIndex={hover} />
-            <ul
-              ref={listRef}
-              className="relative z-10 flex items-center gap-1"
-              onPointerLeave={() => setHover(null)}
-            >
-              {NAV_ITEMS.map((item, i) => (
-                <Magnetic as="li" key={item.href} radius={28} strength={0.22}>
-                  <Link
-                    href={item.href}
-                    aria-current={i === activeIndex ? 'page' : undefined}
-                    onPointerEnter={() => setHover(i)}
-                    onFocus={() => setHover(i)}
-                    onBlur={() => setHover(null)}
-                    className={cn(
-                      'ui-label block rounded-full px-3.5 py-2 transition-colors duration-300',
-                      i === target ? 'text-paper delay-75' : 'text-fg hover:text-jade'
+          <nav aria-label="Principal" className="hidden md:block">
+            <ul className="flex items-center" onPointerLeave={() => setHover(null)}>
+              {NAV_ITEMS.map((item, i) => {
+                const active = i === activeIndex;
+                return (
+                  <li key={item.href} className="relative">
+                    {hover === i && (
+                      <motion.span
+                        layoutId="nav-hover"
+                        className="nav-hover"
+                        transition={SLIDE}
+                        aria-hidden
+                      />
                     )}
-                  >
-                    {item.label}
-                  </Link>
-                </Magnetic>
-              ))}
+                    <Link
+                      href={item.href}
+                      aria-current={active ? 'page' : undefined}
+                      onPointerEnter={() => setHover(i)}
+                      onFocus={() => setHover(i)}
+                      onBlur={() => setHover(null)}
+                      onClick={(e) => goTop(e, item.href)}
+                      className={cn('nav-link', active && 'is-active')}
+                    >
+                      {item.label}
+                    </Link>
+                    {active && (
+                      <motion.span
+                        layoutId="nav-active"
+                        className="nav-active"
+                        transition={SLIDE}
+                        aria-hidden
+                      />
+                    )}
+                  </li>
+                );
+              })}
             </ul>
-          </div>
-        </motion.nav>
+          </nav>
 
-        <motion.div layout="position" className="flex items-center gap-2">
-          <span className="eyebrow hidden text-[0.95rem] text-fg-muted xl:block">
-            Nueve universidades, una mesa
-          </span>
           <button
             type="button"
-            className="relative flex h-10 w-10 items-center justify-center rounded-full border border-line md:hidden"
+            className="nav-burger md:hidden"
             aria-expanded={open}
             aria-controls="menu-movil"
             aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
@@ -121,33 +115,11 @@ export function Navbar() {
           >
             <Burger open={open} />
           </button>
-        </motion.div>
-
-        {/* Progreso de lectura (Rare UI "Scroll Progress Indicator", reimplementado con Motion) */}
-        <motion.span
-          aria-hidden
-          className={cn(
-            'absolute bottom-0 left-0 h-[2px] w-full origin-left bg-amber transition-opacity duration-500',
-            scrolled ? 'opacity-100' : 'opacity-0'
-          )}
-          style={{ scaleX: progress }}
-        />
-      </motion.header>
+        </div>
+      </header>
 
       <MobileMenu open={open} onClose={() => setOpen(false)} activeIndex={activeIndex} />
     </>
-  );
-}
-
-function Monogram() {
-  return (
-    <span
-      aria-hidden
-      className="grid h-9 w-9 place-items-center rounded-full border border-fg font-display text-[1.1rem] leading-none"
-      style={{ fontVariationSettings: "'opsz' 20, 'WONK' 1" }}
-    >
-      F
-    </span>
   );
 }
 
@@ -155,12 +127,12 @@ function Burger({ open }: { open: boolean }) {
   return (
     <span className="relative block h-3 w-4" aria-hidden>
       <motion.span
-        className="absolute left-0 h-px w-full bg-fg"
+        className="absolute left-0 h-[1.5px] w-full rounded-full bg-current"
         animate={{ top: open ? 6 : 0, rotate: open ? 45 : 0 }}
         transition={{ type: 'spring', stiffness: 400, damping: 30 }}
       />
       <motion.span
-        className="absolute left-0 h-px w-full bg-fg"
+        className="absolute left-0 h-[1.5px] w-full rounded-full bg-current"
         animate={{ top: open ? 6 : 12, rotate: open ? -45 : 0 }}
         transition={{ type: 'spring', stiffness: 400, damping: 30 }}
       />

@@ -15,7 +15,7 @@ export function Footer() {
             className="mt-3 max-w-md font-display text-[1.6rem] leading-tight"
             style={{ fontVariationSettings: "'opsz' 32, 'SOFT' 20" }}
           >
-            Nueve universidades, una sola mesa para el posgrado guatemalteco.
+            Nueve universidades, una sola oferta de posgrado para Guatemala.
           </p>
         </div>
         <nav aria-label="Pie de página" className="md:col-span-3">
@@ -25,7 +25,7 @@ export function Footer() {
               <li key={i.href}>
                 <Link
                   href={i.href}
-                  className="text-[0.95rem] transition-colors duration-300 hover:text-accent-jade"
+                  className="text-[0.95rem] transition-colors duration-300 hover:text-accent-sage"
                 >
                   {i.label}
                 </Link>

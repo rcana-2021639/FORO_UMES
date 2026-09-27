@@ -21,7 +21,7 @@ interface Options {
 /**
  * Reveal de texto por caracteres/palabras/líneas con GSAP SplitText (scroll anim #3).
  * Cada unidad sube desde abajo con máscara de línea (no un fade del párrafo completo).
- * Con prefers-reduced-motion hace un fade simple del elemento entero.
+ * Con prefers-reduced-motion (o nivel 'still') no anima: el texto aparece tal cual.
  */
 export function useSplitReveal<T extends HTMLElement = HTMLElement>({
   type = 'words',
@@ -37,22 +37,8 @@ export function useSplitReveal<T extends HTMLElement = HTMLElement>({
     const el = ref.current;
     if (!el) return;
 
-    if (prefersReducedMotion()) {
-      const tween = gsap.fromTo(
-        el,
-        { autoAlpha: 0 },
-        {
-          autoAlpha: 1,
-          duration: 0.6,
-          delay,
-          scrollTrigger: immediate ? undefined : { trigger: el, start },
-        }
-      );
-      return () => {
-        tween.scrollTrigger?.kill();
-        tween.kill();
-      };
-    }
+    // Menos movimiento: el texto está ahí desde el principio, sin fundido
+    if (prefersReducedMotion()) return;
 
     const perUnit = duration ?? (type === 'chars' ? 1.1 : type === 'words' ? 0.9 : 1.2);
     const gap = stagger ?? (type === 'chars' ? 0.018 : type === 'words' ? 0.04 : 0.12);

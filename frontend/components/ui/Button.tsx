@@ -4,16 +4,14 @@ import Link from 'next/link';
 import { useCallback, useRef, type ReactNode } from 'react';
 import { motion, useMotionTemplate, useMotionValue, useSpring } from 'motion/react';
 import { useMagnetic } from '@/hooks/useMagnetic';
-import { useClickSpark } from '@/hooks/useClickSpark';
-import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { cn } from '@/lib/cn';
 
 /**
  * Sistema de botones "sello líquido" (DESIGN_NOTES §9):
  * - magnético (useMagnetic), radio 60 px
- * - relleno líquido: una capa jade con el texto en papel entra desde la X del cursor
+ * - relleno líquido: una capa de luz nácar con el texto en tinta entra desde la X del cursor
  *   mediante `clip-path: circle()` + spring; el texto cambia de color en el mismo píxel
- * - chispas ámbar al click (useClickSpark)
+ * - chispas al click: ahora las pone la capa global ClickSparkLayer (color por capítulo)
  * - loading: la capa se queda dentro y oscila como marea; el texto pasa a "Enviando…" en mono
  */
 
@@ -31,7 +29,6 @@ export interface ButtonProps {
   className?: string;
   onClick?: (e: React.MouseEvent<HTMLElement>) => void;
   'aria-label'?: string;
-  'data-cursor'?: string;
 }
 
 const BASE =
@@ -47,7 +44,7 @@ const VARIANT: Record<Variant, string> = {
 };
 
 const LAYER: Record<Variant, string> = {
-  primary: 'bg-jade text-paper',
+  primary: 'btn-pearl',
   secondary: 'bg-fg text-bg',
   ghost: '',
   icon: 'bg-fg text-bg',
@@ -66,13 +63,11 @@ export function Button({
   onClick,
   ...rest
 }: ButtonProps) {
-  const reduced = useReducedMotion();
   const { ref: magnetRef } = useMagnetic<HTMLAnchorElement & HTMLButtonElement>({
     radius: variant === 'ghost' ? 24 : 60,
     strength: variant === 'ghost' ? 0.2 : 0.35,
     innerStrength: 0,
   });
-  const { canvasRef, spark, pad } = useClickSpark();
   const hovering = useRef(false);
 
   // Capa líquida: centro X (0–100 %) y radio (0–160 %) como valores de movimiento con spring
@@ -118,7 +113,6 @@ export function Button({
       e.preventDefault();
       return;
     }
-    if (!reduced) spark(e.clientX, e.clientY);
     onClick?.(e);
   };
 
@@ -140,14 +134,6 @@ export function Button({
 
   const inner = (
     <>
-      {!reduced && (
-        <canvas
-          ref={canvasRef}
-          aria-hidden
-          className="pointer-events-none absolute z-30"
-          style={{ top: -pad, left: -pad }}
-        />
-      )}
       <span className="relative z-10 inline-flex items-center gap-3">{label}</span>
       {isLiquid && (
         <motion.span

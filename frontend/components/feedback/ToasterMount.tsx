@@ -10,7 +10,7 @@ export function ToasterMount() {
       offset={24}
       theme="light"
       options={{
-        fill: '#101511',
+        fill: '#1e1830',
         roundness: 6,
         duration: 4200,
         styles: {

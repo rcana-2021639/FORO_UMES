@@ -9,6 +9,8 @@ interface Props {
   color?: string;
   /** Vida de cada celda en ms. */
   life?: number;
+  /** Filtro gooey (blur + umbral): las celdas vecinas se funden en una mancha. */
+  gooey?: boolean;
   className?: string;
 }
 
@@ -16,9 +18,10 @@ interface Props {
  * Estela de píxeles tras el cursor. Idea de React Bits `Animations/PixelTrail` (celdas de una
  * retícula que se encienden y se apagan), reimplementada en canvas 2D en vez de un segundo
  * contexto WebGL: el hero ya usa uno y no queremos dos en la misma página.
- * Solo con puntero fino; rAF activo únicamente mientras haya celdas vivas.
+ * Solo con puntero fino; rAF activo únicamente mientras haya celdas vivas. Con `gooey`, el
+ * canvas pasa por el filtro SVG suave (GooeyDefs) y las celdas se funden como tinta.
  */
-export function PixelTrail({ cell = 22, color = '#0b6b5a', life = 700, className }: Props) {
+export function PixelTrail({ cell = 22, color = '#7c5ae0', life = 700, gooey, className }: Props) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -84,6 +87,7 @@ export function PixelTrail({ cell = 22, color = '#0b6b5a', life = 700, className
       ref={ref}
       aria-hidden
       className={`pointer-events-none absolute inset-0 z-10 mix-blend-multiply ${className ?? ''}`}
+      style={gooey ? { filter: 'url(#gooey-soft)' } : undefined}
     />
   );
 }

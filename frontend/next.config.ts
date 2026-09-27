@@ -13,6 +13,10 @@ const nextConfig: NextConfig = {
         port: api.port,
       },
       { protocol: 'https', hostname: '**.railway.app' },
+      // Miniaturas de los videos de la galería (YouTube / Vimeo)
+      { protocol: 'https', hostname: 'img.youtube.com' },
+      { protocol: 'https', hostname: 'i.ytimg.com' },
+      { protocol: 'https', hostname: 'vumbnail.com' },
     ],
   },
 };

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 import type { SectionTheme } from '@/components/providers/SectionThemeObserver';
+import { FoldText } from '@/components/fx/FoldText';
 
 interface Props {
   id: string;
@@ -16,11 +17,14 @@ interface Props {
   aside?: ReactNode;
   /** Ritmo: 'tight' para capítulos cortos, 'wide' para los que necesitan aire. */
   rhythm?: 'tight' | 'normal' | 'wide';
+  /** Capa de fondo a pantalla de sección (canvas, estela…); va detrás del contenido. */
+  backdrop?: ReactNode;
 }
 
 /**
  * Capítulo de la portada. La marca de asiento (un arco) sustituye a la numeración:
- * los capítulos no son una secuencia, son sillas alrededor de la misma mesa.
+ * los capítulos no son una secuencia, son sillas alrededor de la misma mesa. El título se
+ * despliega palabra a palabra (FoldText) al entrar en pantalla.
  */
 export function Section({
   id,
@@ -33,6 +37,7 @@ export function Section({
   bleed,
   aside,
   rhythm = 'normal',
+  backdrop,
 }: Props) {
   const pad =
     rhythm === 'tight'
@@ -44,16 +49,34 @@ export function Section({
     <section
       id={id}
       data-section-theme={theme}
-      className={cn('relative text-fg', pad, className)}
+      data-fx-root
+      className={cn(
+        'relative isolate text-fg',
+        (theme === 'dusk' || theme === 'night') && 'section-dark',
+        theme === 'dusk' && 'section-dark--dusk',
+        pad,
+        className
+      )}
       aria-labelledby={`${id}-title`}
     >
-      <header className="container-x grid gap-5 md:grid-cols-12 md:gap-8">
+      {backdrop && (
+        <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+          {backdrop}
+        </div>
+      )}
+      <header className="container-x relative z-10 grid gap-5 md:grid-cols-12 md:gap-8">
         <div className="flex items-start gap-3 md:col-span-3">
           <SeatMark />
           <p className="eyebrow max-w-[18ch] text-fg-muted">{kicker}</p>
         </div>
         <div className="md:col-span-6">
-          <h2 id={`${id}-title`}>{title}</h2>
+          <h2 id={`${id}-title`}>
+            {typeof title === 'string' ? (
+              <FoldText text={title} splitBy="word" hinge="bottom" stagger={0.07} />
+            ) : (
+              title
+            )}
+          </h2>
           {intro && (
             <div className="mt-6 max-w-[50ch] text-[1.05rem] leading-relaxed text-fg-muted">
               {intro}
@@ -64,6 +87,7 @@ export function Section({
       </header>
       <div
         className={cn(
+          'relative z-10',
           rhythm === 'tight' ? 'mt-10 md:mt-14' : 'mt-14 md:mt-20',
           !bleed && 'container-x'
         )}

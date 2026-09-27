@@ -3,35 +3,67 @@
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 
-export type SectionTheme = 'paper' | 'paper-2' | 'night';
+export type SectionTheme = 'paper' | 'paper-2' | 'night' | 'dusk';
 
 const THEMES: Record<
   SectionTheme,
-  { bg: string; fg: string; muted: string; line: string; accent: string; jade: string }
+  {
+    bg: string;
+    fg: string;
+    muted: string;
+    line: string;
+    accent: string;
+    sage: string;
+    lilac: string;
+    spark: string;
+    ambient: string;
+  }
 > = {
   paper: {
     bg: 'var(--color-paper)',
     fg: 'var(--color-ink)',
     muted: 'var(--color-ink-3)',
     line: 'var(--color-line)',
-    accent: 'var(--color-amber-2)',
-    jade: 'var(--color-jade)',
+    accent: 'var(--color-clay-2)',
+    sage: 'var(--color-sage)',
+    lilac: 'var(--color-lilac)',
+    spark: 'var(--color-lilac)',
+    ambient: '1',
   },
   'paper-2': {
     bg: 'var(--color-paper-2)',
     fg: 'var(--color-ink)',
     muted: 'var(--color-ink-2)',
-    line: '#bcc5b9',
-    accent: 'var(--color-amber-2)',
-    jade: 'var(--color-jade)',
+    line: '#ddd5ee',
+    accent: 'var(--color-clay-2)',
+    sage: 'var(--color-sage)',
+    lilac: 'var(--color-lilac)',
+    spark: 'var(--color-lilac)',
+    ambient: '0.8',
   },
+  // Violeta noche: capítulos oscuros; la luz violeta pasa a ser detalle.
   night: {
     bg: 'var(--color-night)',
     fg: 'var(--color-paper)',
-    muted: '#9fb0a8',
-    line: '#22332b',
-    accent: 'var(--color-amber)',
-    jade: 'var(--color-jade-2)',
+    muted: '#b3a9cc',
+    line: '#302650',
+    accent: 'var(--color-clay)',
+    sage: 'var(--color-sage-2)',
+    lilac: 'var(--color-lilac-2)',
+    spark: 'var(--color-clay)',
+    ambient: '0.18',
+  },
+  // Violeta más profundo para el cierre (Contacto).
+  dusk: {
+    bg: 'var(--color-dusk)',
+    fg: 'var(--color-paper)',
+    muted: '#ada3c6',
+    line: '#2a2045',
+    accent: 'var(--color-clay)',
+    sage: 'var(--color-sage-2)',
+    lilac: 'var(--color-lilac-2)',
+    spark: 'var(--color-lilac-2)',
+    ambient: '0.22',
   },
 };
 
@@ -43,7 +75,10 @@ export function applyTheme(theme: SectionTheme) {
   s.setProperty('--fg-muted', t.muted);
   s.setProperty('--line', t.line);
   s.setProperty('--accent', t.accent);
-  s.setProperty('--accent-jade', t.jade);
+  s.setProperty('--accent-sage', t.sage);
+  s.setProperty('--accent-lilac', t.lilac);
+  s.setProperty('--spark', t.spark);
+  s.setProperty('--ambient', t.ambient);
   document.documentElement.dataset.theme = theme;
 }
 
