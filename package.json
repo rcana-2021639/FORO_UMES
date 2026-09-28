@@ -23,6 +23,7 @@
     "db:logs": "docker compose logs -f postgres",
     "prepare": "husky",
     "seed": "tsx scripts/seed.ts",
+    "setup:env": "tsx scripts/setup-env.ts",
     "openapi:export": "tsx scripts/export-openapi.ts",
     "test": "jest",
     "test:unit": "jest tests/unit",
