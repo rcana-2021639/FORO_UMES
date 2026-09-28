@@ -50,7 +50,7 @@ export function Navbar() {
       </a>
 
       <header className="nav-shell" data-scrolled={scrolled}>
-        <div className="nav-bar">
+        <div className="nav-bar" data-reveal="down">
           <Link
             href="/"
             onClick={(e) => goTop(e, '/')}

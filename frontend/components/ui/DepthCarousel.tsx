@@ -73,6 +73,8 @@ export function DepthCarousel({
   const rootRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const veilRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  // Qué tarjetas estaban a la vista en el último fotograma: las ocultas no se vuelven a escribir
+  const shownRef = useRef<boolean[]>([]);
 
   const posRef = useRef(0);
   const focusRef = useRef(0);
@@ -147,11 +149,21 @@ export function DepthCarousel({
       const back = Math.max(0, d);
       const az = Math.abs(d);
       const shown = az <= c.visibleCards + 0.5;
+      // Con decenas de tarjetas, solo se tocan las visibles (y una vez la que se acaba de ocultar)
+      const was = shownRef.current[i];
+      shownRef.current[i] = shown;
+      if (!shown && was === false) continue;
+      if (!shown) {
+        el.style.opacity = '0';
+        el.style.pointerEvents = 'none';
+        el.style.filter = 'none';
+        el.setAttribute('aria-hidden', 'true');
+        continue;
+      }
       const tz = -c.depth * d;
       const tx = dir * c.spread * d;
       const ry = dir * c.tilt * clamp(d, 0, 1);
-      let opacity = d < 0 ? Math.max(0, 1 + d) : 1;
-      if (!shown) opacity = 0;
+      const opacity = d < 0 ? Math.max(0, 1 + d) : 1;
       const blurPx =
         // En modo liviano la profundidad la dan el velo y la escala; el blur se recalcula por frame
         c.blur > 0 && getQuality() === 'full'
@@ -161,8 +173,9 @@ export function DepthCarousel({
       el.style.opacity = opacity.toFixed(3);
       el.style.filter = blurPx > 0.05 ? `blur(${blurPx.toFixed(2)}px)` : 'none';
       el.style.zIndex = String(Math.round(2000 - d * 20));
-      el.style.pointerEvents = shown && opacity > 0.05 ? 'auto' : 'none';
-      el.setAttribute('aria-hidden', String(Math.round(pos) !== i));
+      el.style.pointerEvents = opacity > 0.05 ? 'auto' : 'none';
+      const hidden = String(Math.round(pos) !== i);
+      if (el.getAttribute('aria-hidden') !== hidden) el.setAttribute('aria-hidden', hidden);
       const veil = veilRefs.current[i];
       if (veil) veil.style.opacity = clamp(back * c.falloff * 1.35, 0, 0.88).toFixed(3);
     }
@@ -259,6 +272,7 @@ export function DepthCarousel({
   useEffect(() => {
     posRef.current = 0;
     focusRef.current = 0;
+    shownRef.current = [];
     layout(0);
   }, [count, layout]);
 

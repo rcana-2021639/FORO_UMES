@@ -56,6 +56,7 @@ export interface FlexCarouselProps extends Partial<PresetValues> {
   onChange?: (index: number, item: FlexCarouselItem) => void;
   onSelect?: (index: number, item: FlexCarouselItem) => void;
   onUnsupported?: () => void;
+  controlRef?: React.RefObject<FlexCarouselHandle | null>;
   className?: string;
   style?: CSSProperties;
 }
@@ -128,6 +129,12 @@ interface Draw {
 interface Engine {
   wake: () => void;
   setItems: (items: FlexCarouselItem[]) => void;
+  closeFocus: () => boolean;
+}
+
+/** Control desde fuera: p. ej. devolver la tarjeta ampliada a su sitio al cerrar un visor. */
+export interface FlexCarouselHandle {
+  closeFocus: () => void;
 }
 
 interface Callbacks {
@@ -393,6 +400,7 @@ export function FlexCarousel({
   onChange,
   onSelect,
   onUnsupported,
+  controlRef,
   className = '',
   style,
 }: FlexCarouselProps) {
@@ -447,6 +455,14 @@ export function FlexCarousel({
   useEffect(() => {
     engineRef.current?.setItems(itemsRef.current);
   }, [itemsKey]);
+
+  useEffect(() => {
+    if (!controlRef) return;
+    controlRef.current = { closeFocus: () => void engineRef.current?.closeFocus() };
+    return () => {
+      controlRef.current = null;
+    };
+  }, [controlRef]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -1355,6 +1371,7 @@ export function FlexCarousel({
         start();
       },
       setItems,
+      closeFocus,
     };
 
     resize();

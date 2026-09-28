@@ -3,7 +3,7 @@ import { Section } from '@/components/ui/Section';
 import { Button } from '@/components/ui/Button';
 import { UniversitiesBento } from '@/components/sections/UniversitiesBento';
 import { ProgramsRail } from '@/components/sections/ProgramsRail';
-import { TimelinePath } from '@/components/sections/TimelinePath';
+import { MilestonesTrack } from '@/components/sections/MilestonesTrack';
 import { NewsMorph } from '@/components/sections/NewsMorph';
 import { GalleryShowcase } from '@/components/sections/GalleryShowcase';
 import { buildMilestones } from '@/lib/milestones';
@@ -33,10 +33,10 @@ export default async function Home() {
     await Promise.all([
       safe(api.summary(), null),
       safe(api.universities(), EMPTY),
-      safe(api.programs(), EMPTY),
+      safe(api.allPrograms(), EMPTY),
       safe(api.activities({ 'pagination[pageSize]': 12 }), EMPTY),
       safe(api.contributions(), EMPTY),
-      safe(api.news({ 'pagination[pageSize]': 3 }), EMPTY),
+      safe(api.news({ 'pagination[pageSize]': 4 }), EMPTY),
       safe(api.gallery({ 'pagination[pageSize]': 13 }), EMPTY),
     ]);
 
@@ -51,38 +51,12 @@ export default async function Home() {
     name: u.name,
     href: `/universidades/${u.documentId}`,
   }));
-  // Vitrina: niveles alternados y universidades distintas, para que el mazo muestre variedad
-  const byLevel = new Map<string, typeof programs.data>();
-  programs.data
-    .filter((p) => p.university)
-    .forEach((p) => byLevel.set(p.level, [...(byLevel.get(p.level) ?? []), p]));
-  const queues = [...byLevel.values()];
-  const picked: typeof programs.data = [];
-  const seenUni = new Set<string>();
-  for (let round = 0; picked.length < 6 && round < 20; round++) {
-    for (const q of queues) {
-      const p = q.find((x) => !seenUni.has(x.university!.documentId)) ?? q[0];
-      if (!p || picked.includes(p)) continue;
-      picked.push(p);
-      seenUni.add(p.university!.documentId);
-      q.splice(q.indexOf(p), 1);
-      if (picked.length >= 6) break;
-    }
-  }
-  const deck = picked.map((p) => ({
-    id: p.documentId,
-    name: p.name,
-    level: p.level,
-    modality: p.modality,
-    university: p.university?.acronym ?? p.university?.name ?? '',
-    href: `/universidades/${p.university?.documentId}`,
-  }));
 
   return (
     <>
       <SectionRail items={RAIL} />
 
-      <Hero year={year} counts={counts} universities={heroUniversities} programs={deck} />
+      <Hero year={year} counts={counts} universities={heroUniversities} />
 
       <Section
         id="universidades"
@@ -118,15 +92,16 @@ export default async function Home() {
         id="hitos"
         kicker="Lo que ya pasó y lo que viene"
         title="Hitos del Foro"
-        intro="Ingresos de universidades, encuentros, seminarios y proyectos, en el orden en que ocurrieron."
+        intro="Ingresos de universidades, encuentros, seminarios y proyectos, en el orden en que ocurrieron. Sigue bajando y la línea avanza sola."
         theme="paper-2"
+        bleed
         aside={
           <Button variant="secondary" href="/actividades">
             Ver todas las actividades
           </Button>
         }
       >
-        <TimelinePath milestones={buildMilestones(universities.data, activities.data)} />
+        <MilestonesTrack milestones={buildMilestones(universities.data, activities.data, 14)} />
       </Section>
 
       <Section

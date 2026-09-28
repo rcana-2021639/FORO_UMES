@@ -1,11 +1,5 @@
-'use client';
-
 import Link from 'next/link';
-import { useRef } from 'react';
-import { motion, useInView } from 'motion/react';
 import { CONTRIBUTION_LABEL, excerpt, formatDate } from '@/lib/format';
-import { EASE, stagger } from '@/lib/motion';
-import { useReducedMotion } from '@/hooks/useReducedMotion';
 import type { Contribution, ContributionType } from '@/lib/types';
 
 const TONE: Record<ContributionType, { rule: string; hint: string }> = {
@@ -19,9 +13,6 @@ const TONE: Record<ContributionType, { rule: string; hint: string }> = {
  * su resultado. Cada tarjeta dice de qué tipo es y qué significa ese tipo, sin leyenda aparte.
  */
 export function ContributionsStrip({ contributions }: { contributions: Contribution[] }) {
-  const ref = useRef<HTMLUListElement>(null);
-  const inView = useInView(ref, { once: true, margin: '-10% 0px' });
-  const reduced = useReducedMotion();
   const items = contributions.slice(0, 3);
 
   if (!items.length) {
@@ -33,8 +24,8 @@ export function ContributionsStrip({ contributions }: { contributions: Contribut
   }
 
   return (
-    <ul ref={ref} className="grid gap-3 md:grid-cols-3">
-      {items.map((c, i) => {
+    <ul data-reveal-stagger="tilt" className="grid gap-3 md:grid-cols-3">
+      {items.map((c) => {
         const tone = TONE[c.type];
         const inner = (
           <>
@@ -65,12 +56,7 @@ export function ContributionsStrip({ contributions }: { contributions: Contribut
           </>
         );
         return (
-          <motion.li
-            key={c.documentId}
-            initial={reduced ? false : { opacity: 0, y: 28 }}
-            animate={inView ? { opacity: 1, y: 0 } : undefined}
-            transition={{ duration: 0.9, ease: EASE.premium, delay: stagger(i, 0.07) }}
-          >
+          <li key={c.documentId}>
             {c.relatedActivity ? (
               <Link href={`/actividades/${c.relatedActivity.documentId}`} className="contrib-card">
                 {inner}
@@ -78,7 +64,7 @@ export function ContributionsStrip({ contributions }: { contributions: Contribut
             ) : (
               <div className="contrib-card">{inner}</div>
             )}
-          </motion.li>
+          </li>
         );
       })}
     </ul>

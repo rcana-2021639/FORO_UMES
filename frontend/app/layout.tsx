@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from 'next';
-import Script from 'next/script';
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import '@/styles/v3.css';
+import '@/styles/v4.css';
 import { SmoothScroll } from '@/components/providers/SmoothScroll';
 import { ToasterMount } from '@/components/feedback/ToasterMount';
 import { GooeyDefs } from '@/components/ui/GooeyDefs';
@@ -51,8 +51,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       data-quality="full"
       suppressHydrationWarning
     >
+      <head>
+        {/* Arranque: nivel de efectos y entradas animadas. Inline y bloqueante a propósito: tiene
+            que correr antes del primer pintado para retener cada elemento en su estado inicial */}
+        <script dangerouslySetInnerHTML={{ __html: QUALITY_SCRIPT }} />
+      </head>
       <body className="flex min-h-full flex-col">
         <GooeyDefs />
+        {/* Progreso de lectura: animación ligada al scroll, sin JavaScript */}
+        <div aria-hidden className="scroll-progress" />
         <SmoothScroll>
           <Navbar />
           <main id="contenido" className="flex-1">
@@ -64,9 +71,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ClickSparkLayer />
         <ToasterMount />
         <QualityProbe />
-        <Script id="quality" strategy="beforeInteractive">
-          {QUALITY_SCRIPT}
-        </Script>
       </body>
     </html>
   );

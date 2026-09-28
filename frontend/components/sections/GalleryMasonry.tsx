@@ -1,14 +1,8 @@
-'use client';
-
 import Image from 'next/image';
-import { useRef } from 'react';
-import { motion, useInView } from 'motion/react';
 import { PixelTrail } from './PixelTrail';
 import { ScrollExpand } from '@/components/ui/ScrollExpand';
 import { mediaUrl } from '@/lib/api';
 import { formatDate, formatDateShort, videoThumbnail } from '@/lib/format';
-import { useReducedMotion } from '@/hooks/useReducedMotion';
-import { EASE, stagger } from '@/lib/motion';
 import { cn } from '@/lib/cn';
 import type { GalleryItem } from '@/lib/types';
 
@@ -33,10 +27,6 @@ interface Props {
  * Estela de píxeles violeta (con filtro gooey) tras el cursor, solo aquí.
  */
 export function GalleryMasonry({ items, opener }: Props) {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: '-8% 0px' });
-  const reduced = useReducedMotion();
-
   if (!items.length)
     return (
       <p className="container-x max-w-[44ch] text-fg-muted">
@@ -53,18 +43,19 @@ export function GalleryMasonry({ items, opener }: Props) {
       {featured && <Opener item={featured} />}
 
       {rest.length > 0 && (
-        <div ref={ref} className={cn('relative', opener && 'container-x mt-10 md:mt-14')}>
+        <div className={cn('relative', opener && 'container-x mt-10 md:mt-14')}>
           <PixelTrail color="#7c5ae0" gooey />
-          <div className="columns-2 gap-3 md:columns-3 lg:columns-4 [&>*]:mb-3 [&>*]:break-inside-avoid">
-            {rest.map((g, i) => {
+          {/* Cada pieza entra con una cortina que sube y la foto se asienta (data-reveal="clip") */}
+          <div
+            data-reveal-stagger="clip"
+            className="columns-2 gap-3 md:columns-3 lg:columns-4 [&>*]:mb-3 [&>*]:break-inside-avoid"
+          >
+            {rest.map((g) => {
               const img = imageOf(g);
               const isVideo = g.type === 'Video' && g.videoUrl;
               return (
-                <motion.figure
+                <figure
                   key={g.documentId}
-                  initial={reduced ? false : { clipPath: 'inset(100% 0 0 0)', y: 24 }}
-                  animate={inView ? { clipPath: 'inset(0% 0 0 0)', y: 0 } : undefined}
-                  transition={{ duration: 1.2, ease: EASE.premium, delay: stagger(i % 10, 0.05) }}
                   className="group relative overflow-hidden rounded-[4px] bg-[color-mix(in_oklab,var(--fg)_5%,var(--bg))]"
                 >
                   {isVideo ? (
@@ -111,7 +102,7 @@ export function GalleryMasonry({ items, opener }: Props) {
                       <span className="mono-label text-fg-muted">{formatDateShort(g.date)}</span>
                     </figcaption>
                   )}
-                </motion.figure>
+                </figure>
               );
             })}
           </div>

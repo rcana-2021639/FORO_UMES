@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { NAV_ITEMS } from '@/lib/nav';
+import { BackToTop } from './BackToTop';
 
 const UNIVERSITIES = ['USAC', 'URL', 'UVG', 'UMG', 'UNIS', 'UPANA', 'UMES', 'Galileo', 'UNI'];
 
@@ -8,7 +9,7 @@ export function Footer() {
   const year = new Date().getFullYear();
   return (
     <footer className="container-x relative border-t border-line pt-14 pb-10 text-fg">
-      <div className="grid gap-10 md:grid-cols-12">
+      <div data-reveal-stagger="up" className="grid gap-10 md:grid-cols-12">
         <div className="md:col-span-5">
           <p className="eyebrow text-fg-muted">Colofón</p>
           <p
@@ -38,9 +39,15 @@ export function Footer() {
           <p className="mono-label mt-3 leading-7 text-fg">{UNIVERSITIES.join('  ')}</p>
         </div>
       </div>
-      <div className="ui-label mt-14 flex flex-wrap items-center justify-between gap-3 text-fg-muted">
+      <div
+        data-reveal="fade"
+        className="ui-label mt-14 flex flex-wrap items-center justify-between gap-3 text-fg-muted"
+      >
         <span>© {year} Foro Interuniversitario de Estudios de Posgrado</span>
-        <span>Guatemala, C. A.</span>
+        <span className="flex items-center gap-4">
+          Guatemala, C. A.
+          <BackToTop />
+        </span>
       </div>
     </footer>
   );

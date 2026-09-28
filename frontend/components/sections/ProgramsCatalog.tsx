@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { PulseStar } from '@/components/ui/PulseStar';
 import { LevelTabs, countByLevel, type LevelFilter } from '@/components/ui/LevelTabs';
 import { useSavedPrograms } from '@/hooks/useSavedPrograms';
+import { useClientValue } from '@/hooks/useClientValue';
 import { LEVEL_LABEL, MODALITY_LABEL, acronymOf } from '@/lib/format';
 import { LEVELS, LEVEL_META } from '@/lib/levels';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
@@ -26,6 +27,11 @@ const dealFrom = (i: number) => ({
 /** Retardo por columna y fila, con tope para que las listas largas no esperen de más. */
 const dealDelay = (i: number) => Math.min((i % 3) * 0.08 + Math.floor(i / 3) * 0.06, 0.7);
 
+const readUrlLevel = (): LevelFilter | null => {
+  const n = new URLSearchParams(window.location.search).get('nivel');
+  return n && (LEVELS as string[]).includes(n) ? (n as LevelFilter) : null;
+};
+
 /**
  * Catálogo completo. Arriba, el selector de nivel a lo grande (el mismo de la portada); debajo,
  * búsqueda y filtros por modalidad y universidad como píldoras. Los resultados van agrupados
@@ -33,7 +39,11 @@ const dealDelay = (i: number) => Math.min((i % 3) * 0.08 + Math.floor(i / 3) * 0
  * estrella para compararlo. La lista de guardados vive en localStorage.
  */
 export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
-  const [level, setLevel] = useState<LevelFilter>('all');
+  // `/programas?nivel=Maestria` (enlaces de la guía de la portada) abre ya filtrado; en cuanto
+  // la persona elige otra pestaña, manda su elección
+  const [picked, setLevel] = useState<LevelFilter | null>(null);
+  const urlLevel = useClientValue(readUrlLevel, null);
+  const level: LevelFilter = picked ?? urlLevel ?? 'all';
   const [modality, setModality] = useState<ProgramModality | ''>('');
   const [uni, setUni] = useState('');
   const [q, setQ] = useState('');

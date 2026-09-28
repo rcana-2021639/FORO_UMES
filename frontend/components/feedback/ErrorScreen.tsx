@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { sileo } from 'sileo';
 import { Button } from '@/components/ui/Button';
+import { Words } from '@/components/ui/Words';
 import { describeError } from '@/lib/api';
 
 import { SoftOrb } from '@/components/ui/SoftOrb';
@@ -37,18 +38,26 @@ export function ErrorScreen({ code, title, text, error, reset, bare }: Props) {
     >
       <div
         aria-hidden
+        data-reveal="scale"
         className="pointer-events-none absolute -right-[10%] top-1/2 -z-10 w-[70vmin] -translate-y-1/2 opacity-70"
       >
         <SoftOrb follow={false} />
       </div>
       <div className="container-x py-32">
-        <p className="eyebrow text-fg-muted">
+        <p data-reveal="left" className="eyebrow text-fg-muted">
           Error <span className="text-accent">{code}</span>
           {folio ? `, referencia ${String(folio).slice(0, 8)}` : ''}
         </p>
-        <h1 className="mt-6 max-w-[14ch]">{title}</h1>
-        <p className="mt-8 max-w-[46ch] text-[1.05rem] leading-relaxed text-fg-muted">{text}</p>
-        <div className="mt-12 flex flex-wrap gap-4">
+        <h1 data-reveal-group className="mt-6 max-w-[14ch]">
+          <Words text={title} />
+        </h1>
+        <p
+          data-reveal="blur"
+          className="mt-8 max-w-[46ch] text-[1.05rem] leading-relaxed text-fg-muted"
+        >
+          {text}
+        </p>
+        <div data-reveal="up" className="mt-12 flex flex-wrap gap-4">
           <Button href="/">Volver a la portada</Button>
           {reset && (
             <Button variant="secondary" onClick={reset}>

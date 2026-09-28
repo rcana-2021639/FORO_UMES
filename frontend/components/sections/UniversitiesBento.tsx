@@ -3,11 +3,9 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
-import { motion, useInView } from 'motion/react';
 import { PixelSwap } from '@/components/ui/PixelSwap';
 import { mediaUrl } from '@/lib/api';
 import { excerpt, yearOf } from '@/lib/format';
-import { EASE, stagger } from '@/lib/motion';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useQuality } from '@/lib/quality';
 import { brandOf } from '@/lib/universities';
@@ -21,14 +19,12 @@ import type { University } from '@/lib/types';
  * con un barrido de máscara en CSS en vez de los píxeles.
  */
 export function UniversitiesBento({ universities }: { universities: University[] }) {
-  const ref = useRef<HTMLUListElement>(null);
-  const inView = useInView(ref, { once: true, margin: '-10% 0px' });
   const reduced = useReducedMotion();
   const lite = useQuality() !== 'full';
 
   return (
     <ul
-      ref={ref}
+      data-reveal-stagger="tilt"
       className="grid auto-rows-[10.5rem] grid-cols-2 gap-2.5 [perspective:1600px] sm:auto-rows-[13.5rem] sm:gap-3 lg:grid-cols-3"
     >
       {universities.length === 0 && (
@@ -37,7 +33,7 @@ export function UniversitiesBento({ universities }: { universities: University[]
         </li>
       )}
       {universities.map((u, i) => (
-        <Cell key={u.documentId} u={u} i={i} inView={inView} reduced={reduced} lite={lite} />
+        <Cell key={u.documentId} u={u} i={i} reduced={reduced} lite={lite} />
       ))}
     </ul>
   );
@@ -46,13 +42,11 @@ export function UniversitiesBento({ universities }: { universities: University[]
 function Cell({
   u,
   i,
-  inView,
   reduced,
   lite,
 }: {
   u: University;
   i: number;
-  inView: boolean;
   reduced: boolean;
   lite: boolean;
 }) {
@@ -91,10 +85,10 @@ function Cell({
           <Image
             src={logo}
             alt=""
-            width={96}
-            height={96}
+            width={144}
+            height={144}
             onError={() => setLogoBroken(true)}
-            className="h-12 w-auto object-contain mix-blend-multiply"
+            className="h-12 w-auto object-contain transition-transform duration-700 ease-(--ease-out-premium) group-hover:scale-105 sm:h-[4.5rem]"
           />
         ) : (
           <span
@@ -143,10 +137,7 @@ function Cell({
   );
 
   return (
-    <motion.li
-      initial={reduced ? false : { opacity: 0, rotateX: -28, y: 36, transformOrigin: '50% 100%' }}
-      animate={inView ? { opacity: 1, rotateX: 0, y: 0 } : undefined}
-      transition={{ duration: 1, ease: EASE.premium, delay: stagger(i, 0.05) }}
+    <li
       className="group relative"
       onPointerEnter={enter}
       onPointerLeave={leave}
@@ -177,6 +168,6 @@ function Cell({
           />
         )}
       </Link>
-    </motion.li>
+    </li>
   );
 }

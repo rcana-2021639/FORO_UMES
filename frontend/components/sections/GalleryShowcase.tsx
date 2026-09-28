@@ -2,14 +2,14 @@
 
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { mediaUrl } from '@/lib/api';
+import { mediaUrl, sameOriginImage } from '@/lib/api';
 import { formatDate, videoEmbed, videoThumbnail } from '@/lib/format';
 import { useQuality } from '@/lib/quality';
 import { EASE } from '@/lib/motion';
 import type { GalleryItem } from '@/lib/types';
-import type { FlexCarouselItem } from '@/components/fx/FlexCarousel';
+import type { FlexCarouselHandle, FlexCarouselItem } from '@/components/fx/FlexCarousel';
 
 const FlexCarousel = dynamic(
   () => import('@/components/fx/FlexCarousel').then((m) => m.FlexCarousel),
@@ -146,6 +146,13 @@ export function GalleryShowcase({
   // El carrusel espera a tener las miniaturas definitivas: cambiarlas después reinicia su entrada
   const [postersReady, setPostersReady] = useState(false);
   const quality = useQuality();
+  const carousel = useRef<FlexCarouselHandle | null>(null);
+
+  // Al cerrar el reproductor, la tarjeta ampliada vuelve a su sitio y el carrusel sigue vivo
+  const closeViewer = useCallback(() => {
+    setOpen(null);
+    carousel.current?.closeFocus();
+  }, []);
 
   // Miniaturas de video: fotograma de los subidos y versión 16:9 de las de YouTube
   useEffect(() => {
@@ -167,8 +174,9 @@ export function GalleryShowcase({
     .map((e) => ({ ...e, poster: posters[e.id] ?? e.poster ?? null }))
     .filter((e) => e.poster);
 
+  // Texturas por el optimizador de Next: mismo origen (sin CORS) y livianas
   const carouselItems: FlexCarouselItem[] = entries.map((e) => ({
-    src: e.poster!,
+    src: sameOriginImage(e.poster, 1080),
     alt: e.title,
     title: e.title,
     subtitle: e.subtitle,
@@ -204,6 +212,7 @@ export function GalleryShowcase({
             fit="natural"
             radius={18}
             captureWheel={false}
+            controlRef={carousel}
             onUnsupported={() => setUnsupported(true)}
             onSelect={(i) => {
               const e = entries[i];
@@ -214,7 +223,7 @@ export function GalleryShowcase({
       ) : (
         <GalleryStrip entries={entries} onOpen={setOpen} />
       )}
-      <Lightbox entry={open} onClose={() => setOpen(null)} />
+      <Lightbox entry={open} onClose={closeViewer} />
     </>
   );
 }

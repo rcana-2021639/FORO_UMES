@@ -3,15 +3,12 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
-import { useRef } from 'react';
-import { motion, useInView } from 'motion/react';
 import { FoldText } from '@/components/fx/FoldText';
 import { Tilt } from '@/components/fx/Tilt';
 import { DepthText } from '@/components/fx/DepthText';
-import { mediaUrl } from '@/lib/api';
+import { mediaUrl, sameOriginImage } from '@/lib/api';
 import { excerpt, formatDate, folio } from '@/lib/format';
 import { useFinePointer, useReducedMotion } from '@/hooks/useReducedMotion';
-import { EASE, stagger } from '@/lib/motion';
 import { useQuality } from '@/lib/quality';
 import type { NewsItem } from '@/lib/types';
 
@@ -59,9 +56,12 @@ export function NewsArchive({ news, page, pageCount }: Props) {
         />
       )}
 
-      <ul className="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 [perspective:1600px]">
+      <ul
+        data-reveal-stagger="tilt"
+        className="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 [perspective:1600px]"
+      >
         {grid.map((n, i) => (
-          <Card key={n.documentId} item={n} n={offset + i + (featured ? 2 : 1)} i={i} />
+          <Card key={n.documentId} item={n} n={offset + i + (featured ? 2 : 1)} />
         ))}
       </ul>
 
@@ -112,14 +112,8 @@ export function NewsArchive({ news, page, pageCount }: Props) {
 function Featured({ item, elastic }: { item: NewsItem; elastic: boolean }) {
   const cover = mediaUrl(item.coverImage?.formats?.large?.url ?? item.coverImage?.url);
   const thumb = mediaUrl(item.coverImage?.formats?.medium?.url ?? item.coverImage?.url);
-  const reduced = useReducedMotion();
   return (
-    <motion.article
-      initial={reduced ? false : { opacity: 0, y: 40, rotateX: 12 }}
-      animate={{ opacity: 1, y: 0, rotateX: 0 }}
-      transition={{ duration: 1.1, ease: EASE.premium, delay: 0.2 }}
-      className="group [perspective:1600px]"
-    >
+    <article data-reveal="tilt" className="group [perspective:1600px]">
       <div className="mb-4 flex items-center justify-between">
         <span className="ui-label inline-flex items-center gap-2 rounded-full bg-fg px-3 py-1 text-bg">
           <span aria-hidden className="h-1.5 w-1.5 animate-pulse rounded-full bg-clay" />
@@ -137,7 +131,7 @@ function Featured({ item, elastic }: { item: NewsItem; elastic: boolean }) {
           {elastic ? (
             <div className="absolute inset-0">
               <ElasticMesh
-                image={cover ?? ''}
+                image={sameOriginImage(cover)}
                 color1="#6443c4"
                 color2="#7c5ae0"
                 highlight="#fdfcff"
@@ -198,23 +192,14 @@ function Featured({ item, elastic }: { item: NewsItem; elastic: boolean }) {
           </span>
         </Link>
       </Tilt>
-    </motion.article>
+    </article>
   );
 }
 
-function Card({ item, n, i }: { item: NewsItem; n: number; i: number }) {
-  const ref = useRef<HTMLLIElement>(null);
-  const inView = useInView(ref, { once: true, margin: '-8% 0px' });
-  const reduced = useReducedMotion();
+function Card({ item, n }: { item: NewsItem; n: number }) {
   const cover = mediaUrl(item.coverImage?.formats?.medium?.url ?? item.coverImage?.url);
   return (
-    <motion.li
-      ref={ref}
-      initial={reduced ? false : { opacity: 0, rotateX: -30, y: 40, transformOrigin: '50% 100%' }}
-      animate={inView ? { opacity: 1, rotateX: 0, y: 0 } : undefined}
-      transition={{ duration: 1, ease: EASE.premium, delay: stagger(i % 9, 0.06) }}
-      className="[transform-style:preserve-3d]"
-    >
+    <li className="[transform-style:preserve-3d]">
       <Tilt max={9} scale={1.03} className="h-full rounded-[14px]">
         <Link
           href={`/noticias/${item.documentId}`}
@@ -275,6 +260,6 @@ function Card({ item, n, i }: { item: NewsItem; n: number; i: number }) {
           </div>
         </Link>
       </Tilt>
-    </motion.li>
+    </li>
   );
 }

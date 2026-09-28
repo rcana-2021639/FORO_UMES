@@ -46,7 +46,10 @@ export default async function NoticiaPage({ params }: Params) {
       <div className="container-x grid gap-12 pb-[var(--section-y)] md:grid-cols-12">
         <div className="md:col-span-8 md:col-start-3">
           {cover && (
-            <figure className="relative mb-12 aspect-[16/9] overflow-hidden rounded-[3px] border border-line">
+            <figure
+              data-reveal="clip"
+              className="relative mb-12 aspect-[16/9] overflow-hidden rounded-[3px] border border-line"
+            >
               <Image
                 src={cover}
                 alt={n.coverImage?.alternativeText ?? ''}
@@ -58,7 +61,7 @@ export default async function NoticiaPage({ params }: Params) {
             </figure>
           )}
           <Prose markdown={n.content} />
-          <div className="mt-16 border-t border-line pt-8">
+          <div data-reveal="up" className="mt-16 border-t border-line pt-8">
             <Button variant="ghost" href="/noticias">
               ← Archivo de noticias
             </Button>

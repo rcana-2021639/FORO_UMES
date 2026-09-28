@@ -12,15 +12,7 @@ export const metadata: Metadata = {
 const EMPTY = { data: [], meta: { pagination: { page: 1, pageSize: 0, pageCount: 0, total: 0 } } };
 
 export default async function ProgramasPage() {
-  // El backend limita a 50 por página: traemos hasta 4 páginas (200 programas)
-  const first = await safe(api.programs({ 'pagination[page]': 1 }), EMPTY);
-  const pages = Math.min(first.meta.pagination.pageCount, 4);
-  const rest = await Promise.all(
-    Array.from({ length: Math.max(0, pages - 1) }, (_, i) =>
-      safe(api.programs({ 'pagination[page]': i + 2 }), EMPTY)
-    )
-  );
-  const programs = [...first.data, ...rest.flatMap((r) => r.data)];
+  const programs = (await safe(api.allPrograms(), EMPTY)).data;
 
   return (
     <>

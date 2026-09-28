@@ -3,259 +3,267 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
-import { useRef } from 'react';
-import { motion, useScroll, useTransform, type MotionValue } from 'motion/react';
-import { FoldText } from '@/components/fx/FoldText';
-import { Tilt } from '@/components/fx/Tilt';
-import { mediaUrl } from '@/lib/api';
+import { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
+import { mediaUrl, sameOriginImage } from '@/lib/api';
 import { excerpt, formatDate, folio } from '@/lib/format';
-import { useReducedMotion, useFinePointer } from '@/hooks/useReducedMotion';
-import { cn } from '@/lib/cn';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { useClientValue } from '@/hooks/useClientValue';
 import { useQuality } from '@/lib/quality';
+import { EASE } from '@/lib/motion';
+import { cn } from '@/lib/cn';
 import type { NewsItem } from '@/lib/types';
 
 const ElasticMesh = dynamic(
   () => import('@/components/fx/ElasticMesh').then((m) => m.ElasticMesh),
-  {
-    ssr: false,
-  }
+  { ssr: false }
 );
 
+/** Degradados violeta para las notas sin portada: cada una se distingue de la anterior. */
+const TONES: [string, string][] = [
+  ['#4f339e', '#b8a2fa'],
+  ['#3a2677', '#8e4fb8'],
+  ['#4b4aa8', '#d7daff'],
+  ['#7a3d8f', '#ebcff2'],
+  ['#261a4f', '#7c5ae0'],
+];
+
+const CYCLE_MS = 7000;
+
+let glCache: boolean | null = null;
+function webglAvailable() {
+  if (glCache === null) {
+    try {
+      const c = document.createElement('canvas');
+      glCache = !!(c.getContext('webgl2') || c.getContext('webgl'));
+    } catch {
+      glCache = false;
+    }
+  }
+  return glCache;
+}
+
 /**
- * Noticias del Foro. La última nota manda: su portada es una malla elástica (React Bits
- * `ElasticMesh`) que se hunde y rebota bajo el puntero, con el título desplegándose (FoldText).
- * Las dos anteriores son losas que se inclinan (Tilt) y entran con el scroll. Cada nota lleva
- * su folio (01, 02, 03) y su fecha para que se entienda que es una lista de lo más reciente.
+ * Noticias del Foro. A la izquierda, la portada de la nota activa es una tela elástica (React
+ * Bits `ElasticMesh`): se hunde bajo el cursor, respira sola y, al cambiar de nota, la nueva
+ * imagen se revela en círculo mientras la tela da un latido. A la derecha, el índice de notas:
+ * pasar el cursor o el foco por una la muestra en la tela; sin tocar nada, avanzan solas.
  */
 export function NewsMorph({ news }: { news: NewsItem[] }) {
-  const ref = useRef<HTMLDivElement>(null);
+  const items = news.slice(0, 4);
+  const [active, setActive] = useState(0);
+  const [hold, setHold] = useState(false);
+  const [inView, setInView] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
-  const fine = useFinePointer();
   const quality = useQuality();
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start 92%', 'end 45%'] });
+  const gl = useClientValue(webglAvailable, false);
+  const elastic = gl && quality === 'full' && !reduced;
 
-  const [a, b, c] = news;
-  if (!a)
+  // Solo avanza sola si se ve y nadie la está usando
+  useEffect(() => {
+    const el = root.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => setInView(e.isIntersecting), {
+      threshold: 0.35,
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  const cycling = inView && !hold && !reduced && items.length > 1;
+  useEffect(() => {
+    if (!cycling) return;
+    const id = window.setTimeout(() => setActive((a) => (a + 1) % items.length), CYCLE_MS);
+    return () => window.clearTimeout(id);
+  }, [cycling, active, items.length]);
+
+  if (!items.length)
     return (
       <p className="max-w-[44ch] text-fg-muted">
         Todavía no hay noticias publicadas. La primera que salga del panel aparecerá aquí.
       </p>
     );
 
+  const item = items[active];
+  const tone = TONES[active % TONES.length];
+  const cover = mediaUrl(item.coverImage?.formats?.large?.url ?? item.coverImage?.url);
+
   return (
-    <div ref={ref} className="grid gap-x-6 gap-y-10 lg:grid-cols-12 [perspective:1600px]">
-      <Featured
-        item={a}
-        progress={scrollYProgress}
-        reduced={reduced}
-        elastic={fine && !reduced && quality === 'full' && !!a.coverImage}
-      />
-      <div className="grid gap-6 sm:grid-cols-2 lg:col-span-4 lg:grid-cols-1">
-        {b && <Side item={b} index={2} progress={scrollYProgress} reduced={reduced} />}
-        {c && <Side item={c} index={3} progress={scrollYProgress} reduced={reduced} />}
+    <div
+      ref={root}
+      className="news-stage grid gap-x-10 gap-y-12 lg:grid-cols-12"
+      onPointerEnter={() => setHold(true)}
+      onPointerLeave={() => setHold(false)}
+      onFocusCapture={() => setHold(true)}
+      onBlurCapture={() => setHold(false)}
+    >
+      <article data-reveal="tilt" className="lg:col-span-7">
+        <Link
+          href={`/noticias/${item.documentId}`}
+          className="news-mesh group"
+          aria-label={`Leer: ${item.title}`}
+          tabIndex={-1}
+        >
+          <span aria-hidden className="news-mesh__shadow" />
+          {elastic ? (
+            <span className="absolute inset-0">
+              <ElasticMesh
+                image={sameOriginImage(cover)}
+                color1={tone[0]}
+                color2={tone[1]}
+                highlight="#fdfcff"
+                showGrid
+                gridDensity={20}
+                gridOpacity={cover ? 0.12 : 0.26}
+                gridColor="#ffffff"
+                borderRadius={26}
+                tilt={12}
+                shading={0.5}
+                resolution={24}
+                interaction="hover"
+                stiffness={0.05}
+                damping={0.2}
+                grabRadius={0.6}
+                pull={0.4}
+                wobble={5}
+                idle={1}
+              />
+            </span>
+          ) : (
+            <StaticCover items={items} active={active} />
+          )}
+          <span className="news-mesh__chip">
+            <span aria-hidden className="news-mesh__live" />
+            {active === 0 ? 'Última publicación' : `Nota ${folio(active + 1)}`}
+          </span>
+          {elastic && (
+            <span aria-hidden className="news-mesh__hint">
+              Mueve el cursor sobre la portada
+            </span>
+          )}
+        </Link>
+
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={item.documentId}
+            initial={reduced ? false : { opacity: 0, y: 18, filter: 'blur(6px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            exit={reduced ? undefined : { opacity: 0, y: -10, filter: 'blur(4px)' }}
+            transition={{ duration: 0.55, ease: EASE.premium }}
+            className="news-copy"
+          >
+            <p className="mono-label text-fg-muted">
+              {folio(active + 1)} · {formatDate(item.publishedAt)}
+            </p>
+            <h3 className="news-copy__title">
+              <Link href={`/noticias/${item.documentId}`}>{item.title}</Link>
+            </h3>
+            {item.summary && <p className="news-copy__summary">{excerpt(item.summary, 200)}</p>}
+            <Link href={`/noticias/${item.documentId}`} className="news-copy__cta">
+              Leer la nota
+              <span aria-hidden className="news-copy__arrow">
+                →
+              </span>
+            </Link>
+          </motion.div>
+        </AnimatePresence>
+      </article>
+
+      <div className="lg:col-span-5">
+        <p data-reveal="fade" className="news-index__head">
+          <span>Últimas notas</span>
+          <span className="mono-label">{folio(items.length)} en portada</span>
+        </p>
+        <ol data-reveal-stagger="right" className="news-index">
+          {items.map((n, i) => {
+            const thumb = mediaUrl(n.coverImage?.formats?.thumbnail?.url ?? n.coverImage?.url);
+            const on = i === active;
+            return (
+              <li key={n.documentId}>
+                <Link
+                  href={`/noticias/${n.documentId}`}
+                  className={cn('news-row', on && 'is-active')}
+                  aria-current={on ? 'true' : undefined}
+                  onPointerEnter={() => setActive(i)}
+                  onFocus={() => setActive(i)}
+                  style={{ '--i': i } as React.CSSProperties}
+                >
+                  {on && (
+                    <motion.span
+                      layoutId="news-row-bg"
+                      aria-hidden
+                      className="news-row__bg"
+                      transition={{ type: 'spring', stiffness: 420, damping: 38 }}
+                    />
+                  )}
+                  <span className="news-row__n" aria-hidden>
+                    {folio(i + 1)}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="news-row__title">{n.title}</span>
+                    <span className="news-row__date mono-label">{formatDate(n.publishedAt)}</span>
+                  </span>
+                  <span
+                    aria-hidden
+                    className="news-row__thumb"
+                    style={
+                      {
+                        '--t1': TONES[i % TONES.length][0],
+                        '--t2': TONES[i % TONES.length][1],
+                      } as React.CSSProperties
+                    }
+                  >
+                    {thumb && (
+                      <Image src={thumb} alt="" fill sizes="64px" className="object-cover" />
+                    )}
+                  </span>
+                  {/* Cuánto falta para pasar a la siguiente (solo en la activa) */}
+                  {on && cycling && (
+                    <span
+                      aria-hidden
+                      key={`p-${active}`}
+                      className="news-row__progress"
+                      style={{ animationDuration: `${CYCLE_MS}ms` }}
+                    />
+                  )}
+                </Link>
+              </li>
+            );
+          })}
+        </ol>
+        <Link href="/noticias" data-reveal="up" className="news-index__all">
+          Ver todas las noticias <span aria-hidden>→</span>
+        </Link>
       </div>
     </div>
   );
 }
 
-function Featured({
-  item,
-  progress,
-  reduced,
-  elastic,
-}: {
-  item: NewsItem;
-  progress: MotionValue<number>;
-  reduced: boolean;
-  elastic: boolean;
-}) {
-  const y = useTransform(progress, [0, 1], [80, 0]);
-  const rotateX = useTransform(progress, [0, 1], [14, 0]);
-  const scale = useTransform(progress, [0, 1], [0.94, 1]);
-  const cover = mediaUrl(item.coverImage?.formats?.large?.url ?? item.coverImage?.url);
-  const thumb = mediaUrl(item.coverImage?.formats?.medium?.url ?? item.coverImage?.url);
-
+/** Sin WebGL o en modo liviano: las portadas apiladas, la activa aparece con un fundido. */
+function StaticCover({ items, active }: { items: NewsItem[]; active: number }) {
   return (
-    <motion.article
-      style={reduced ? undefined : { y, rotateX, scale, transformOrigin: '50% 100%' }}
-      className="group relative lg:col-span-8 [transform-style:preserve-3d]"
-    >
-      <div className="mb-4 flex items-center justify-between">
-        <span className="ui-label inline-flex items-center gap-2 rounded-full bg-fg px-3 py-1 text-bg">
-          <span aria-hidden className="h-1.5 w-1.5 animate-pulse rounded-full bg-clay" />
-          Última publicación
-        </span>
-        <span className="mono-label text-fg-muted">
-          {folio(1)} · {formatDate(item.publishedAt)}
-        </span>
-      </div>
-
-      <Tilt max={5} scale={1.01} className="rounded-[16px]" glare={false}>
-        <Link
-          href={`/noticias/${item.documentId}`}
-          className="relative block aspect-[16/9] overflow-hidden rounded-[16px] border border-line bg-surface-2 shadow-[0_40px_80px_-40px_rgb(var(--shadow-ink)/0.5)]"
-        >
-          {elastic ? (
-            <div className="absolute inset-0">
-              <ElasticMesh
-                image={cover ?? ''}
-                color1="#6443c4"
-                color2="#7c5ae0"
-                highlight="#fdfcff"
-                showGrid={!cover}
-                gridDensity={18}
-                gridOpacity={0.18}
-                gridColor="#fdfcff"
-                borderRadius={0}
-                tilt={0}
-                shading={0.45}
-                resolution={22}
-                interaction="hover"
-                stiffness={0.06}
-                damping={0.18}
-                grabRadius={0.5}
-                pull={0.35}
-                wobble={4}
-              />
-            </div>
-          ) : thumb ? (
-            <Image
-              src={thumb}
-              alt={item.coverImage?.alternativeText ?? ''}
-              fill
-              sizes="(min-width: 1024px) 66vw, 100vw"
-              className="object-cover"
-            />
-          ) : (
-            <span aria-hidden className="news-cover absolute inset-0" />
-          )}
-          {/* Scrim y texto: sin eventos, para que el puntero llegue a la malla */}
-          <span
-            aria-hidden
-            className="pointer-events-none absolute inset-0 bg-gradient-to-t from-dusk/85 via-dusk/20 to-transparent"
-          />
-          <span className="pointer-events-none absolute inset-0 flex flex-col justify-end p-6 text-paper md:p-9">
-            <h3
-              className="max-w-[20ch] text-[clamp(1.7rem,3.4vw,3rem)] leading-[1.02] text-paper"
-              style={{ fontVariationSettings: "'opsz' 96, 'SOFT' 40, 'WONK' 1" }}
-            >
-              <FoldText text={item.title} splitBy="word" hinge="bottom" stagger={0.06} />
-            </h3>
-            {item.summary && (
-              <span className="mt-3 block max-w-[58ch] text-[0.98rem] leading-relaxed text-paper/80">
-                {excerpt(item.summary, 180)}
-              </span>
-            )}
-            <span className="ui-label mt-5 inline-flex w-fit items-center gap-2 rounded-full border border-paper/40 px-4 py-2 text-paper transition-[background-color,color,border-color] duration-300 group-hover:border-clay group-hover:bg-clay group-hover:text-ink">
-              Leer la nota <span aria-hidden>→</span>
-            </span>
-          </span>
-        </Link>
-      </Tilt>
-      <p className="ui-label mt-3 text-fg-muted">
-        {elastic ? 'Mueve el cursor sobre la portada: es una superficie elástica.' : ''}
-      </p>
-    </motion.article>
-  );
-}
-
-function Side({
-  item,
-  index,
-  progress,
-  reduced,
-}: {
-  item: NewsItem;
-  index: number;
-  progress: MotionValue<number>;
-  reduced: boolean;
-}) {
-  const y = useTransform(progress, [0, 1], [50 + index * 20, 0]);
-  const rotateY = useTransform(progress, [0, 1], [-18, 0]);
-  const opacity = useTransform(progress, [0, 0.5, 1], [0, 0.8, 1]);
-  const cover = mediaUrl(item.coverImage?.formats?.medium?.url ?? item.coverImage?.url);
-  return (
-    <motion.article
-      style={reduced ? undefined : { y, rotateY, opacity, transformOrigin: '0% 50%' }}
-      className="[transform-style:preserve-3d]"
-    >
-      <Tilt max={9} scale={1.03} className="rounded-[12px]">
-        <Link
-          href={`/noticias/${item.documentId}`}
-          className="group relative block overflow-hidden rounded-[12px] border border-line bg-surface-1 [transform-style:preserve-3d]"
-        >
-          <div className="relative aspect-[16/10] overflow-hidden bg-surface-2">
-            {cover ? (
-              <Image
-                src={cover}
-                alt={item.coverImage?.alternativeText ?? ''}
-                fill
-                sizes="(min-width: 1024px) 33vw, 100vw"
-                className="object-cover transition-transform duration-[1.4s] ease-(--ease-out-premium) group-hover:scale-[1.06]"
-              />
-            ) : (
-              <Seal />
-            )}
-            <span
-              aria-hidden
-              className="absolute inset-0 origin-bottom bg-[color-mix(in_oklab,var(--color-sage)_22%,transparent)] transition-transform duration-700 ease-(--ease-cinematic) group-hover:scale-y-0"
-            />
-            <span className="mono-label absolute top-3 left-3 rounded-full bg-bg/85 px-2 py-0.5 text-fg backdrop-blur-sm">
-              {folio(index)}
-            </span>
-          </div>
-          <div className="p-4 md:p-5" data-depth style={{ '--z': 20 } as React.CSSProperties}>
-            <p className="mono-label text-fg-muted">{formatDate(item.publishedAt)}</p>
-            <h3
-              className={cn(
-                'mt-2 text-[1.2rem] leading-[1.15] text-fg underline decoration-transparent decoration-1 underline-offset-[5px] transition-[text-decoration-color] duration-500 group-hover:decoration-[color:var(--accent-sage)]'
-              )}
-              style={{ fontVariationSettings: "'opsz' 32, 'SOFT' 30" }}
-            >
-              {item.title}
-            </h3>
-            <span className="ui-label mt-3 inline-flex items-center gap-2 text-fg-muted transition-colors duration-300 group-hover:text-fg">
-              Leer{' '}
-              <span
-                aria-hidden
-                className="transition-transform duration-300 group-hover:translate-x-1"
-              >
-                →
-              </span>
-            </span>
-          </div>
-        </Link>
-      </Tilt>
-    </motion.article>
-  );
-}
-
-/** Placeholder sin foto: el anillo de la mesa, no una letra suelta. */
-function Seal() {
-  return (
-    <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full" aria-hidden>
-      <circle
-        cx="50"
-        cy="50"
-        r="22"
-        fill="none"
-        stroke="var(--fg)"
-        strokeWidth="0.4"
-        opacity="0.35"
-      />
-      {Array.from({ length: 9 }, (_, i) => {
-        const a = (i / 9) * Math.PI * 2 - Math.PI / 2;
+    <span className="news-static">
+      {items.map((n, i) => {
+        const src = mediaUrl(n.coverImage?.formats?.large?.url ?? n.coverImage?.url);
+        const tone = TONES[i % TONES.length];
         return (
-          <circle
-            key={i}
-            cx={50 + 22 * Math.cos(a)}
-            cy={50 + 22 * Math.sin(a)}
-            r="1.4"
-            fill="var(--fg)"
-            opacity="0.5"
-          />
+          <span
+            key={n.documentId}
+            className={cn('news-static__layer', i === active && 'is-on')}
+            style={{ background: `linear-gradient(160deg, ${tone[0]}, ${tone[1]})` }}
+          >
+            {src && (
+              <Image
+                src={src}
+                alt={n.coverImage?.alternativeText ?? ''}
+                fill
+                sizes="(min-width: 1024px) 58vw, 100vw"
+                className="object-cover"
+              />
+            )}
+          </span>
         );
       })}
-    </svg>
+    </span>
   );
 }

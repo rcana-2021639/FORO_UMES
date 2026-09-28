@@ -77,6 +77,15 @@ interface FetchOptions {
 }
 
 /**
+ * En desarrollo la caché dura solo 10 s: lo que se cambie en el panel de Strapi (o un
+ * `npm run seed -- --reset`) se ve casi al instante, sin respuestas viejas que apunten a archivos
+ * que ya no existen. No se desactiva del todo porque cada portada hace ~10 consultas y el backend
+ * limita a 120 por minuto por IP (todas las de Next salen de 127.0.0.1). En producción, la caché
+ * de Next según el `revalidate` de cada recurso.
+ */
+const DEV_REVALIDATE = process.env.NODE_ENV === 'development' ? 10 : null;
+
+/**
  * Único punto de entrada a la API. Entiende el formato de error del backend y lanza ApiError.
  * Se usa tanto en Server Components (con `revalidate`) como en el cliente.
  */
@@ -85,7 +94,10 @@ export async function apiFetch<T>(path: string, opts: FetchOptions = {}): Promis
   const res = await fetch(url, {
     ...opts.init,
     headers: { Accept: 'application/json', ...(opts.init?.headers ?? {}) },
-    next: { revalidate: opts.revalidate ?? 60 },
+    // Un 0 explícito (p. ej. el envío del formulario) nunca se cachea, tampoco en desarrollo
+    next: {
+      revalidate: opts.revalidate === 0 ? 0 : (DEV_REVALIDATE ?? opts.revalidate ?? 60),
+    },
   });
 
   if (!res.ok) {
@@ -108,6 +120,17 @@ export function mediaUrl(url?: string | null) {
   return url.startsWith('http') ? url : `${API_URL}${url}`;
 }
 
+/**
+ * La misma imagen servida por el optimizador de Next: mismo origen que la página (las texturas de
+ * WebGL no dependen del CORS del backend) y en WebP del ancho justo. `width` debe ser uno de los
+ * tamaños que acepta Next (640, 750, 828, 1080, 1200, 1920…). Los data: y rutas propias pasan igual.
+ */
+export function sameOriginImage(url: string | undefined | null, width = 1200) {
+  if (!url) return '';
+  if (url.startsWith('data:') || url.startsWith('/')) return url;
+  return `/_next/image?url=${encodeURIComponent(url)}&w=${width}&q=75`;
+}
+
 /* ---------- Recursos ---------- */
 
 export const api = {
@@ -122,9 +145,10 @@ export const api = {
   university: (documentId: string) =>
     apiFetch<SingleResponse<University>>(`/universities/${documentId}`, {
       query: {
-        'populate[0]': 'logo',
-        'populate[1]': 'representatives',
-        'populate[2]': 'academicPrograms',
+        'populate[logo]': 'true',
+        // La foto de cada representante vive en su propia relación: sin esto llegan sin avatar
+        'populate[representatives][populate][photo]': 'true',
+        'populate[academicPrograms]': 'true',
       },
       revalidate: 300,
     }),
@@ -146,6 +170,18 @@ export const api = {
       query: { populate: 'university', 'pagination[pageSize]': 50, sort: 'name', ...query },
       revalidate: 300,
     }),
+
+  /** Toda la oferta: el backend entrega 50 por página, así que se piden las que falten (hasta 4). */
+  allPrograms: async (): Promise<ListResponse<AcademicProgram>> => {
+    const first = await api.programs({ 'pagination[page]': 1 });
+    const pages = Math.min(first.meta.pagination.pageCount, 4);
+    const rest = await Promise.all(
+      Array.from({ length: Math.max(0, pages - 1) }, (_, i) =>
+        api.programs({ 'pagination[page]': i + 2 })
+      )
+    );
+    return { ...first, data: [...first.data, ...rest.flatMap((r) => r.data)] };
+  },
 
   activities: (query?: Query) =>
     apiFetch<ListResponse<Activity>>('/activities', {

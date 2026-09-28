@@ -1,0 +1,2492 @@
+/* v4 — Guía de la portada, noticias con malla elástica, hitos y microdetalles (DESIGN_NOTES §25). */
+
+/* ---------- Guía del posgrado (portada): cinco cartas grandes, contenido explicativo ---------- */
+/*
+ * Todo el tamaño sale de CSS (unidades de contenedor), para que el servidor ya mande cada carta
+ * en su sitio. El mazo ocupa EXACTAMENTE el alto de la versión anterior (cartas + barra de
+ * pestañas), así la columna del título no se mueve: el alto que dejó la barra se lo quedan las
+ * cartas, que ahora crecen hasta 600 px de ancho.
+ */
+.guide {
+  container: guide / inline-size;
+}
+.guide-wrap {
+  /* Separación entre cartas y escala aparente de la del fondo (perspectiva 900 px, z = 4·dx·1.5) */
+  --dx: 24px;
+  --dy: 20px;
+  --s: 0.862;
+  --top: 56px;
+  /* Alto de siempre: carta de antes (≤ 400 px, 0.84 de alto) + su pila + barra de pestañas */
+  --w0: min(400px, 100cqw - 126px);
+  --total: calc(var(--w0) * 0.84 + 164px + 4.3rem);
+  /* La carta más grande que cabe: la del fondo no se sale por la derecha ni por arriba */
+  --wmax: calc((100cqw - 2px - var(--s) * 4 * var(--dx)) / (0.5 + var(--s) / 2));
+  --hmax: calc((var(--total) - var(--top) - var(--s) * 4 * var(--dy)) / (0.5 + var(--s) / 2));
+  --cw: min(var(--wmax), var(--hmax) * 1.14, 600px);
+  --ch: min(var(--hmax), var(--cw) / 1.14);
+  position: relative;
+  width: 100%;
+  height: var(--total);
+  perspective: 1400px;
+  border-radius: 30px;
+  outline: none;
+}
+@container guide (width < 470px) {
+  .guide-wrap {
+    --dx: 12px;
+    --dy: 16px;
+    --s: 0.926;
+    --top: 50px;
+    --w0: max(250px, min(400px, 100cqw - 62px));
+    --total: calc(var(--w0) * 0.96 + 108px + 4.3rem);
+    --cw: min(var(--wmax), var(--hmax) * 0.92);
+    --ch: min(var(--hmax), var(--cw) / 0.92);
+  }
+}
+.guide-wrap:focus-visible {
+  outline: 2px solid var(--color-violet-500);
+  outline-offset: 10px;
+}
+.guide-tilt {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.guide-anchor {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: var(--cw);
+  height: var(--ch);
+}
+.card-swap {
+  perspective: 900px;
+}
+.deck-chip--soft {
+  color: var(--color-ink-2);
+}
+/* Las dos etiquetas no caben lado a lado en columnas angostas: queda solo la principal */
+@container guide (width < 400px) {
+  .deck-chip--soft {
+    display: none;
+  }
+}
+
+/* Cada carta en su sitio desde el servidor (GSAP escribe después exactamente la misma matriz) */
+.guide-slot {
+  width: var(--cw);
+  height: var(--ch);
+  border-radius: 28px;
+  cursor: pointer;
+  z-index: calc(var(--n) - var(--slot));
+  transform: translate(-50%, -50%)
+    translate3d(
+      calc(var(--slot) * var(--dx)),
+      calc(var(--slot) * var(--dy) * -1),
+      calc(var(--slot) * var(--dx) * -1.5)
+    )
+    skewY(2deg);
+}
+.guide-slot[data-front='true'] {
+  cursor: default;
+}
+
+.guide-card {
+  --mx: 70%;
+  --my: 18%;
+  --px: 0;
+  --py: 0;
+  position: relative;
+  height: 100%;
+  border-radius: 28px;
+  color: #fff;
+  overflow: hidden;
+  isolation: isolate;
+  /* Contenedor en los dos ejes: la maquetación interna cambia si la carta es más alta que ancha */
+  container-type: size;
+  background:
+    radial-gradient(
+      78% 62% at 100% 0%,
+      color-mix(in oklab, var(--lv) 40%, rgb(255 255 255 / 0.55)) 0%,
+      transparent 64%
+    ),
+    radial-gradient(
+      64% 58% at 0% 100%,
+      color-mix(in oklab, var(--lv) 50%, rgb(0 0 0 / 0.55)) 0%,
+      transparent 72%
+    ),
+    linear-gradient(
+      158deg,
+      color-mix(in oklab, var(--lv) 86%, #fff) 0%,
+      var(--lv) 40%,
+      color-mix(in oklab, var(--lv) 46%, var(--color-violet-950)) 100%
+    );
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.16),
+    inset 0 1px 0 rgb(255 255 255 / 0.34),
+    0 50px 80px -42px color-mix(in oklab, var(--lv) 85%, transparent),
+    0 14px 28px -20px rgb(var(--shadow-ink) / 0.65);
+  transition: filter 0.6s var(--ease-out-premium);
+}
+/* Las cartas del fondo se apagan un poco: el frente es lo que se lee */
+.guide-slot:not([data-front='true']) .guide-card {
+  filter: saturate(0.78) brightness(0.86);
+}
+.guide-slot:not([data-front='true']):hover .guide-card {
+  filter: saturate(1) brightness(1.04);
+}
+/* Grano fino: una textura fija (se rasteriza una vez), le quita lo "plano" al degradado */
+.guide-card__grain {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.13;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+/* Luz que sigue al cursor (solo en la carta del frente) */
+.guide-card__light {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(
+    420px circle at var(--mx) var(--my),
+    rgb(255 255 255 / 0.2),
+    transparent 60%
+  );
+  opacity: 0;
+  transition: opacity 0.5s var(--ease-out-premium);
+  pointer-events: none;
+}
+.guide-wrap:hover [data-front='true'] .guide-card__light {
+  opacity: 1;
+}
+/* Barrido de brillo cada vez que una carta llega al frente */
+.guide-card__sweep {
+  position: absolute;
+  inset: -20% -60%;
+  z-index: -1;
+  background: linear-gradient(105deg, transparent 40%, rgb(255 255 255 / 0.2) 50%, transparent 60%);
+  transform: translateX(-70%);
+  pointer-events: none;
+}
+[data-front='true'] .guide-card__sweep {
+  animation: guide-sweep 1.6s 0.25s var(--ease-cinematic) both;
+}
+@keyframes guide-sweep {
+  to {
+    transform: translateX(70%);
+  }
+}
+
+/* Contenido: todo se mide contra el ancho de la carta (cqi), de 300 a 600 px */
+.gc {
+  position: relative;
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  gap: clamp(0.55rem, 3cqi, 1.05rem);
+  padding: clamp(1rem, 5.4cqi, 1.8rem) clamp(1.05rem, 5.8cqi, 1.9rem)
+    clamp(0.95rem, 4.8cqi, 1.55rem);
+}
+.gc-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.gc-level {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.8rem 0.3rem 0.62rem;
+  border-radius: 999px;
+  font-size: clamp(0.7rem, 2.3cqi, 0.82rem);
+  font-weight: 500;
+  white-space: nowrap;
+  background: rgb(255 255 255 / 0.15);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.28);
+}
+.gc-level__dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: #fff;
+}
+[data-front='true'] .gc-level__dot {
+  animation: gc-beacon 2.6s 1s ease-out infinite;
+}
+@keyframes gc-beacon {
+  0% {
+    box-shadow: 0 0 0 0 rgb(255 255 255 / 0.55);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 7px rgb(255 255 255 / 0);
+  }
+}
+.gc-index {
+  font-family: var(--font-mono);
+  font-size: clamp(0.68rem, 2.2cqi, 0.8rem);
+  letter-spacing: 0.04em;
+}
+.gc-index span {
+  opacity: 0.55;
+}
+
+.gc-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 35cqi;
+  align-items: start;
+  gap: 4cqi;
+}
+.gc-copy {
+  min-width: 0;
+}
+.gc-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.3rem, 6.9cqi, 2.4rem);
+  line-height: 1.02;
+  letter-spacing: -0.012em;
+  text-wrap: balance;
+  font-variation-settings:
+    'opsz' 72,
+    'SOFT' 50;
+}
+.gc-text {
+  display: -webkit-box;
+  margin-top: 0.65rem;
+  overflow: hidden;
+  font-size: clamp(0.78rem, 2.85cqi, 1rem);
+  line-height: 1.45;
+  opacity: 0.84;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+.gc-art {
+  display: block;
+  aspect-ratio: 4 / 3;
+  margin-top: -0.2rem;
+  transform: translate3d(calc(var(--px) * -9px), calc(var(--py) * -7px), 0);
+  transition: transform 0.9s var(--ease-out-premium);
+}
+
+/* Regla de duración: 0 a 5 años; el tramo típico se rellena cuando la carta llega al frente */
+.gc-meter {
+  margin-top: auto;
+}
+.gc-meter__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.55rem;
+}
+.gc-k {
+  font-family: var(--font-mono);
+  font-size: clamp(0.56rem, 1.85cqi, 0.68rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.66;
+}
+.gc-meter__label {
+  font-family: var(--font-display);
+  font-size: clamp(0.95rem, 3.4cqi, 1.25rem);
+  line-height: 1;
+  font-variation-settings: 'opsz' 36;
+}
+.gc-meter__rail {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.13);
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.2);
+}
+.gc-meter__tick {
+  position: absolute;
+  top: 50%;
+  width: 1px;
+  height: 14px;
+  background: rgb(255 255 255 / 0.3);
+  transform: translate(-50%, -50%);
+}
+.gc-meter__fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  min-width: 12px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #fff, color-mix(in oklab, #fff 62%, var(--lv)));
+  box-shadow:
+    0 0 16px rgb(255 255 255 / 0.55),
+    0 0 0 3px rgb(255 255 255 / 0.12);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.35s var(--ease-snap);
+}
+[data-front='true'] .gc-meter__fill {
+  transform: scaleX(1);
+  animation: gc-fill 1.2s 0.45s var(--ease-out-premium) both;
+}
+@keyframes gc-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.gc-meter__scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.45rem;
+  font-family: var(--font-mono);
+  font-size: clamp(0.54rem, 1.8cqi, 0.64rem);
+  opacity: 0.55;
+}
+.gc-meter__scale > span {
+  display: flex;
+  width: 0;
+  justify-content: center;
+}
+
+/* Tres datos: entran uno tras otro cuando la carta llega al frente */
+.gc-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(0.5rem, 2.6cqi, 0.95rem);
+  padding-top: clamp(0.6rem, 2.8cqi, 0.95rem);
+  border-top: 1px solid rgb(255 255 255 / 0.16);
+}
+.gc-fact {
+  min-width: 0;
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 0.25s,
+    transform 0.25s;
+}
+[data-front='true'] .gc-fact {
+  opacity: 1;
+  transform: none;
+  animation: gc-in 0.8s calc(0.6s + var(--i) * 0.09s) var(--ease-out-premium) both;
+}
+.gc-fact dt {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: clamp(0.54rem, 1.85cqi, 0.66rem);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  opacity: 0.68;
+}
+.gc-fact dd {
+  margin-top: 0.25rem;
+  font-size: clamp(0.78rem, 2.75cqi, 0.96rem);
+  font-weight: 500;
+  line-height: 1.25;
+}
+.gc-fact__icon,
+.gc-tip__icon {
+  width: 1.15em;
+  height: 1.15em;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+@keyframes gc-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Carta de pasos: una línea une los números y se dibuja al llegar al frente */
+.gc-steps {
+  --dot: clamp(1.55rem, 6cqi, 1.95rem);
+  position: relative;
+  display: grid;
+  gap: clamp(0.55rem, 2.6cqi, 0.9rem);
+  margin-top: auto;
+}
+.gc-steps::before {
+  content: '';
+  position: absolute;
+  top: calc(var(--dot) / 2);
+  bottom: calc(var(--dot) / 2 + 0.6rem);
+  left: calc(var(--dot) / 2);
+  width: 1px;
+  background: rgb(255 255 255 / 0.35);
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 0.3s;
+}
+[data-front='true'] .gc-steps::before {
+  transform: scaleY(1);
+  animation: gc-draw-y 1.2s 0.5s var(--ease-out-premium) both;
+}
+@keyframes gc-draw-y {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+.gc-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition:
+    opacity 0.25s,
+    transform 0.25s;
+}
+[data-front='true'] .gc-step {
+  opacity: 1;
+  transform: none;
+  animation: gc-in-x 0.8s calc(0.45s + var(--i) * 0.14s) var(--ease-out-premium) both;
+}
+@keyframes gc-in-x {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.gc-step__n {
+  position: relative;
+  display: grid;
+  width: var(--dot);
+  height: var(--dot);
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: clamp(0.7rem, 2.4cqi, 0.82rem);
+  color: var(--color-violet-900);
+  background: #fff;
+  box-shadow: 0 0 0 4px rgb(255 255 255 / 0.16);
+}
+.gc-step__t {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(0.98rem, 3.7cqi, 1.25rem);
+  line-height: 1.15;
+}
+.gc-step__d {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: clamp(0.74rem, 2.6cqi, 0.9rem);
+  opacity: 0.8;
+}
+
+/* Un consejo al pie de cada carta, con su foco que se enciende */
+.gc-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding-top: clamp(0.6rem, 2.6cqi, 0.9rem);
+  border-top: 1px dashed rgb(255 255 255 / 0.22);
+  font-size: clamp(0.72rem, 2.45cqi, 0.88rem);
+  line-height: 1.4;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+[data-front='true'] .gc-tip {
+  opacity: 0.92;
+  animation: gc-tip 0.9s 1s var(--ease-out-premium) both;
+}
+@keyframes gc-tip {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 0.92;
+    transform: none;
+  }
+}
+[data-front='true'] .gc-tip__icon {
+  animation: gc-bulb 3.2s 2s ease-in-out infinite;
+}
+@keyframes gc-bulb {
+  0%,
+  100% {
+    color: #fff;
+  }
+  12%,
+  30% {
+    color: #ffe9a8;
+  }
+}
+
+/* Cartas más altas que anchas (tablet, móvil): la descripción baja a todo el ancho y la
+   ilustración crece; así no queda un hueco entre el título y la regla */
+@container (max-aspect-ratio: 1 / 1) {
+  .gc-hero {
+    grid-template-columns: minmax(0, 1fr) 38cqi;
+    grid-template-areas:
+      'title art'
+      'text text';
+    row-gap: 3.4cqi;
+  }
+  .gc-copy {
+    display: contents;
+  }
+  .gc-title {
+    grid-area: title;
+    align-self: center;
+  }
+  .gc-text {
+    grid-area: text;
+    margin-top: 0;
+  }
+  .gc-art {
+    grid-area: art;
+    margin-top: 0;
+  }
+}
+
+/* Cartas estrechas (móvil, tablet): menos texto para que todo respire */
+@container (max-width: 400px) {
+  .gc-text {
+    -webkit-line-clamp: 2;
+  }
+  .gc-meter__scale,
+  .gc-tip {
+    display: none;
+  }
+}
+@container (max-width: 300px) {
+  .gc-text {
+    display: none;
+  }
+  .gc-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .gc-fact:nth-child(3) {
+    display: none;
+  }
+}
+
+/* ---------- Ilustraciones de la guía (trazo blanco, solo la del frente se mueve) ---------- */
+.ga {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ga * {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@keyframes ga-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+}
+@keyframes ga-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes ga-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Maestría: escalones que crecen y un punto que los salta hasta la bandera */
+.ga-base {
+  stroke-opacity: 0.35;
+}
+.ga-bar {
+  fill: rgb(255 255 255 / 0.12);
+  stroke-opacity: 0.78;
+  transform-origin: 50% 100%;
+}
+.ga-bar:nth-of-type(4) {
+  fill: rgb(255 255 255 / 0.3);
+}
+[data-front='true'] .ga-bar {
+  animation: ga-grow 0.9s calc(0.2s + var(--k) * 0.12s) var(--ease-out-premium) both;
+}
+@keyframes ga-grow {
+  from {
+    opacity: 0;
+    transform: scaleY(0);
+  }
+}
+.ga-trail {
+  stroke-opacity: 0.5;
+  stroke-dasharray: 0.035 0.03;
+}
+[data-front='true'] .ga-trail {
+  animation: ga-fade 0.8s 0.8s both;
+}
+.ga-flag {
+  fill: rgb(255 255 255 / 0.92);
+  stroke: #fff;
+  transform-origin: 0% 100%;
+}
+[data-front='true'] .ga-flag {
+  animation:
+    ga-pop 0.6s 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) both,
+    ga-wave 2.2s 1.5s ease-in-out infinite;
+}
+@keyframes ga-wave {
+  50% {
+    transform: skewY(-9deg) scaleX(0.9);
+  }
+}
+.ga-dot {
+  fill: #fff;
+  stroke: none;
+  opacity: 0;
+}
+.ga-dot--hop {
+  transform: translate(29px, 81px);
+}
+[data-front='true'] .ga-dot--hop {
+  animation: ga-hop 4s 1.2s infinite;
+}
+@keyframes ga-hop {
+  0% {
+    opacity: 0;
+    transform: translate(29px, 81px);
+    animation-timing-function: ease-out;
+  }
+  6% {
+    opacity: 1;
+    transform: translate(29px, 81px);
+    animation-timing-function: ease-out;
+  }
+  14% {
+    transform: translate(45px, 54px);
+    animation-timing-function: ease-in;
+  }
+  22%,
+  28% {
+    transform: translate(61px, 63px);
+    animation-timing-function: ease-out;
+  }
+  36% {
+    transform: translate(77px, 36px);
+    animation-timing-function: ease-in;
+  }
+  44%,
+  50% {
+    transform: translate(93px, 45px);
+    animation-timing-function: ease-out;
+  }
+  58% {
+    transform: translate(109px, 16px);
+    animation-timing-function: ease-in;
+  }
+  66%,
+  88% {
+    opacity: 1;
+    transform: translate(125px, 25px);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(125px, 25px);
+  }
+}
+
+/* Doctorado: la red conocida se dibuja y un nodo nuevo se enciende en el borde */
+.ga-link {
+  stroke-opacity: 0.5;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+[data-front='true'] .ga-link {
+  animation: ga-draw 0.8s calc(0.2s + var(--k) * 0.09s) var(--ease-out-premium) forwards;
+}
+.ga-link--new {
+  stroke-opacity: 0.85;
+  stroke-dasharray: 0.06 0.05;
+  stroke-dashoffset: 0;
+  opacity: 0;
+}
+[data-front='true'] .ga-link--new {
+  opacity: 1;
+  animation:
+    ga-fade 0.5s 1s both,
+    ga-march 1.2s 1s linear infinite;
+}
+@keyframes ga-march {
+  to {
+    stroke-dashoffset: -0.11;
+  }
+}
+.ga-node {
+  fill: color-mix(in oklab, var(--lv) 55%, #000);
+  stroke-opacity: 0.9;
+}
+[data-front='true'] .ga-node {
+  animation: ga-pop 0.5s calc(0.12s + var(--k) * 0.08s) var(--ease-out-premium) both;
+}
+.ga-new {
+  fill: #fff;
+  stroke: none;
+}
+[data-front='true'] .ga-new {
+  animation: ga-pop 0.6s 1.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.ga-pulse {
+  stroke-opacity: 0.8;
+  opacity: 0;
+}
+[data-front='true'] .ga-pulse {
+  animation: ga-pulse 2.2s 1.6s ease-out infinite;
+}
+@keyframes ga-pulse {
+  0% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.8);
+  }
+}
+.ga-spark {
+  opacity: 0;
+}
+[data-front='true'] .ga-spark {
+  animation: ga-spark 2.2s 1.6s ease-in-out infinite;
+}
+@keyframes ga-spark {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  30%,
+  60% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Especialización: un visor que enfoca; los corchetes se cierran sobre el punto */
+.ga-ring {
+  stroke-opacity: 0.45;
+}
+.ga-ring--outer {
+  stroke-opacity: 0.35;
+  stroke-dasharray: 4 7;
+}
+[data-front='true'] .ga-ring--outer {
+  animation: ga-spin 26s linear infinite;
+}
+@keyframes ga-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.ga-ring--lens {
+  stroke-opacity: 0.95;
+  stroke-width: 2;
+}
+[data-front='true'] .ga-ring--lens {
+  animation: ga-focus 3.4s 0.4s var(--ease-out-premium) infinite;
+}
+@keyframes ga-focus {
+  0% {
+    opacity: 0;
+    transform: scale(2.1);
+  }
+  35% {
+    opacity: 1;
+  }
+  60%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.ga-cross {
+  stroke-opacity: 0.5;
+}
+.ga-bracket {
+  stroke-width: 2.2;
+}
+[data-front='true'] .ga-bracket {
+  animation: ga-bracket 3.4s 0.4s var(--ease-out-premium) infinite;
+}
+@keyframes ga-bracket {
+  0% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+  40%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.ga-core {
+  fill: #fff;
+  stroke: none;
+}
+[data-front='true'] .ga-core {
+  animation: ga-core 3.4s 0.4s ease-in-out infinite;
+}
+@keyframes ga-core {
+  0%,
+  55%,
+  100% {
+    transform: scale(1);
+  }
+  68% {
+    transform: scale(1.7);
+  }
+}
+
+/* Diplomado: un mes corto y los fines de semana que se van marcando */
+.ga-frame {
+  fill: rgb(255 255 255 / 0.06);
+  stroke-opacity: 0.55;
+}
+.ga-rule {
+  stroke-opacity: 0.3;
+}
+.ga-day {
+  fill: #fff;
+  fill-opacity: 0.72;
+  stroke: none;
+  font-family: var(--font-mono);
+  font-size: 9px;
+}
+.ga-cell {
+  fill: rgb(255 255 255 / 0.1);
+  stroke: none;
+}
+.ga-cell--on {
+  fill: rgb(255 255 255 / 0.2);
+}
+[data-front='true'] .ga-cell--on {
+  animation: ga-cell 4.8s calc(0.4s + var(--k) * 0.26s) var(--ease-out-premium) infinite;
+}
+@keyframes ga-cell {
+  0% {
+    fill: rgb(255 255 255 / 0.2);
+    transform: scale(1);
+  }
+  6% {
+    fill: #fff;
+    transform: scale(1.3);
+  }
+  12%,
+  70% {
+    fill: #fff;
+    transform: scale(1);
+  }
+  86%,
+  100% {
+    fill: rgb(255 255 255 / 0.2);
+    transform: scale(1);
+  }
+}
+
+/* Cómo empezar: la ruta avanza, las paradas aparecen y alguien la recorre */
+.ga-road {
+  stroke-opacity: 0.6;
+  stroke-dasharray: 5 6;
+}
+[data-front='true'] .ga-road {
+  animation: ga-road 1.1s linear infinite;
+}
+@keyframes ga-road {
+  to {
+    stroke-dashoffset: -11;
+  }
+}
+.ga-stop circle {
+  fill: color-mix(in oklab, var(--lv) 55%, #000);
+}
+.ga-stop text {
+  fill: #fff;
+  stroke: none;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+[data-front='true'] .ga-stop {
+  animation: ga-pop 0.6s calc(0.3s + var(--k) * 0.2s) cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.ga-start {
+  fill: #fff;
+  stroke: none;
+  opacity: 0.7;
+}
+.ga-pin path {
+  fill: #fff;
+  stroke: none;
+}
+.ga-pin circle {
+  fill: color-mix(in oklab, var(--lv) 60%, #000);
+  stroke: none;
+}
+.ga-pin {
+  transform-origin: 50% 100%;
+}
+[data-front='true'] .ga-pin {
+  animation:
+    ga-drop 0.8s 0.95s cubic-bezier(0.34, 1.56, 0.64, 1) both,
+    ga-bob 2.6s 1.9s ease-in-out infinite;
+}
+@keyframes ga-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.6);
+  }
+}
+@keyframes ga-bob {
+  50% {
+    transform: translateY(-3px);
+  }
+}
+.ga-dot--walk {
+  transform: translate(10px, 104px);
+}
+[data-front='true'] .ga-dot--walk {
+  animation: ga-walk 5.2s 1.1s linear infinite;
+}
+@keyframes ga-walk {
+  0% {
+    opacity: 0;
+    transform: translate(10px, 104px);
+  }
+  4% {
+    opacity: 1;
+  }
+  10% {
+    transform: translate(27px, 99px);
+  }
+  16% {
+    transform: translate(37.5px, 87px);
+  }
+  22% {
+    transform: translate(47px, 74.5px);
+  }
+  28% {
+    transform: translate(62px, 68px);
+  }
+  34% {
+    transform: translate(78px, 63px);
+  }
+  40% {
+    transform: translate(89px, 53px);
+  }
+  46% {
+    transform: translate(99px, 43px);
+  }
+  52% {
+    transform: translate(112px, 38px);
+  }
+  58% {
+    transform: translate(125px, 34px);
+  }
+  64% {
+    transform: translate(136px, 27px);
+  }
+  70% {
+    transform: translate(144px, 19px);
+  }
+  76% {
+    opacity: 1;
+    transform: translate(152px, 12px);
+  }
+  84%,
+  100% {
+    opacity: 0;
+    transform: translate(152px, 12px);
+  }
+}
+
+/* Menos movimiento: la guía queda quieta y completa */
+html[data-quality='still'] .gc-meter__fill,
+html[data-quality='still'] .gc-fact,
+html[data-quality='still'] .gc-step,
+html[data-quality='still'] .gc-tip,
+html[data-quality='still'] .gc-steps::before {
+  opacity: 1;
+  transform: none;
+}
+html[data-quality='still'] .ga-link {
+  stroke-dashoffset: 0;
+}
+
+/* ---------- Noticias: tela elástica + índice ---------- */
+.news-mesh {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 10.5;
+  /* La tela se dibuja al 82 % del lienzo: el borde sobrante es aire, no un marco */
+  margin: -3% -4% 0;
+}
+.news-mesh__shadow {
+  position: absolute;
+  right: 16%;
+  bottom: 6%;
+  left: 16%;
+  height: 12%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(var(--shadow-ink) / 0.35), transparent);
+  filter: blur(14px);
+  pointer-events: none;
+  transition:
+    transform 0.9s var(--ease-out-premium),
+    opacity 0.9s;
+}
+.news-mesh:hover .news-mesh__shadow {
+  transform: scaleX(1.08);
+  opacity: 0.8;
+}
+.news-mesh__chip {
+  position: absolute;
+  top: 12%;
+  left: 12%;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  color: var(--color-violet-900);
+  background: rgb(253 252 255 / 0.9);
+  box-shadow: 0 10px 24px -14px rgb(var(--shadow-ink) / 0.6);
+  pointer-events: none;
+}
+.news-mesh__live {
+  position: relative;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--color-violet-500);
+}
+.news-mesh__live::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  border: 1px solid var(--color-violet-500);
+  animation: news-ping 2.2s var(--ease-out-premium) infinite;
+}
+@keyframes news-ping {
+  from {
+    transform: scale(0.5);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+.news-mesh__hint {
+  position: absolute;
+  right: 12%;
+  bottom: 12%;
+  z-index: 2;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  color: #fff;
+  background: rgb(22 15 48 / 0.45);
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+  opacity: 1;
+  transition:
+    opacity 0.5s,
+    transform 0.5s var(--ease-out-premium);
+}
+.news-mesh:hover .news-mesh__hint {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+/* Portada fija (modo liviano / sin WebGL): la misma hoja, inclinada con CSS */
+.news-static {
+  position: absolute;
+  inset: 9% 9% 9%;
+  border-radius: 26px;
+  overflow: hidden;
+  transform: perspective(1400px) rotateX(9deg);
+  transform-origin: 50% 100%;
+  box-shadow: 0 40px 70px -40px rgb(var(--shadow-ink) / 0.55);
+}
+.news-static__layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: scale(1.04);
+  transition:
+    opacity 0.7s var(--ease-out-premium),
+    transform 1.4s var(--ease-out-premium);
+}
+.news-static__layer.is-on {
+  opacity: 1;
+  transform: none;
+}
+
+.news-copy {
+  margin-top: 0.4rem;
+}
+.news-copy__title {
+  margin-top: 0.7rem;
+  max-width: 24ch;
+  font-size: clamp(1.7rem, 3vw, 2.6rem);
+  line-height: 1.04;
+  font-variation-settings:
+    'opsz' 96,
+    'SOFT' 40;
+}
+.news-copy__title a {
+  background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
+  transition: background-size 0.7s var(--ease-out-premium);
+}
+.news-copy__title a:hover {
+  background-size: 100% 1px;
+}
+.news-copy__summary {
+  margin-top: 0.9rem;
+  max-width: 60ch;
+  font-size: 1.02rem;
+  line-height: 1.6;
+  color: var(--fg-muted);
+}
+.news-copy__cta {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 1.4rem;
+  padding: 0.7rem 1.25rem;
+  overflow: hidden;
+  border-radius: 999px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: #fff;
+  background: var(--violet-glow);
+  box-shadow: 0 18px 34px -18px rgb(var(--shadow-ink) / 0.7);
+  isolation: isolate;
+  transition: transform 0.45s var(--ease-out-premium);
+}
+/* Relleno que sube desde abajo al pasar el cursor */
+.news-copy__cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--color-violet-900);
+  transform: translateY(101%);
+  transition: transform 0.55s var(--ease-out-premium);
+}
+.news-copy__cta:hover::before,
+.news-copy__cta:focus-visible::before {
+  transform: none;
+}
+.news-copy__cta:active {
+  transform: scale(0.97);
+}
+.news-copy__arrow {
+  display: inline-block;
+  transition: transform 0.5s var(--ease-out-premium);
+}
+.news-copy__cta:hover .news-copy__arrow {
+  transform: translateX(4px) rotate(-45deg);
+}
+
+.news-index__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: var(--fg);
+}
+.news-index__head .mono-label {
+  color: var(--fg-muted);
+}
+.news-index {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 0.6rem;
+}
+.news-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.95rem 1rem 0.95rem 0.8rem;
+  border-radius: 18px;
+  isolation: isolate;
+  overflow: hidden;
+  transition: transform 0.5s var(--ease-out-premium);
+}
+.news-row:hover {
+  transform: translateX(4px);
+}
+.news-row__bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--surface-2);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--color-violet-400) 22%, transparent),
+    0 18px 34px -26px rgb(var(--shadow-ink) / 0.55);
+}
+.news-row__n {
+  width: 2.2rem;
+  flex-shrink: 0;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--color-violet-300);
+  transition:
+    color 0.4s,
+    transform 0.6s var(--ease-out-premium);
+}
+.news-row.is-active .news-row__n {
+  color: var(--color-violet-600);
+  transform: translateY(-2px);
+}
+.news-row__title {
+  display: -webkit-box;
+  font-family: var(--font-display);
+  font-size: 1.08rem;
+  line-height: 1.2;
+  color: var(--fg);
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-variation-settings:
+    'opsz' 32,
+    'SOFT' 30;
+}
+.news-row__date {
+  display: block;
+  margin-top: 0.3rem;
+  color: var(--fg-muted);
+}
+.news-row__thumb {
+  position: relative;
+  width: 3.6rem;
+  height: 3.6rem;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 14px;
+  background: linear-gradient(150deg, var(--t1), var(--t2));
+  transform: rotate(-4deg) scale(0.92);
+  opacity: 0.7;
+  transition:
+    transform 0.7s var(--ease-out-premium),
+    opacity 0.5s,
+    border-radius 0.7s var(--ease-out-premium);
+}
+.news-row:hover .news-row__thumb,
+.news-row.is-active .news-row__thumb {
+  transform: none;
+  opacity: 1;
+  border-radius: 999px;
+}
+.news-row__progress {
+  position: absolute;
+  right: 1rem;
+  bottom: 0.45rem;
+  left: 4rem;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--violet-glow);
+  transform-origin: left;
+  animation: news-progress linear both;
+}
+@keyframes news-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.news-index__all {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 1.1rem 0 0 0.8rem;
+  font-size: 0.9rem;
+  color: var(--color-violet-700);
+  transition: gap 0.45s var(--ease-out-premium);
+}
+.news-index__all:hover {
+  gap: 0.8rem;
+}
+
+html[data-quality='still'] .news-mesh__live::after,
+html[data-quality='still'] .news-row__progress {
+  animation: none;
+}
+@media (max-width: 1023px) {
+  .news-mesh {
+    margin: -4% -6% 0;
+  }
+}
+
+/* ---------- Hitos: línea de tiempo horizontal ---------- */
+.ms {
+  --step: clamp(170px, 17vw, 240px);
+  --card-w: clamp(250px, 32vh, 340px);
+  --gap: clamp(26px, 4vh, 44px);
+  position: relative;
+  overflow: hidden;
+  margin-top: clamp(1.5rem, 4vw, 3rem);
+}
+.ms--pinned {
+  height: 100svh;
+}
+.ms-year {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  overflow: hidden;
+}
+.ms-year > span {
+  grid-area: 1 / 1;
+  font-family: var(--font-display);
+  font-size: clamp(9rem, 34vh, 22rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: transparent;
+  -webkit-text-stroke: 1.5px color-mix(in oklab, var(--color-violet-400) 45%, transparent);
+  font-variation-settings:
+    'opsz' 144,
+    'SOFT' 100;
+}
+.ms-viewport {
+  position: relative;
+  height: 100%;
+}
+.ms--strip .ms-viewport {
+  height: clamp(560px, 70vh, 700px);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.ms--strip .ms-viewport::-webkit-scrollbar {
+  display: none;
+}
+.ms-track {
+  position: relative;
+  display: flex;
+  width: max-content;
+  height: calc(100% - 4.5rem);
+  padding-inline: max(var(--gutter), 8vw) 50vw;
+  will-change: transform;
+}
+.ms--strip .ms-track {
+  height: 100%;
+  /* La tarjeta sobresale 1.4rem a la izquierda de su nodo: el margen la deja entera */
+  padding-inline: calc(var(--gutter) + 1.4rem) 30vw;
+}
+.ms-line {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: 2px;
+  background: color-mix(in oklab, var(--color-violet-400) 22%, transparent);
+  overflow: hidden;
+}
+.ms-line__fill {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    var(--color-violet-300),
+    var(--color-violet-600) 40%,
+    var(--color-orchid)
+  );
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.ms--strip .ms-line__fill {
+  transform: scaleX(1);
+  opacity: 0.5;
+}
+
+.ms-item {
+  --d: 0;
+  --ad: 0;
+  position: relative;
+  flex: 0 0 var(--step);
+  height: 100%;
+  scroll-snap-align: start;
+  scroll-margin-left: calc(var(--gutter) + 1.4rem);
+}
+.ms-node {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  transform: translate(-7px, -50%);
+}
+.ms-node__dot {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--bg);
+  box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--tone) 55%, transparent);
+  transition:
+    background 0.5s var(--ease-snap),
+    box-shadow 0.5s var(--ease-snap),
+    transform 0.6s var(--ease-out-premium);
+}
+.ms-node__dot::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: inherit;
+  border: 1.5px solid var(--tone);
+  opacity: 0;
+  transform: scale(0.6);
+}
+.ms-item.is-passed .ms-node__dot {
+  background: var(--tone);
+  box-shadow: 0 0 0 3px var(--bg);
+}
+.ms-item.is-active .ms-node__dot {
+  transform: scale(1.35);
+}
+.ms-item.is-active .ms-node__dot::after {
+  animation: ms-ring 1.8s var(--ease-out-premium) infinite;
+}
+@keyframes ms-ring {
+  from {
+    opacity: 0.9;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.8);
+  }
+}
+.ms-node__date {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  white-space: nowrap;
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  background: var(--bg);
+  transition: color 0.4s;
+}
+.ms-node__date b {
+  font-weight: 600;
+  color: var(--fg);
+}
+/* Tarjetas de arriba: la fecha va debajo de la línea (y al revés) para no chocar */
+.ms-item[data-side='top'] .ms-node__date {
+  transform: translateY(1.35rem);
+  margin-left: -1.6rem;
+}
+.ms-item[data-side='bottom'] .ms-node__date {
+  transform: translateY(-1.35rem);
+  margin-left: -1.6rem;
+}
+.ms-item.is-active .ms-node__date {
+  color: var(--tone);
+}
+
+.ms-stem {
+  position: absolute;
+  left: 0;
+  width: 1px;
+  height: var(--gap);
+  background: linear-gradient(var(--tone), transparent);
+  opacity: 0.45;
+  transform-origin: bottom;
+  transition: opacity 0.4s;
+}
+.ms-item[data-side='top'] .ms-stem {
+  bottom: 50%;
+  background: linear-gradient(to top, var(--tone), transparent);
+}
+.ms-item[data-side='bottom'] .ms-stem {
+  top: 50%;
+}
+.ms-item.is-active .ms-stem {
+  opacity: 1;
+}
+
+.ms-card-wrap {
+  position: absolute;
+  left: -1.4rem;
+  width: var(--card-w);
+  perspective: 1000px;
+}
+.ms-item[data-side='top'] .ms-card-wrap {
+  bottom: calc(50% + var(--gap));
+}
+.ms-item[data-side='bottom'] .ms-card-wrap {
+  top: calc(50% + var(--gap));
+}
+.ms-card {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 20px;
+  background: var(--surface-1);
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--tone) 18%, transparent),
+    0 26px 50px -34px rgb(var(--shadow-ink) / 0.55);
+  transition:
+    box-shadow 0.6s var(--ease-out-premium),
+    filter 0.6s var(--ease-out-premium),
+    opacity 0.6s var(--ease-out-premium);
+}
+/* Curva 3D según la distancia al centro (solo con la pista fijada) */
+.ms--pinned .ms-card {
+  transform: rotateY(calc(var(--d) * -16deg)) translateZ(calc(var(--ad) * -70px));
+  transform-origin: 50% 50%;
+  filter: saturate(calc(1 - var(--ad) * 0.35));
+  opacity: calc(1 - var(--ad) * 0.28);
+}
+.ms--pinned .ms-item.is-active .ms-card {
+  box-shadow:
+    0 0 0 1.5px var(--tone),
+    0 40px 70px -34px color-mix(in oklab, var(--tone) 70%, transparent);
+}
+.ms-item.is-active {
+  z-index: 4;
+}
+.ms-card:hover {
+  box-shadow:
+    0 0 0 1.5px var(--tone),
+    0 36px 60px -34px rgb(var(--shadow-ink) / 0.6);
+}
+.ms-item.is-upcoming .ms-card {
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      transparent 0 10px,
+      color-mix(in oklab, var(--tone) 4%, transparent) 10px 20px
+    ),
+    var(--surface-1);
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--tone) 30%, transparent),
+    0 26px 50px -34px rgb(var(--shadow-ink) / 0.4);
+}
+.ms-item.is-upcoming .ms-node__dot {
+  background: var(--bg);
+  box-shadow: inset 0 0 0 2px var(--tone);
+  border: 1px dashed var(--tone);
+}
+
+.ms-card__media {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 8.5;
+  overflow: hidden;
+  background: linear-gradient(150deg, var(--tone), color-mix(in oklab, var(--tone) 45%, #fff));
+}
+.ms-card__img {
+  transform: translateX(calc(var(--d) * -14px)) scale(1.12);
+  transition: transform 0.9s var(--ease-out-premium);
+}
+.ms-card:hover .ms-card__img {
+  transform: translateX(calc(var(--d) * -14px)) scale(1.18);
+}
+.ms-card__art {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 20% 20%, rgb(255 255 255 / 0.28), transparent 45%),
+    radial-gradient(circle at 85% 90%, rgb(0 0 0 / 0.18), transparent 50%);
+}
+.ms-card__art::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgb(255 255 255 / 0.22) 1px, transparent 1.5px);
+  background-size: 14px 14px;
+  mask-image: linear-gradient(to bottom, #000, transparent);
+}
+.ms-card__big {
+  position: relative;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4.2vh, 3rem);
+  line-height: 1;
+  color: #fff;
+  letter-spacing: -0.02em;
+  font-variation-settings:
+    'opsz' 144,
+    'SOFT' 60;
+  transform: translateX(calc(var(--d) * -10px));
+}
+.ms-card__chip {
+  position: absolute;
+  top: 0.7rem;
+  left: 0.7rem;
+  padding: 0.18rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  color: #fff;
+  background: color-mix(in oklab, var(--tone) 80%, #000 10%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.25);
+  backdrop-filter: blur(4px);
+}
+.ms-card__body {
+  display: block;
+  padding: 0.85rem 1rem 1rem;
+}
+.ms-card__title {
+  display: -webkit-box;
+  font-family: var(--font-display);
+  font-size: 1.08rem;
+  line-height: 1.18;
+  color: var(--fg);
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-variation-settings:
+    'opsz' 32,
+    'SOFT' 30;
+}
+.ms-card__summary {
+  display: -webkit-box;
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--fg-muted);
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ms-card__unis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.6rem;
+}
+.ms-card__unis > span {
+  padding: 0.08rem 0.45rem;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  color: var(--tone);
+  background: color-mix(in oklab, var(--tone) 9%, transparent);
+}
+@media (max-height: 760px) {
+  .ms-card__summary {
+    display: none;
+  }
+}
+
+/* "Hoy": corte entre lo que pasó y lo que viene */
+.ms-today {
+  position: absolute;
+  top: 8%;
+  bottom: 8%;
+  left: calc(var(--step) * -0.5);
+  z-index: 2;
+  width: 0;
+  border-left: 1.5px dashed color-mix(in oklab, var(--color-violet-500) 55%, transparent);
+  list-style: none;
+}
+.ms-today--end {
+  position: relative;
+  left: calc(var(--step) * 0.3);
+  height: 84%;
+  align-self: center;
+}
+.ms-today > span {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--violet-glow);
+  box-shadow: 0 10px 22px -10px rgb(var(--shadow-ink) / 0.6);
+  transform: translate(-50%, -50%);
+}
+
+/* Contador y leyenda */
+.ms-hud {
+  position: absolute;
+  right: 0;
+  bottom: 1.4rem;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+  font-size: 0.85rem;
+  color: var(--fg-muted);
+  pointer-events: none;
+}
+.ms--strip .ms-hud {
+  position: relative;
+  bottom: auto;
+  margin-top: 1rem;
+}
+.ms--strip .ms-hud__count,
+.ms--strip .ms-hud__label {
+  display: none;
+}
+.ms-hud__count {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--fg);
+}
+.ms-hud__now {
+  display: inline-block;
+  min-width: 2ch;
+  font-variant-numeric: tabular-nums;
+}
+.ms-hud__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.ms-hud__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  transition: background 0.4s;
+}
+.ms-hud__hint {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+}
+@media (max-width: 899px) {
+  .ms--pinned {
+    height: auto;
+  }
+  .ms--pinned .ms-viewport {
+    height: clamp(560px, 72vh, 700px);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .ms--pinned .ms-track {
+    height: 100%;
+    padding-inline: calc(var(--gutter) + 1.4rem) 30vw;
+  }
+  .ms--pinned .ms-line__fill {
+    transform: scaleX(1);
+    opacity: 0.5;
+  }
+  .ms--pinned .ms-hud {
+    position: relative;
+    bottom: auto;
+    margin-top: 1rem;
+  }
+  .ms--pinned .ms-hud__count,
+  .ms--pinned .ms-hud__label {
+    display: none;
+  }
+  .ms--pinned .ms-card {
+    transform: none;
+    filter: none;
+    opacity: 1;
+  }
+}
+html[data-quality='still'] .ms-node__dot::after {
+  animation: none;
+}
+
+/* ---------- Hitos: entrada atada a la línea e interacción de cada tarjeta ---------- */
+/* La tarjeta gira sobre el borde que toca la línea (la entrada la despliega desde ahí) y, con el
+   cursor encima, se inclina hacia él y se adelanta. --rx/--ry los escribe MilestonesTrack. */
+.ms-card-wrap {
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg))
+    translateZ(var(--lift, 0px));
+  transform-origin: 50% 100%;
+  transition: transform 0.6s var(--ease-out-premium);
+}
+.ms-item[data-side='bottom'] .ms-card-wrap {
+  transform-origin: 50% 0%;
+}
+.ms-card-wrap:hover {
+  --lift: 26px;
+}
+.ms-item[data-side='bottom'] .ms-stem {
+  transform-origin: top;
+}
+/* Brillo que sigue al puntero sobre toda la tarjeta */
+.ms-card__glare {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: radial-gradient(
+    280px circle at var(--gx, 50%) var(--gy, 0%),
+    rgb(255 255 255 / 0.3),
+    transparent 62%
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s var(--ease-out-premium);
+}
+.ms-card:hover .ms-card__glare {
+  opacity: 1;
+}
+/* El nodo late y la fecha toma el color del tipo mientras el cursor está en su tarjeta */
+.ms-item:has(.ms-card:hover) .ms-node__dot {
+  transform: scale(1.35);
+}
+.ms-item:has(.ms-card:hover) .ms-node__dot::after {
+  animation: ms-ring 1.8s var(--ease-out-premium) infinite;
+}
+.ms-item:has(.ms-card:hover) .ms-node__date {
+  color: var(--tone);
+}
+.ms-item:has(.ms-card:hover) .ms-stem {
+  opacity: 1;
+}
+/* Una chispa baja por el tallo desde la tarjeta hasta la línea */
+.ms-stem::after {
+  content: '';
+  position: absolute;
+  left: -2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--tone);
+  box-shadow: 0 0 10px 1px var(--tone);
+  opacity: 0;
+}
+.ms-item[data-side='top'] .ms-stem::after {
+  top: 0;
+}
+.ms-item[data-side='bottom'] .ms-stem::after {
+  bottom: 0;
+}
+.ms-item[data-side='top']:has(.ms-card:hover) .ms-stem::after {
+  animation: ms-spark-down 1.3s ease-in infinite;
+}
+.ms-item[data-side='bottom']:has(.ms-card:hover) .ms-stem::after {
+  animation: ms-spark-up 1.3s ease-in infinite;
+}
+@keyframes ms-spark-down {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  20%,
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(calc(var(--gap) - 5px));
+  }
+}
+@keyframes ms-spark-up {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  20%,
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(calc((var(--gap) - 5px) * -1));
+  }
+}
+
+/* Actividades con foto: sombra y "Ver actividad" que sube desde abajo */
+.ms-card__shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgb(12 8 26 / 0.45), transparent 55%);
+  opacity: 0;
+  transition: opacity 0.5s var(--ease-out-premium);
+}
+.ms-card__peek {
+  position: absolute;
+  bottom: 0.7rem;
+  left: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--color-ink);
+  background: rgb(255 255 255 / 0.92);
+  opacity: 0;
+  translate: 0 10px;
+  transition:
+    opacity 0.35s,
+    translate 0.5s var(--ease-out-premium);
+}
+.ms-card__peek > span {
+  transition: translate 0.5s var(--ease-out-premium);
+}
+.ms-card:hover .ms-card__shade,
+.ms-card:focus-visible .ms-card__shade,
+.ms-card:hover .ms-card__peek,
+.ms-card:focus-visible .ms-card__peek {
+  opacity: 1;
+  translate: 0 0;
+}
+.ms-card:hover .ms-card__peek > span {
+  translate: 3px 0;
+}
+
+/* Ingresos: el color de la universidad inunda la tarjeta desde el puntero y su sello cae como
+   un timbre (como en las losas de la portada, su color solo aparece al pasar el cursor) */
+.ms-card__flood {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      circle at 25% 20%,
+      color-mix(in oklab, var(--brand-accent) 38%, transparent),
+      transparent 58%
+    ),
+    linear-gradient(150deg, var(--brand), color-mix(in oklab, var(--brand) 55%, #000));
+  clip-path: circle(0% at var(--gx, 50%) var(--gy, 30%));
+  transition: clip-path 0.75s var(--ease-out-premium);
+}
+.ms-card:hover .ms-card__flood,
+.ms-card:focus-visible .ms-card__flood {
+  clip-path: circle(150% at var(--gx, 50%) var(--gy, 30%));
+}
+.ms-card__big {
+  transition: translate 0.6s var(--ease-out-premium);
+}
+.ms-item[data-kind='university'] .ms-card:hover .ms-card__big,
+.ms-item[data-kind='university'] .ms-card:focus-visible .ms-card__big {
+  translate: -16% 0;
+}
+.ms-card__seal {
+  position: absolute;
+  top: 50%;
+  right: 9%;
+  width: 34%;
+  max-width: 5.5rem;
+  aspect-ratio: 1;
+  translate: 0 -50%;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow:
+    0 0 0 3px rgb(255 255 255 / 0.9),
+    0 12px 22px -6px rgb(0 0 0 / 0.45);
+  opacity: 0;
+  transform: scale(1.8) rotate(-24deg);
+  transition:
+    opacity 0.25s,
+    transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.ms-card:hover .ms-card__seal,
+.ms-card:focus-visible .ms-card__seal {
+  opacity: 1;
+  transform: scale(1) rotate(-8deg);
+  transition-delay: 0.12s;
+}
+
+/* Icono de cada tipo, con su gesto (al pasar el cursor, o en la tarjeta activa de la pista) */
+.ms-card__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.ms-glyph {
+  width: 0.95rem;
+  height: 0.95rem;
+  flex-shrink: 0;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ms-glyph * {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.ms-glyph--seal .g-check {
+  stroke-dasharray: 1;
+}
+:is(.ms-card:hover, .ms-item.is-active .ms-card) .ms-glyph--seal {
+  animation: g-stamp 0.8s var(--ease-out-premium) both;
+}
+:is(.ms-card:hover, .ms-item.is-active .ms-card) .ms-glyph--seal .g-check {
+  animation: g-check 0.6s 0.3s var(--ease-out-premium) both;
+}
+@keyframes g-stamp {
+  0% {
+    opacity: 0.2;
+    transform: scale(1.9) rotate(-40deg);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(0.85) rotate(4deg);
+  }
+  100% {
+    transform: none;
+  }
+}
+@keyframes g-check {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+:is(.ms-card:hover, .ms-item.is-active .ms-card) .ms-glyph--meet .g-a {
+  animation: g-meet-a 1s ease-in-out infinite alternate;
+}
+:is(.ms-card:hover, .ms-item.is-active .ms-card) .ms-glyph--meet .g-b {
+  animation: g-meet-b 1s ease-in-out infinite alternate;
+}
+@keyframes g-meet-a {
+  to {
+    transform: translateX(1.6px);
+  }
+}
+@keyframes g-meet-b {
+  to {
+    transform: translateX(-1.6px);
+  }
+}
+:is(.ms-card:hover, .ms-item.is-active .ms-card) .ms-glyph--talk .g-w {
+  animation: g-wave 1.1s ease-out infinite;
+}
+:is(.ms-card:hover, .ms-item.is-active .ms-card) .ms-glyph--talk .g-w2 {
+  animation-delay: 0.25s;
+}
+@keyframes g-wave {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.25);
+  }
+}
+.ms-glyph--book .g-page {
+  transform-box: view-box;
+  transform-origin: 8px 8px;
+}
+:is(.ms-card:hover, .ms-item.is-active .ms-card) .ms-glyph--book .g-page {
+  animation: g-page 1.2s var(--ease-cinematic) infinite alternate;
+}
+@keyframes g-page {
+  to {
+    transform: scaleX(-1);
+  }
+}
+.ms-glyph--table .g-seats {
+  transform-box: view-box;
+  transform-origin: 8px 8px;
+}
+:is(.ms-card:hover, .ms-item.is-active .ms-card) .ms-glyph--table .g-seats {
+  animation: g-orbit 1.4s var(--ease-out-premium) infinite;
+}
+@keyframes g-orbit {
+  to {
+    transform: rotate(90deg);
+  }
+}
+:is(.ms-card:hover, .ms-item.is-active .ms-card) .ms-glyph--launch .g-arrow {
+  animation: g-launch 1.2s var(--ease-out-premium) infinite;
+}
+:is(.ms-card:hover, .ms-item.is-active .ms-card) .ms-glyph--launch .g-trail {
+  animation: g-trail 1.2s var(--ease-out-premium) infinite;
+}
+@keyframes g-launch {
+  0%,
+  100% {
+    transform: none;
+  }
+  45% {
+    transform: translate(2.4px, -2.4px);
+  }
+}
+@keyframes g-trail {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  45% {
+    opacity: 1;
+  }
+}
+
+/* ---------- Microdetalles (v4) ---------- */
+
+/* Progreso de lectura: una línea violeta bajo el borde superior, ligada al scroll (solo CSS) */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 80;
+  height: 2px;
+  background: var(--violet-glow);
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  pointer-events: none;
+}
+@supports (animation-timeline: scroll()) {
+  .scroll-progress {
+    animation: scroll-grow linear both;
+    animation-timeline: scroll(root block);
+  }
+}
+@supports not (animation-timeline: scroll()) {
+  .scroll-progress {
+    display: none;
+  }
+}
+@keyframes scroll-grow {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* Cambio de página: un fundido breve de todo el contenido. Cada pieza trae además su propia
+   entrada (data-reveal), así que aquí basta con suavizar el corte, sin desplazar nada */
+.page-enter {
+  animation: page-in 0.45s var(--ease-out-premium) backwards;
+}
+@keyframes page-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Entradas animadas (lib/quality-script.ts): el script anima con la Web Animations API y no
+   necesita reglas para ocultar nada. Aquí solo lo que las piezas necesitan para verse bien. */
+
+/* El pliegue de FoldText se sombrea con una variable: registrada, se puede interpolar */
+@property --fold-crease {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+/* Palabra de un título que sube desde su renglón: la máscara es un clip-path que desborda la caja
+   (no cambia el alto de la línea ni corta ascendentes y descendentes) */
+.rw {
+  display: inline-block;
+  clip-path: inset(-0.25em -0.1em -0.16em -0.1em);
+}
+.rw > span {
+  display: inline-block;
+  transform-origin: 0% 100%;
+}
+
+/* Foco: el anillo llega desde un poco más lejos y se asienta (se nota que algo tomó el foco) */
+:focus-visible {
+  animation: focus-in 0.35s var(--ease-out-premium);
+}
+@keyframes focus-in {
+  from {
+    outline-offset: 8px;
+    outline-color: transparent;
+  }
+}
+
+/* Barras de desplazamiento finas y en violeta; cursor de texto y controles nativos también */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--color-violet-400) 55%, transparent) transparent;
+  accent-color: var(--color-violet-600);
+  caret-color: var(--color-violet-600);
+}
+p,
+li,
+dd {
+  text-wrap: pretty;
+}
+
+/* Botones: se hunden al presionar y un brillo cruza el principal al pasar el cursor */
+.cta-violet,
+.cta-ghost {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.cta-violet::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgb(255 255 255 / 0.35) 50%,
+    transparent 65%
+  );
+  transform: translateX(-120%);
+  pointer-events: none;
+}
+.cta-violet:hover::after {
+  transform: translateX(120%);
+  transition: transform 0.9s var(--ease-out-premium);
+}
+.cta-violet:active,
+.cta-ghost:active,
+.path-card:active {
+  transform: translateY(0) scale(0.97);
+  transition-duration: 0.12s;
+}
+
+/* Copiar correo */
+.copy-email {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.copy-email__btn {
+  position: relative;
+  display: grid;
+  width: 1.55rem;
+  height: 1.55rem;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 999px;
+  color: currentColor;
+  opacity: 0.55;
+  transition:
+    opacity 0.3s,
+    background 0.3s,
+    transform 0.4s var(--ease-out-premium);
+}
+.copy-email:hover .copy-email__btn,
+.copy-email__btn:focus-visible {
+  opacity: 1;
+}
+.copy-email__btn:hover {
+  background: color-mix(in oklab, currentColor 12%, transparent);
+}
+.copy-email__btn:active {
+  transform: scale(0.88);
+}
+.copy-email__icon {
+  position: absolute;
+  width: 0.95rem;
+  height: 0.95rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition:
+    opacity 0.25s,
+    transform 0.45s var(--ease-out-premium);
+}
+.copy-email__icon--ok {
+  opacity: 0;
+  transform: scale(0.6);
+}
+.copy-email__icon--ok path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+.copy-email__btn[data-copied='true'] .copy-email__icon--copy {
+  opacity: 0;
+  transform: scale(0.6) rotate(-20deg);
+}
+.copy-email__btn[data-copied='true'] .copy-email__icon--ok {
+  opacity: 1;
+  transform: none;
+}
+.copy-email__btn[data-copied='true'] .copy-email__icon--ok path {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 0.45s 0.08s var(--ease-out-premium);
+}
+
+/* Volver arriba: anillo que se llena con el scroll */
+.to-top {
+  position: relative;
+  display: grid;
+  width: 2.9rem;
+  height: 2.9rem;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--color-violet-700);
+  transition:
+    transform 0.5s var(--ease-out-premium),
+    background 0.3s;
+}
+.to-top:hover {
+  background: var(--color-violet-50);
+}
+.to-top:active {
+  transform: scale(0.92);
+}
+.to-top__ring {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-90deg);
+}
+.to-top__ring circle {
+  fill: none;
+  stroke-width: 2;
+}
+.to-top__track {
+  stroke: color-mix(in oklab, var(--color-violet-400) 25%, transparent);
+}
+.to-top__fill {
+  stroke: var(--color-violet-600);
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+@supports (animation-timeline: scroll()) {
+  .to-top__fill {
+    animation: ring-fill linear both;
+    animation-timeline: scroll(root block);
+  }
+}
+@keyframes ring-fill {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.to-top__arrow {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.5s var(--ease-out-premium);
+}
+.to-top:hover .to-top__arrow {
+  transform: translateY(-3px);
+  animation: to-top-nudge 1.2s var(--ease-out-premium) 0.5s infinite;
+}
+@keyframes to-top-nudge {
+  0%,
+  100% {
+    transform: translateY(-3px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+html[data-quality='still'] .page-enter,
+html[data-quality='still'] :focus-visible {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-enter,
+  :focus-visible {
+    animation: none;
+  }
+}
+
+/* ---------- Perfil de universidad: su color en toda la página ---------- */
+/* Dentro del perfil, las superficies, líneas y acentos del sitio se derivan del color de la
+   universidad en vez del violeta del Foro (las tarjetas, bordes y botones lo heredan solos) */
+.u-profile {
+  --accent: var(--u-text);
+  --accent-sage: var(--u-text);
+  --accent-lilac: var(--u-primary);
+  --line: color-mix(in oklab, var(--u-primary) 16%, #ebe8f0);
+  --surface-1: color-mix(in oklab, var(--u-primary) 4%, var(--color-paper));
+  --surface-2: color-mix(in oklab, var(--u-primary) 8%, var(--color-paper));
+  --surface-3: color-mix(in oklab, var(--u-primary) 13%, var(--color-paper));
+}
+/* Fuera del perfil pero en su página (lo publica brandRootCss en :root mientras está montado) */
+html:has(.u-profile) {
+  scrollbar-color: color-mix(in oklab, var(--u-primary) 55%, transparent) transparent;
+  accent-color: var(--u-primary);
+  caret-color: var(--u-primary);
+}
+html:has(.u-profile) ::selection {
+  background: color-mix(in oklab, var(--u-primary) 24%, transparent);
+}
+html:has(.u-profile) .scroll-progress {
+  background: linear-gradient(90deg, var(--u-primary), var(--u-accent));
+}
+html:has(.u-profile) .nav-link.is-active,
+html:has(.u-profile) .nav-link:hover,
+html:has(.u-profile) .nav-link:focus-visible {
+  color: var(--u-text);
+}
+html:has(.u-profile) .nav-active {
+  background: linear-gradient(90deg, var(--u-primary), var(--u-accent));
+}
+html:has(.u-profile) .nav-hover {
+  background: color-mix(in oklab, var(--u-primary) 10%, #fff);
+}
+html:has(.u-profile) .nav-shell[data-scrolled='true'] .nav-bar {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--u-primary) 26%, transparent),
+    0 18px 40px -22px color-mix(in oklab, var(--u-primary) 55%, transparent);
+}
+html:has(.u-profile) .to-top {
+  color: var(--u-text);
+}
+html:has(.u-profile) .to-top:hover {
+  background: color-mix(in oklab, var(--u-primary) 8%, #fff);
+}
+html:has(.u-profile) .to-top__fill {
+  stroke: var(--u-primary);
+}
+html:has(.u-profile) .to-top__track {
+  stroke: color-mix(in oklab, var(--u-primary) 22%, transparent);
+}

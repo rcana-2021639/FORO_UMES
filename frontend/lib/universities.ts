@@ -131,3 +131,16 @@ export function brandVars(acronym?: string | null): React.CSSProperties {
     '--u-text': b.text,
   } as React.CSSProperties;
 }
+
+/**
+ * Los mismos colores en la raíz del documento, para lo que vive fuera del perfil (barra de
+ * navegación, progreso de lectura, selección, barras de desplazamiento). Lo renderiza el perfil en
+ * un <style>: aparece con la página y se va con ella. Los valores salen de BRANDS (hex fijos).
+ */
+export function brandRootCss(acronym?: string | null) {
+  const b = brandOf(acronym);
+  return (
+    `:root{--u-primary:${b.primary};--u-surface:${b.surface};--u-on-surface:${b.onSurface};` +
+    `--u-accent:${b.accent};--u-on-accent:${b.onAccent};--u-text:${b.text}}`
+  );
+}

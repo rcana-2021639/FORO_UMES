@@ -7,6 +7,7 @@ import { FlipCard } from '@/components/ui/FlipCard';
 import { mediaUrl } from '@/lib/api';
 import { acronymOf, excerpt } from '@/lib/format';
 import { cn } from '@/lib/cn';
+import { CopyEmail } from '@/components/ui/CopyEmail';
 import { EASE, stagger } from '@/lib/motion';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import type { Representative } from '@/lib/types';
@@ -117,13 +118,11 @@ export function RepresentativesSpotlight({ reps }: { reps: Representative[] }) {
                       </span>
                     )}
                   </span>
-                  <a
-                    href={`mailto:${r.institutionalEmail}`}
-                    onClick={(e) => e.stopPropagation()}
-                    className="ui-label mt-2 inline-block max-w-full truncate border-b border-lilac-2/40 pb-0.5 text-lilac-2 transition-colors hover:border-lilac-2"
-                  >
-                    {r.institutionalEmail}
-                  </a>
+                  <CopyEmail
+                    email={r.institutionalEmail}
+                    className="ui-label mt-2 max-w-full text-lilac-2"
+                    linkClassName="border-b border-lilac-2/40 pb-0.5 transition-colors hover:border-lilac-2"
+                  />
                 </span>
               }
             />

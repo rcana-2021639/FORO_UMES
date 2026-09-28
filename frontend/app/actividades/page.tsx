@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { Words } from '@/components/ui/Words';
 import { ActivitiesBoard } from '@/components/sections/ActivitiesBoard';
-import { TimelinePath } from '@/components/sections/TimelinePath';
+import { MilestonesTrack } from '@/components/sections/MilestonesTrack';
 import { buildMilestones } from '@/lib/milestones';
 import { api, safe } from '@/lib/api';
 
@@ -17,7 +18,8 @@ export default async function ActividadesPage() {
     safe(api.activities({ 'pagination[pageSize]': 50 }), EMPTY),
     safe(api.universities(), EMPTY),
   ]);
-  const milestones = buildMilestones(universities.data, activities.data);
+  // Aquí la historia completa, desde el primer ingreso (en la portada solo los últimos 14)
+  const milestones = buildMilestones(universities.data, activities.data, 100);
 
   return (
     <>
@@ -26,19 +28,25 @@ export default async function ActividadesPage() {
         title="Actividades del Foro"
         intro="Encuentros, seminarios y proyectos de las nueve universidades. Filtra por tipo y pulsa un boleto para ver de qué se trata y quién participa."
       />
-      <div className="container-x pb-[var(--section-y)]">
+      <div className="container-x">
         <ActivitiesBoard activities={activities.data} />
-
-        {milestones.length > 0 && (
-          <section aria-labelledby="hitos" className="mt-24 border-t border-line pt-16 md:mt-32">
-            <p className="eyebrow text-fg-muted">Todo en orden, desde el principio</p>
-            <h2 id="hitos" className="mt-2 mb-12 text-[clamp(2rem,4vw,3.4rem)]">
-              Hitos del Foro
-            </h2>
-            <TimelinePath milestones={milestones} />
-          </section>
-        )}
       </div>
+
+      {milestones.length > 0 && (
+        <section aria-labelledby="hitos" className="mt-24 pb-[var(--section-y)] md:mt-32">
+          <div className="container-x">
+            <div className="border-t border-line pt-16">
+              <p data-reveal="left" className="eyebrow text-fg-muted">
+                Todo en orden, desde el principio
+              </p>
+              <h2 id="hitos" data-reveal-group className="mt-2 text-[clamp(2rem,4vw,3.4rem)]">
+                <Words text="Hitos del Foro" />
+              </h2>
+            </div>
+          </div>
+          <MilestonesTrack milestones={milestones} />
+        </section>
+      )}
     </>
   );
 }

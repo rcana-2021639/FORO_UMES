@@ -1,11 +1,8 @@
 'use client';
 
 import { useId, useRef, useState, type FormEvent } from 'react';
-import { motion } from 'motion/react';
 import { sileo } from 'sileo';
 import { api, ApiError, describeError } from '@/lib/api';
-import { EASE } from '@/lib/motion';
-import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { cn } from '@/lib/cn';
 
 const AUDIENCES = [
@@ -51,7 +48,6 @@ function validate(v: Record<Field, string>): Errors {
  */
 export function ContactForm() {
   const id = useId();
-  const reduced = useReducedMotion();
   const [values, setValues] = useState<Record<Field, string>>({
     name: '',
     email: '',
@@ -128,25 +124,20 @@ export function ContactForm() {
   ].filter(Boolean).length;
   const ready = done === 3;
 
-  const enter = (i: number) =>
-    reduced
-      ? {}
-      : {
-          initial: { opacity: 0, y: 24 },
-          whileInView: { opacity: 1, y: 0 },
-          viewport: { once: true, margin: '-10% 0px' },
-          transition: { duration: 1, ease: EASE.premium, delay: 0.08 * i },
-        };
-
   return (
     <div className="contact grid gap-16 lg:grid-cols-12 lg:gap-12">
       {/* A quién le escribes */}
-      <motion.div {...enter(0)} className="lg:col-span-5">
+      <div data-reveal="up" className="lg:col-span-5">
         <p className="contact__lead">
           Tu mensaje llega a la secretaría técnica que coordina a las nueve universidades.
         </p>
         <p className="contact__kicker mt-10">¿Quién escribe?</p>
-        <ul className="mt-4" role="radiogroup" aria-label="Quién escribe">
+        <ul
+          data-reveal-stagger="left"
+          className="mt-4"
+          role="radiogroup"
+          aria-label="Quién escribe"
+        >
           {AUDIENCES.map((a, i) => (
             <li key={a.who} className="contact__who-row">
               <button
@@ -185,11 +176,11 @@ export function ContactForm() {
             <dd>Al correo que dejes en el formulario</dd>
           </div>
         </dl>
-      </motion.div>
+      </div>
 
       {/* Formulario sin recuadros */}
-      <motion.form
-        {...enter(1)}
+      <form
+        data-reveal="up"
         onSubmit={onSubmit}
         noValidate
         className="lg:col-span-7"
@@ -306,7 +297,7 @@ export function ContactForm() {
             </span>
           )}
         </div>
-      </motion.form>
+      </form>
     </div>
   );
 }

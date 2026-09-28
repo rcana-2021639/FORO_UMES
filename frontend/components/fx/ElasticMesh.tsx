@@ -5,8 +5,14 @@
  * puntero. Código de React Bits `ElasticMesh`, con estos cambios: dpr ≤ 1.5, el bucle se
  * pausa fuera del viewport y con la pestaña oculta, y sin `touchAction: none` (no roba el
  * scroll en móvil).
+ *
+ * Añadidos del Foro: la imagen se encuadra como `object-fit: cover` (no se deforma); cambiar
+ * `image` no reconstruye WebGL, sino que la nueva se revela en círculo desde el centro mientras
+ * la tela da un latido; los colores del degradado viajan suaves de un valor a otro; e `idle`
+ * hace que la superficie respire sola (se ve viva también en pantallas táctiles).
  */
 import { useEffect, useRef } from 'react';
+import { prefersReducedMotion } from '@/hooks/useReducedMotion';
 import type { CSSProperties } from 'react';
 import { Renderer, Geometry, Program, Mesh, Texture } from 'ogl';
 
@@ -59,7 +65,12 @@ varying vec3 vNormal;
 varying float vDepth;
 
 uniform sampler2D tMap;
+uniform sampler2D tPrev;
 uniform float uHasImage;
+uniform float uHasPrev;
+uniform float uMix;
+uniform vec2 uImgScale;
+uniform vec2 uPrevScale;
 uniform vec3 uColor1;
 uniform vec3 uColor2;
 uniform vec3 uHighlight;
@@ -71,13 +82,20 @@ uniform float uGridDensity;
 uniform float uGridOpacity;
 uniform vec3 uGridColor;
 
+vec2 coverUv(vec2 uv, vec2 s) {
+  return (uv - 0.5) * s + 0.5;
+}
+
 void main() {
-  vec3 base;
-  if (uHasImage > 0.5) {
-    base = texture2D(tMap, vUv).rgb;
-  } else {
-    base = mix(uColor1, uColor2, clamp(vUv.y, 0.0, 1.0));
-  }
+  vec3 grad = mix(uColor1, uColor2, clamp(vUv.y, 0.0, 1.0));
+  vec3 cur = uHasImage > 0.5 ? texture2D(tMap, coverUv(vUv, uImgScale)).rgb : grad;
+  vec3 prev = uHasPrev > 0.5 ? texture2D(tPrev, coverUv(vUv, uPrevScale)).rgb : grad;
+  // Revelado en círculo desde el centro, con borde suave y un brillo en el frente de onda
+  float dist = length((vUv - 0.5) * vec2(uRes.x / max(uRes.y, 1.0), 1.0));
+  float front = uMix * 1.35;
+  float reveal = 1.0 - smoothstep(front - 0.16, front, dist);
+  vec3 base = mix(prev, cur, reveal);
+  base += uHighlight * 0.18 * (1.0 - smoothstep(0.0, 0.08, abs(dist - front + 0.05))) * (1.0 - uMix);
 
   vec3 N = normalize(vNormal);
   vec3 L = normalize(vec3(-0.35, 0.55, 0.78));
@@ -126,6 +144,12 @@ function hexToRgb(hex: string): [number, number, number] {
   return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
 }
 
+function lerp3(out: [number, number, number], to: [number, number, number], k: number) {
+  out[0] += (to[0] - out[0]) * k;
+  out[1] += (to[1] - out[1]) * k;
+  out[2] += (to[2] - out[2]) * k;
+}
+
 interface Live {
   color1: string;
   color2: string;
@@ -144,6 +168,7 @@ interface Live {
   shading: number;
   interaction: 'hover' | 'drag';
   enabled: boolean;
+  idle: number;
 }
 
 export interface ElasticMeshProps {
@@ -166,6 +191,8 @@ export interface ElasticMeshProps {
   resolution?: number;
   interaction?: 'hover' | 'drag';
   enabled?: boolean;
+  /** Respiración sin puntero (0 = quieta). 1 es un oleaje apenas visible. */
+  idle?: number;
   className?: string;
   style?: CSSProperties;
 }
@@ -190,10 +217,14 @@ const ElasticMesh = ({
   resolution = 25,
   interaction = 'hover',
   enabled = true,
+  idle = 0,
   className = '',
   style,
 }: ElasticMeshProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  // Imagen vigente y acción para cambiarla sin reconstruir la escena
+  const imageRef = useRef(image);
+  const setImageRef = useRef<((url: string) => void) | null>(null);
 
   const live: Live = {
     color1,
@@ -213,6 +244,7 @@ const ElasticMesh = ({
     shading,
     interaction,
     enabled,
+    idle,
   };
   const propsRef = useRef<Live>(live);
   useEffect(() => {
@@ -223,7 +255,7 @@ const ElasticMesh = ({
     const container = containerRef.current as HTMLDivElement;
     if (!container) return;
 
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduceMotion = prefersReducedMotion();
 
     const renderer = new Renderer({
       alpha: true,
@@ -282,17 +314,20 @@ const ElasticMesh = ({
       index: { data: index },
     });
 
-    const texture = new Texture(gl, { generateMipmaps: false, flipY: false });
-    const hasImage = 0;
-    if (image) {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.src = image;
-      img.onload = () => {
-        texture.image = img;
-        program.uniforms.uHasImage.value = 1;
-      };
-    }
+    // Dos texturas que se turnan: la vigente (tMap) y la anterior (tPrev) durante el revelado
+    const texOpts = {
+      generateMipmaps: false,
+      flipY: false,
+      minFilter: gl.LINEAR,
+      wrapS: gl.CLAMP_TO_EDGE,
+      wrapT: gl.CLAMP_TO_EDGE,
+    };
+    let texCur = new Texture(gl, texOpts);
+    let texPrev = new Texture(gl, texOpts);
+    const imgAspect = { cur: 1, prev: 1 };
+    let mix = 1;
+    let loadToken = 0;
+    let firstShown = false;
 
     const program = new Program(gl, {
       vertex: VERT,
@@ -300,8 +335,13 @@ const ElasticMesh = ({
       transparent: true,
       cullFace: null,
       uniforms: {
-        tMap: { value: texture },
-        uHasImage: { value: hasImage },
+        tMap: { value: texCur },
+        tPrev: { value: texPrev },
+        uHasImage: { value: 0 },
+        uHasPrev: { value: 0 },
+        uMix: { value: 1 },
+        uImgScale: { value: [1, 1] },
+        uPrevScale: { value: [1, 1] },
         uColor1: { value: hexToRgb(color1) },
         uColor2: { value: hexToRgb(color2) },
         uHighlight: { value: hexToRgb(highlight) },
@@ -343,11 +383,61 @@ const ElasticMesh = ({
       program.uniforms.uAspect.value = aspect;
       program.uniforms.uRes.value = [w, h];
       refreshBase();
+      updateCover();
+    }
+
+    /** Escala de UV para que la imagen cubra el plano sin deformarse (object-fit: cover). */
+    function coverScale(img: number): [number, number] {
+      return img > aspect ? [aspect / img, 1] : [1, img / aspect];
+    }
+    function updateCover() {
+      program.uniforms.uImgScale.value = coverScale(imgAspect.cur);
+      program.uniforms.uPrevScale.value = coverScale(imgAspect.prev);
+    }
+
+    /** Latido: la tela se abomba desde el centro y vuelve con su propio rebote. */
+    function kick(strength: number) {
+      if (reduceMotion) return;
+      for (let idx = 0; idx < nodeCount; idx++) {
+        const d2 = baseX[idx] * baseX[idx] * 0.35 + baseY[idx] * baseY[idx];
+        vel[idx * 3 + 2] += strength * Math.exp(-d2 * 2.2);
+      }
+    }
+
+    /** Carga una imagen nueva y la revela sobre la actual (o vuelve al degradado si es ''). */
+    function setImage(url: string) {
+      const token = ++loadToken;
+      const swap = (img: HTMLImageElement | null) => {
+        if (token !== loadToken) return;
+        // La vigente pasa a ser la anterior
+        [texPrev, texCur] = [texCur, texPrev];
+        imgAspect.prev = imgAspect.cur;
+        program.uniforms.uHasPrev.value = program.uniforms.uHasImage.value;
+        if (img) {
+          texCur.image = img;
+          imgAspect.cur = img.naturalWidth / Math.max(1, img.naturalHeight);
+        }
+        program.uniforms.uHasImage.value = img ? 1 : 0;
+        program.uniforms.tMap.value = texCur;
+        program.uniforms.tPrev.value = texPrev;
+        updateCover();
+        mix = reduceMotion || !firstShown ? 1 : 0;
+        if (firstShown) kick(0.05);
+        firstShown = true;
+      };
+      if (!url) return swap(null);
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.decoding = 'async';
+      img.onload = () => swap(img);
+      img.src = url;
     }
 
     const ro = new ResizeObserver(resize);
     ro.observe(container);
     resize();
+    setImage(imageRef.current);
+    setImageRef.current = setImage;
 
     const pointer = { x: 0, y: 0, tx: 0, ty: 0, active: false, targetActive: false };
 
@@ -404,6 +494,7 @@ const ElasticMesh = ({
     container.addEventListener('touchmove', onTouch, { passive: true });
     container.addEventListener('touchend', onLeave);
 
+    let clock = 0;
     const STEP = 1 / 120;
     const MAX_SUB = 5;
     let accTime = 0;
@@ -420,6 +511,8 @@ const ElasticMesh = ({
       const r = Math.max(0.08, p.grabRadius) * 1.4;
       const invR = 1 / r;
       const force = p.pull * 0.009;
+      const idleAmp = reduceMotion ? 0 : p.idle * 0.00045;
+      clock += STEP;
 
       for (let j = 0; j < N; j++) {
         for (let i = 0; i < N; i++) {
@@ -468,6 +561,16 @@ const ElasticMesh = ({
           ax += coupling * (sumx - cnt * ox);
           ay += coupling * (sumy - cnt * oy);
           az += coupling * (sumz - cnt * oz);
+
+          // Respiración: dos ondas lentas cruzadas, solo mientras nadie la toca
+          if (idleAmp > 0 && !active) {
+            const bx = baseX[idx];
+            const by = baseY[idx];
+            az +=
+              idleAmp *
+              (Math.sin(clock * 1.25 + bx * 2.1 + by * 0.8) +
+                0.6 * Math.sin(clock * 0.8 - by * 2.6 + bx * 0.5));
+          }
 
           if (active) {
             const dx = pointer.x - (baseX[idx] + ox);
@@ -575,6 +678,8 @@ const ElasticMesh = ({
       geometry.attributes.aNormal.needsUpdate = true;
     }
 
+    const c1 = hexToRgb(color1);
+    const c2 = hexToRgb(color2);
     let raf = 0;
     function frame(now: number) {
       raf = requestAnimationFrame(frame);
@@ -583,8 +688,16 @@ const ElasticMesh = ({
       program.uniforms.uShading.value = p.shading;
       program.uniforms.uRadius.value = p.borderRadius;
       program.uniforms.uTilt.value = (p.tilt * Math.PI) / 180;
-      program.uniforms.uColor1.value = hexToRgb(p.color1);
-      program.uniforms.uColor2.value = hexToRgb(p.color2);
+      // Colores y revelado viajan suaves hacia su valor (independiente de los fps)
+      const step = Math.max((now - last) / 1000, 1e-4);
+      const kc = 1 - Math.exp(-step / 0.25);
+      lerp3(c1, hexToRgb(p.color1), kc);
+      lerp3(c2, hexToRgb(p.color2), kc);
+      program.uniforms.uColor1.value = c1;
+      program.uniforms.uColor2.value = c2;
+      if (mix < 1) mix = Math.min(1, mix + Math.min(step, 0.1) / 1.1);
+      // Curva de salida: rápido al principio, se asienta al final
+      program.uniforms.uMix.value = 1 - Math.pow(1 - mix, 3);
       program.uniforms.uHighlight.value = hexToRgb(p.highlight);
       program.uniforms.uGrid.value = p.showGrid ? 1 : 0;
       program.uniforms.uGridDensity.value = p.gridDensity;
@@ -644,6 +757,7 @@ const ElasticMesh = ({
     gl.canvas.style.display = 'block';
 
     return () => {
+      setImageRef.current = null;
       tryStop();
       io.disconnect();
       document.removeEventListener('visibilitychange', onVis);
@@ -661,7 +775,14 @@ const ElasticMesh = ({
       if (lose) lose.loseContext();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [image, resolution]);
+  }, [resolution]);
+
+  // Cambiar de imagen: revelado sobre la anterior, sin reconstruir la escena
+  useEffect(() => {
+    if (imageRef.current === image) return;
+    imageRef.current = image;
+    setImageRef.current?.(image);
+  }, [image]);
 
   return (
     <div

@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import { ProgramDeck, type DeckProgram } from './ProgramDeck';
+import { GuideDeck } from './GuideDeck';
 import { RollingNumber } from '@/components/ui/RollingNumber';
-import { useSplitReveal } from '@/hooks/useSplitReveal';
+import { Word, Words } from '@/components/ui/Words';
 import { gsap } from '@/lib/gsap';
 import { getQuality } from '@/lib/quality';
 
@@ -23,7 +23,6 @@ interface Props {
     contributions: number;
   };
   universities: HeroUniversity[];
-  programs: DeckProgram[];
 }
 
 /** Los tres motivos por los que alguien llega al sitio. Es lo primero que hay que poder elegir. */
@@ -50,41 +49,24 @@ const PATHS = [
 
 /**
  * Portada. Campo de luz violeta propio (orbes que derivan, retícula de puntos), el nombre del
- * Foro con "Posgrado" en degradado, y a la derecha una vitrina de programas reales que se baraja
- * sola. Debajo: tres caminos, cuatro cifras y una cinta con las nueve universidades.
+ * Foro con "Posgrado" en degradado, y a la derecha una guía del posgrado en cartas que se
+ * barajan solas. Debajo: tres caminos, cuatro cifras y una cinta con las nueve universidades.
+ *
+ * La entrada la hace el script de arranque (data-reveal): empieza en el primer pintado, antes de
+ * que React hidrate, así que nada aparece, desaparece y vuelve a entrar.
  */
-export function Hero({ year, counts, universities, programs }: Props) {
+export function Hero({ year, counts, universities }: Props) {
   const root = useRef<HTMLElement>(null);
-  const deck = useRef<HTMLDivElement>(null);
-  const title = useSplitReveal<HTMLHeadingElement>({ type: 'words', immediate: true, delay: 0.1 });
 
+  // Parallax de los orbes con el scroll (solo modo completo)
   useEffect(() => {
-    const q = getQuality();
-    if (q === 'still' || !root.current) return;
+    if (getQuality() !== 'full' || !root.current) return;
     const ctx = gsap.context(() => {
-      gsap.from('[data-hero-in]', {
-        y: 26,
-        autoAlpha: 0,
-        duration: 1,
-        ease: 'expo.out',
-        stagger: 0.07,
-        delay: 0.45,
+      gsap.to('[data-hero-orb]', {
+        yPercent: (i) => [-18, 12, -8][i] ?? 0,
+        ease: 'none',
+        scrollTrigger: { trigger: root.current, start: 'top top', end: 'bottom top', scrub: 0.6 },
       });
-      gsap.from(deck.current, {
-        y: 60,
-        rotate: 6,
-        autoAlpha: 0,
-        duration: 1.4,
-        ease: 'expo.out',
-        delay: 0.35,
-      });
-      if (q === 'full') {
-        gsap.to('[data-hero-orb]', {
-          yPercent: (i) => [-18, 12, -8][i] ?? 0,
-          ease: 'none',
-          scrollTrigger: { trigger: root.current, start: 'top top', end: 'bottom top', scrub: 0.6 },
-        });
-      }
     }, root);
     return () => ctx.revert();
   }, []);
@@ -117,26 +99,26 @@ export function Hero({ year, counts, universities, programs }: Props) {
 
       <div className="container-x grid gap-12 lg:grid-cols-12 lg:items-center lg:gap-x-10">
         <div className="lg:col-span-7">
-          <p data-hero-in className="hero-pill">
+          <p data-reveal="down" className="hero-pill">
             <span className="hero-pill__live" aria-hidden />
             Guatemala, {year} · {counts.universities} universidades, una sola oferta de posgrado
           </p>
           <h1
             id="hero-title"
-            ref={title}
+            data-reveal-group
             className="mt-6 max-w-[13ch] text-[clamp(2.7rem,6.6vw,6.4rem)] leading-[0.96] text-fg"
           >
-            Foro Interuniversitario de Estudios de{' '}
-            <span className="text-violet-grad">Posgrado</span>
+            <Words text="Foro Interuniversitario de Estudios de" />{' '}
+            <Word className="text-violet-grad">Posgrado</Word>
           </h1>
           <p
-            data-hero-in
+            data-reveal="blur"
             className="mt-6 max-w-[46ch] text-[1.14rem] leading-relaxed text-fg-muted"
           >
             Las direcciones de posgrado de nueve universidades de Guatemala coordinan aquí su
             oferta, sus actividades y sus proyectos.
           </p>
-          <div data-hero-in className="mt-8 flex flex-wrap items-center gap-3">
+          <div data-reveal="up" className="mt-8 flex flex-wrap items-center gap-3">
             <Link href="/programas" className="cta-violet">
               Explorar programas <span aria-hidden>→</span>
             </Link>
@@ -146,14 +128,18 @@ export function Hero({ year, counts, universities, programs }: Props) {
           </div>
         </div>
 
-        <div ref={deck} className="lg:col-span-5">
-          <ProgramDeck programs={programs} total={counts.academicPrograms} />
+        <div data-reveal="deck" className="lg:col-span-5">
+          <GuideDeck />
         </div>
 
         {/* Tres caminos: la decisión principal de la portada */}
-        <ol className="grid gap-3 md:grid-cols-3 lg:col-span-12" aria-label="Por dónde empezar">
+        <ol
+          data-reveal-stagger="tilt"
+          className="grid gap-3 md:grid-cols-3 lg:col-span-12"
+          aria-label="Por dónde empezar"
+        >
           {PATHS.map((p) => (
-            <li key={p.n} data-hero-in>
+            <li key={p.n}>
               <Link href={p.href} className="path-card group">
                 <span className="path-card__n" aria-hidden>
                   {p.n}
@@ -173,7 +159,10 @@ export function Hero({ year, counts, universities, programs }: Props) {
         </ol>
 
         {/* Cifras: odómetro, regla que se dibuja y destello al llegar */}
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-4 lg:col-span-12">
+        <dl
+          data-reveal-stagger="up"
+          className="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-4 lg:col-span-12"
+        >
           {stats.map((s, i) => (
             <HeroStat key={s.label} value={s.value} label={s.label} index={i} />
           ))}
@@ -181,7 +170,11 @@ export function Hero({ year, counts, universities, programs }: Props) {
       </div>
 
       {/* Cinta con las nueve universidades: movimiento continuo, pausa al pasar el cursor */}
-      <nav aria-label="Universidades del Foro" className="uni-ribbon mt-16 md:mt-20">
+      <nav
+        aria-label="Universidades del Foro"
+        data-reveal="fade"
+        className="uni-ribbon mt-16 md:mt-20"
+      >
         <div className="uni-ribbon__track">
           {[0, 1].map((copy) => (
             <ul key={copy} className="uni-ribbon__list" aria-hidden={copy === 1}>

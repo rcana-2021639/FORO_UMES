@@ -54,7 +54,10 @@ export default async function ActividadPage({ params }: Params) {
       <div className="container-x grid gap-12 pb-[var(--section-y)] md:grid-cols-12">
         <div className="md:col-span-8">
           {cover && (
-            <div className="relative mb-10 aspect-[16/9] overflow-hidden rounded-[3px] border border-line">
+            <div
+              data-reveal="clip"
+              className="relative mb-10 aspect-[16/9] overflow-hidden rounded-[3px] border border-line"
+            >
               <Image
                 src={cover}
                 alt={a.coverImage?.alternativeText ?? ''}
@@ -71,7 +74,7 @@ export default async function ActividadPage({ params }: Params) {
             <p className="text-fg-muted">Esta actividad todavía no tiene descripción.</p>
           )}
         </div>
-        <aside className="md:col-span-4">
+        <aside data-reveal-stagger="up" className="md:col-span-4">
           {!!a.contributions?.length && (
             <section>
               <h2 className="eyebrow border-b border-line pb-3 text-fg-muted">Aportes derivados</h2>

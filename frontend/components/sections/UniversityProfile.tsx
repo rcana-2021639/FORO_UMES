@@ -2,23 +2,23 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion, useInView } from 'motion/react';
+import { useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { Button } from '@/components/ui/Button';
 import { PulseStar } from '@/components/ui/PulseStar';
 import { SeatMark } from '@/components/ui/Section';
 import { DepthText } from '@/components/fx/DepthText';
 import { FoldText } from '@/components/fx/FoldText';
 import { Tilt } from '@/components/fx/Tilt';
-import { useSplitReveal } from '@/hooks/useSplitReveal';
 import { useSavedPrograms } from '@/hooks/useSavedPrograms';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { mediaUrl } from '@/lib/api';
 import { LEVEL_LABEL, MODALITY_LABEL, yearOf } from '@/lib/format';
 import { LEVELS, LEVEL_META } from '@/lib/levels';
-import { EASE, stagger } from '@/lib/motion';
+import { EASE } from '@/lib/motion';
 import { cn } from '@/lib/cn';
-import { brandOf, brandVars } from '@/lib/universities';
+import { CopyEmail } from '@/components/ui/CopyEmail';
+import { brandOf, brandRootCss, brandVars } from '@/lib/universities';
 import type { ProgramLevel, University } from '@/lib/types';
 
 export interface SeatLink {
@@ -49,13 +49,6 @@ export function UniversityProfile({
   const reps = u.representatives ?? [];
   const joined = yearOf(u.joinedForumAt);
   const firstRep = u.representatives?.[0];
-  const reduced = useReducedMotion();
-
-  const intro = useSplitReveal<HTMLParagraphElement>({
-    type: 'lines',
-    immediate: true,
-    delay: 0.55,
-  });
 
   const byLevel = useMemo(
     () =>
@@ -77,6 +70,9 @@ export function UniversityProfile({
 
   return (
     <div style={brandVars(u.acronym)} className="u-profile">
+      {/* Los colores de la universidad también para lo que vive fuera del perfil (barra de
+          navegación, progreso de lectura, selección de texto): se quitan al salir de la página */}
+      <style>{brandRootCss(u.acronym)}</style>
       {/* Cabecera en el color de la universidad */}
       <section
         className="u-hero relative isolate overflow-hidden"
@@ -87,7 +83,11 @@ export function UniversityProfile({
         <SeatsRing />
         <div className="container-x relative grid gap-10 pt-32 pb-16 md:grid-cols-12 md:items-end md:pt-40 md:pb-20">
           <div className="md:col-span-8">
-            <nav aria-label="Ruta" className="ui-label flex items-center gap-2 opacity-80">
+            <nav
+              aria-label="Ruta"
+              data-reveal="down"
+              className="ui-label flex items-center gap-2 opacity-80"
+            >
               <Link
                 href="/universidades"
                 className="underline decoration-current/30 underline-offset-4 hover:decoration-current"
@@ -97,7 +97,7 @@ export function UniversityProfile({
               <span aria-hidden>/</span>
               <span aria-current="page">{u.acronym ?? u.name}</span>
             </nav>
-            <div className="mt-6 flex items-start gap-3">
+            <div data-reveal="left" className="mt-6 flex items-start gap-3">
               <SeatMark className="text-[var(--u-accent)]" />
               <p className="eyebrow opacity-75">Universidad miembro del Foro</p>
             </div>
@@ -113,13 +113,13 @@ export function UniversityProfile({
             </h1>
             {u.shortDescription && (
               <p
-                ref={intro}
+                data-reveal="blur"
                 className="mt-6 max-w-[56ch] text-[1.05rem] leading-relaxed opacity-80"
               >
                 {u.shortDescription}
               </p>
             )}
-            <div className="mt-8 flex flex-wrap items-center gap-3">
+            <div data-reveal="up" className="mt-8 flex flex-wrap items-center gap-3">
               {programs.length > 0 && (
                 <a href="#programas-u" className="u-cta u-cta--solid">
                   Ver sus {programs.length} programas <span aria-hidden>↓</span>
@@ -138,10 +138,8 @@ export function UniversityProfile({
             </div>
           </div>
 
-          <motion.div
-            initial={reduced ? false : { opacity: 0, y: 40, rotateY: -30, rotateX: 10 }}
-            animate={{ opacity: 1, y: 0, rotateY: 0, rotateX: 0 }}
-            transition={{ duration: 1.2, ease: EASE.premium, delay: 0.3 }}
+          <div
+            data-reveal="swing"
             className="relative md:col-span-4 md:justify-self-end [perspective:1200px]"
           >
             {/* Anillos que giran detrás de la losa del logo */}
@@ -196,20 +194,17 @@ export function UniversityProfile({
                 </div>
               </Tilt>
             </div>
-          </motion.div>
+          </div>
         </div>
 
         {/* Franja de cifras */}
         <div className="container-x relative border-t border-current/15">
-          <dl className="grid grid-cols-2 divide-current/15 md:grid-cols-4 md:divide-x">
+          <dl
+            data-reveal-stagger="up"
+            className="grid grid-cols-2 divide-current/15 md:grid-cols-4 md:divide-x"
+          >
             {stats.map((s, i) => (
-              <motion.div
-                key={s.label}
-                initial={reduced ? false : { opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, ease: EASE.premium, delay: 0.5 + i * 0.08 }}
-                className="py-6 md:px-6 md:first:pl-0"
-              >
+              <div key={s.label} className="py-6 md:px-6 md:first:pl-0">
                 <dd className="m-0">
                   <DepthText
                     text={s.n}
@@ -224,7 +219,7 @@ export function UniversityProfile({
                   />
                 </dd>
                 <dt className="ui-label mt-1 opacity-70">{s.label}</dt>
-              </motion.div>
+              </div>
             ))}
           </dl>
         </div>
@@ -233,7 +228,7 @@ export function UniversityProfile({
       <div className="u-body container-x pb-[var(--section-y)]">
         {/* Representantes */}
         <section aria-labelledby="reps" className="pt-16 md:pt-20">
-          <div className="flex flex-wrap items-end justify-between gap-4">
+          <div data-reveal="up" className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="eyebrow text-[var(--u-text)]">Quién la representa en el Foro</p>
               <h2 id="reps" className="mt-2 text-[clamp(1.8rem,3.4vw,2.8rem)]">
@@ -245,9 +240,12 @@ export function UniversityProfile({
             </p>
           </div>
           {reps.length ? (
-            <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {reps.map((r, i) => (
-                <Reveal key={r.documentId} i={i}>
+            <ul
+              data-reveal-stagger="tilt"
+              className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+            >
+              {reps.map((r) => (
+                <li key={r.documentId} className="h-full">
                   <Tilt max={8} scale={1.02} className="h-full rounded-[12px]">
                     <article className="group flex h-full gap-4 rounded-[12px] border border-line bg-surface-1 p-5 [transform-style:preserve-3d]">
                       <Avatar
@@ -269,16 +267,15 @@ export function UniversityProfile({
                             {r.shortBio}
                           </p>
                         )}
-                        <a
-                          href={`mailto:${r.institutionalEmail}`}
-                          className="mono-label mt-3 inline-block max-w-full truncate text-[var(--u-text)] underline decoration-transparent underline-offset-4 transition-[text-decoration-color] duration-300 hover:decoration-current"
-                        >
-                          {r.institutionalEmail}
-                        </a>
+                        <CopyEmail
+                          email={r.institutionalEmail}
+                          className="mono-label mt-3 max-w-full text-[var(--u-text)]"
+                          linkClassName="underline decoration-transparent underline-offset-4 transition-[text-decoration-color] duration-300 hover:decoration-current"
+                        />
                       </div>
                     </article>
                   </Tilt>
-                </Reveal>
+                </li>
               ))}
             </ul>
           ) : (
@@ -288,7 +285,7 @@ export function UniversityProfile({
 
         {/* Programas */}
         <section aria-labelledby="progs" id="programas-u" className="mt-20 scroll-mt-28 md:mt-24">
-          <div className="flex flex-wrap items-end justify-between gap-4">
+          <div data-reveal="up" className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="eyebrow text-[var(--u-text)]">Oferta de posgrado</p>
               <h2 id="progs" className="mt-2 text-[clamp(1.8rem,3.4vw,2.8rem)]">
@@ -309,6 +306,7 @@ export function UniversityProfile({
         {/* Recorrer las nueve sin volver al índice */}
         <nav
           aria-label="Otras universidades"
+          data-reveal-stagger="up"
           className="mt-20 grid gap-3 border-t border-line pt-8 sm:grid-cols-3"
         >
           {prev ? <SeatNav link={prev} dir="prev" /> : <span />}
@@ -410,6 +408,7 @@ function Programs({
     <>
       {groups.length > 1 && (
         <div
+          data-reveal="up"
           className="mt-8 flex flex-wrap items-center gap-2"
           role="tablist"
           aria-label="Filtrar por nivel"
@@ -453,9 +452,12 @@ function Programs({
                     <span className="whitespace-nowrap">Duración típica: {meta.span}.</span>
                   </p>
                 </header>
-                <ul className={cn('mt-5 grid gap-4 sm:grid-cols-2', !compact && 'xl:grid-cols-3')}>
-                  {g.items.map((p, i) => (
-                    <Reveal key={p.documentId} i={i}>
+                <ul
+                  data-reveal-stagger="up"
+                  className={cn('mt-5 grid gap-4 sm:grid-cols-2', !compact && 'xl:grid-cols-3')}
+                >
+                  {g.items.map((p) => (
+                    <li key={p.documentId} className="h-full">
                       <article className="u-program group">
                         <div className="flex items-start justify-between gap-3">
                           <span className="u-program__level">{LEVEL_LABEL[p.level]}</span>
@@ -501,7 +503,7 @@ function Programs({
                           </span>
                         )}
                       </article>
-                    </Reveal>
+                    </li>
                   ))}
                 </ul>
               </motion.section>
@@ -544,7 +546,13 @@ function Avatar({ name, photo }: { name: string; photo?: string }) {
     <span
       data-depth
       style={{ '--z': 26 } as React.CSSProperties}
-      className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full bg-[linear-gradient(135deg,var(--u-primary),var(--u-surface))] text-[var(--u-on-surface)] ring-2 ring-[var(--u-accent)] ring-offset-2 ring-offset-bg"
+      className={cn(
+        'relative h-16 w-16 shrink-0 overflow-hidden rounded-full ring-2 ring-[var(--u-accent)] ring-offset-2 ring-offset-bg',
+        // Con foto: un fondo claro del color de la universidad detrás de la ilustración
+        photo
+          ? 'bg-[radial-gradient(circle_at_30%_25%,#fff,color-mix(in_oklab,var(--u-primary)_20%,#fff))]'
+          : 'bg-[linear-gradient(135deg,var(--u-primary),var(--u-surface))] text-[var(--u-on-surface)]'
+      )}
     >
       {photo ? (
         <Image src={photo} alt="" fill sizes="64px" className="object-cover" />
@@ -557,23 +565,5 @@ function Avatar({ name, photo }: { name: string; photo?: string }) {
         </span>
       )}
     </span>
-  );
-}
-
-/** Entrada en viewport con stagger irregular (una sola vez). */
-function Reveal({ i, children }: { i: number; children: React.ReactNode }) {
-  const ref = useRef<HTMLLIElement>(null);
-  const inView = useInView(ref, { once: true, margin: '-8% 0px' });
-  const reduced = useReducedMotion();
-  return (
-    <motion.li
-      ref={ref}
-      initial={reduced ? false : { opacity: 0, y: 22 }}
-      animate={inView ? { opacity: 1, y: 0 } : undefined}
-      transition={{ duration: 0.8, ease: EASE.premium, delay: stagger(i % 9, 0.05) }}
-      className="h-full"
-    >
-      {children}
-    </motion.li>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, type CSSProperties, type ReactNode } from 'react';
-import { gsap, ScrollTrigger } from '@/lib/gsap';
+import { gsap } from '@/lib/gsap';
 
 type SplitBy = 'char' | 'word' | 'line';
 type Hinge = 'top' | 'bottom' | 'left' | 'right';
@@ -17,8 +17,6 @@ export interface FoldTextProps {
   perspective?: number;
   creaseShading?: number;
   trigger?: Trigger;
-  /** Posición del ScrollTrigger cuando `trigger="scroll"`. */
-  start?: string;
   delay?: number;
   className?: string;
   style?: CSSProperties;
@@ -37,8 +35,11 @@ const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 /**
  * Texto que se despliega como una hoja doblada: cada carácter/palabra/línea gira sobre una
  * bisagra (arriba, abajo, izquierda o derecha) con un sombreado de pliegue. Adaptado de React
- * Bits `FoldText`: hereda tipografía del padre (Fraunces en títulos), estilos en globals.css,
- * y registra GSAP desde lib/gsap. Con reduced-motion el pliegue se reduce a un fade corto.
+ * Bits `FoldText`: hereda tipografía del padre (Fraunces en títulos), estilos en globals.css.
+ *
+ * Con `trigger` "scroll" o "mount" (lo normal) la entrada la hace el script de arranque
+ * (data-reveal="fold", lib/quality-script.ts): empieza en el primer pintado y no toca el DOM, así
+ * que no hay parpadeo al hidratar. "hover" y "loop" siguen con GSAP porque se repiten.
  */
 export function FoldText({
   text,
@@ -50,7 +51,6 @@ export function FoldText({
   perspective = 700,
   creaseShading = 0.5,
   trigger = 'scroll',
-  start = 'top 82%',
   delay = 0,
   className,
   style,
@@ -61,6 +61,9 @@ export function FoldText({
   const h = HINGE[hinge];
   const crease = clamp(creaseShading, 0, 1);
   const persp = Math.max(120, perspective);
+
+  // Entrada única (scroll/mount): la anima el script de arranque. Repetida (hover/loop): GSAP
+  const scripted = trigger === 'scroll' || trigger === 'mount';
 
   const segments = useMemo(() => {
     let n = 0;
@@ -76,6 +79,7 @@ export function FoldText({
           <span
             className="fold-text-piece"
             data-fold-hinge={hinge}
+            data-reveal={scripted ? 'fold' : undefined}
             style={{ transformOrigin: h.origin, '--fold-crease': 0 } as CSSProperties}
           >
             {content || ' '}
@@ -98,11 +102,11 @@ export function FoldText({
     return Array.from(text).map((ch, i) =>
       ch === '\n' ? <br key={`br${i}`} /> : seg(ch === ' ' ? ' ' : ch, `sc${i}`)
     );
-  }, [text, splitBy, hinge, h.origin, persp]);
+  }, [text, splitBy, hinge, h.origin, persp, scripted]);
 
   useEffect(() => {
     const el = root.current;
-    if (!el) return;
+    if (!el || scripted) return;
     const pieces = Array.from(el.querySelectorAll<HTMLElement>('.fold-text-piece'));
     if (!pieces.length) return;
 
@@ -140,21 +144,15 @@ export function FoldText({
       tl.current.fromTo(pieces, from, to);
     };
 
-    let st: ScrollTrigger | undefined;
     let hover: (() => void) | undefined;
     if (trigger === 'hover') {
       gsap.set(pieces, { opacity: 1, rotateX: 0, rotateY: 0, '--fold-crease': 0 });
       hover = () => play(false);
       el.addEventListener('mouseenter', hover);
-    } else if (trigger === 'scroll') {
-      gsap.set(pieces, from);
-      st = ScrollTrigger.create({ trigger: el, start, once: true, onEnter: () => play(false) });
-    } else if (trigger === 'loop') play(true);
-    else play(false);
+    } else play(true);
 
     return () => {
       if (hover) el.removeEventListener('mouseenter', hover);
-      st?.kill();
       kill();
     };
   }, [
@@ -166,11 +164,11 @@ export function FoldText({
     ease,
     crease,
     trigger,
-    start,
     delay,
     h.origin,
     h.rx,
     h.ry,
+    scripted,
   ]);
 
   return (
@@ -180,6 +178,9 @@ export function FoldText({
         .filter(Boolean)
         .join(' ')}
       style={style}
+      data-reveal-group={scripted ? '' : undefined}
+      data-reveal-step={scripted ? Math.round(stagger * 1000) : undefined}
+      data-reveal-delay={scripted && delay ? Math.round(delay * 1000) : undefined}
     >
       <span className="sr-only">{text}</span>
       <span aria-hidden className="fold-text-visual">

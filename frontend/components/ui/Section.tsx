@@ -22,9 +22,9 @@ interface Props {
 }
 
 /**
- * Capítulo de la portada. La marca de asiento (un arco) sustituye a la numeración:
- * los capítulos no son una secuencia, son sillas alrededor de la misma mesa. El título se
- * despliega palabra a palabra (FoldText) al entrar en pantalla.
+ * Capítulo de la portada. La marca de asiento (un arco) sustituye a la numeración. Al entrar en
+ * pantalla el encabezado se arma en cascada: la marca llega de la izquierda, el título se
+ * despliega palabra a palabra (FoldText), la introducción se enfoca y el botón sube.
  */
 export function Section({
   id,
@@ -65,7 +65,7 @@ export function Section({
         </div>
       )}
       <header className="container-x relative z-10 grid gap-5 md:grid-cols-12 md:gap-8">
-        <div className="flex items-start gap-3 md:col-span-3">
+        <div data-reveal="left" className="flex items-start gap-3 md:col-span-3">
           <SeatMark />
           <p className="eyebrow max-w-[18ch] text-fg-muted">{kicker}</p>
         </div>
@@ -78,12 +78,19 @@ export function Section({
             )}
           </h2>
           {intro && (
-            <div className="mt-6 max-w-[50ch] text-[1.05rem] leading-relaxed text-fg-muted">
+            <div
+              data-reveal="blur"
+              className="mt-6 max-w-[50ch] text-[1.05rem] leading-relaxed text-fg-muted"
+            >
               {intro}
             </div>
           )}
         </div>
-        {aside && <div className="md:col-span-3 md:justify-self-end">{aside}</div>}
+        {aside && (
+          <div data-reveal="up" className="md:col-span-3 md:justify-self-end">
+            {aside}
+          </div>
+        )}
       </header>
       <div
         className={cn(

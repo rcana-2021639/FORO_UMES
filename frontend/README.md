@@ -14,7 +14,9 @@ npm install
 npm run dev                  # http://localhost:3000
 ```
 
-Necesitas el backend corriendo (`npm run develop` en la raíz) con datos (`npm run seed`).
+Necesitas el backend corriendo (`npm run develop` en la raíz) con datos (`npm run seed`). La guía
+completa para una computadora nueva (backend, base de datos, datos y frontend) está en el
+[README de la raíz](../README.md#levantar-todo-en-otra-computadora-paso-a-paso).
 
 > Usa `127.0.0.1` y no `localhost` en `NEXT_PUBLIC_API_URL`: el servidor de Next resuelve `localhost` a `::1` y Strapi escucha en IPv4.
 
