@@ -14,6 +14,12 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Server =>
   webhooks: {
     populateRelations: env.bool('WEBHOOKS_POPULATE_RELATIONS', false),
   },
+  // Transferencia remota de datos (`strapi transfer` contra /admin/transfer/*): con un token,
+  // permite reemplazar TODA la base desde fuera. El Foro no la usa; apagada, esas rutas dan 404.
+  // Para migrar datos entre entornos se enciende temporalmente con REMOTE_TRANSFER_ENABLED=true.
+  transfer: {
+    remote: { enabled: env.bool('REMOTE_TRANSFER_ENABLED', false) },
+  },
 });
 
 export default config;

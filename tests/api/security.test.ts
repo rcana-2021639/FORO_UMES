@@ -158,6 +158,12 @@ describe('panel administrativo', () => {
     }
     expect(last!.status).toBe(429);
   });
+  it('la transferencia remota de datos está apagada (nadie puede reemplazar la base desde fuera)', () => {
+    const transfer = strapi.service('admin::transfer') as unknown as {
+      utils: { isRemoteTransferEnabled: () => boolean };
+    };
+    expect(transfer.utils.isRemoteTransferEnabled()).toBe(false);
+  });
 });
 
 describe('subida de archivos', () => {
