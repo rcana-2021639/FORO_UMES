@@ -49,6 +49,13 @@ const OPTIONS: sanitizeHtml.IOptions = {
   },
   allowedSchemes: ['http', 'https', 'mailto'],
   allowedSchemesByTag: { img: ['http', 'https'] },
+  // Un enlace que abre otra pestaña no debe poder controlar la página de origen (tabnabbing)
+  transformTags: {
+    a: (tagName, attribs) => ({
+      tagName,
+      attribs: attribs.target ? { ...attribs, rel: 'noopener noreferrer' } : attribs,
+    }),
+  },
   // Markdown legítimo usa < y > como texto (p. ej. "a < b"); no se escapan porque no son etiquetas
   disallowedTagsMode: 'discard',
 };
