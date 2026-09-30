@@ -1,4 +1,5 @@
 import type { Core } from '@strapi/strapi';
+import cronTasks from './cron-tasks';
 
 const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Server => ({
   host: env('HOST', '0.0.0.0'),
@@ -20,6 +21,8 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Server =>
   transfer: {
     remote: { enabled: env.bool('REMOTE_TRANSFER_ENABLED', false) },
   },
+  // Tareas programadas (config/cron-tasks.ts): p. ej. borrar mensajes de contacto vencidos
+  cron: { enabled: env.bool('CRON_ENABLED', true), tasks: cronTasks },
 });
 
 export default config;

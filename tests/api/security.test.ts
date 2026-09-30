@@ -4,6 +4,7 @@
  */
 import type { Core } from '@strapi/strapi';
 import zlib from 'node:zlib';
+import { purgeExpiredContactMessages } from '../../src/lib/contact-retention';
 import {
   CM,
   api,
@@ -129,6 +130,42 @@ describe('POST /api/contact', () => {
           .send({ ...valid, website: 'x' })
       ).status
     ).toBe(201);
+  });
+});
+
+describe('conservación de mensajes de contacto (aviso de privacidad)', () => {
+  const UID = 'api::contact-message.contact-message';
+  const DAY = 24 * 60 * 60 * 1000;
+
+  it('borra solo los mensajes más antiguos que el plazo', async () => {
+    const q = strapi.db.query(UID);
+    const base = {
+      email: 'persona@example.org',
+      message: 'Mensaje de prueba suficiente',
+      handled: false,
+    };
+    const old = await q.create({
+      data: { ...base, name: 'Vencido', createdAt: new Date(Date.now() - 400 * DAY) },
+    });
+    const recent = await q.create({ data: { ...base, name: 'Reciente' } });
+
+    const deleted = await purgeExpiredContactMessages(strapi, 365);
+
+    expect(deleted).toBeGreaterThanOrEqual(1);
+    expect(await q.findOne({ where: { id: old.id } })).toBeNull();
+    expect(await q.findOne({ where: { id: recent.id } })).not.toBeNull();
+  });
+
+  it('la tarea diaria está programada con el plazo de la configuración', () => {
+    const tasks = strapi.config.get('server.cron.tasks') as Record<
+      string,
+      { options: { rule: string; tz: string } }
+    >;
+    expect(tasks.purgeExpiredContactMessages.options).toEqual({
+      rule: '0 3 * * *',
+      tz: 'America/Guatemala',
+    });
+    expect(strapi.config.get('contact.retentionDays')).toBe(365);
   });
 });
 
