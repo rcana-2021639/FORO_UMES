@@ -11,7 +11,13 @@ import { ProcessSteps } from '@/components/sections/ProcessSteps';
 import { ContributionsStrip } from '@/components/sections/ContributionsStrip';
 import { ContactForm } from '@/components/sections/ContactForm';
 import { SectionRail } from '@/components/nav/SectionRail';
+import { JsonLd } from '@/components/seo/JsonLd';
 import { api, critical } from '@/lib/api';
+import { organizationJsonLd, websiteJsonLd } from '@/lib/json-ld';
+import { pageMetadata } from '@/lib/seo';
+import { SITE_DESCRIPTION } from '@/lib/site';
+
+export const metadata = pageMetadata({ path: '/', description: SITE_DESCRIPTION });
 
 const EMPTY = { data: [], meta: { pagination: { page: 1, pageSize: 0, pageCount: 0, total: 0 } } };
 
@@ -54,6 +60,7 @@ export default async function Home() {
 
   return (
     <>
+      <JsonLd data={[organizationJsonLd(universities.data), websiteJsonLd()]} />
       <SectionRail items={RAIL} />
 
       <Hero year={year} counts={counts} universities={heroUniversities} />

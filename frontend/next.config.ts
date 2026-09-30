@@ -34,16 +34,10 @@ const CSP: Record<string, string[]> = {
   // 'unsafe-eval' solo en desarrollo: React lo usa para reconstruir las pilas de error del servidor
   'script-src': ["'self'", "'unsafe-inline'", ...(isDev ? ["'unsafe-eval'"] : [])],
   'style-src': ["'self'", "'unsafe-inline'"],
-  // Miniaturas de YouTube (i.ytimg.com) y fotogramas de video dibujados en canvas (data:/blob:)
-  'img-src': [
-    "'self'",
-    'data:',
-    'blob:',
-    ...MEDIA_ORIGINS,
-    'https://img.youtube.com',
-    'https://i.ytimg.com',
-    'https://vumbnail.com',
-  ],
+  // Las miniaturas de YouTube/Vimeo pasan por el optimizador (mismo origen): el navegador no
+  // contacta a Google ni a Vimeo hasta que alguien reproduce un video. data:/blob: para los
+  // fotogramas de video dibujados en canvas.
+  'img-src': ["'self'", 'data:', 'blob:', ...MEDIA_ORIGINS],
   'media-src': ["'self'", 'blob:', ...MEDIA_ORIGINS],
   'font-src': ["'self'", 'data:'],
   // El formulario de contacto se envía desde el navegador a la API; en desarrollo, la recarga en caliente

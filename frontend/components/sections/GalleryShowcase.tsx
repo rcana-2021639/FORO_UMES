@@ -51,6 +51,9 @@ function toEntry(g: GalleryItem): Entry {
 /**
  * La miniatura estándar de YouTube (hqdefault) es 4:3 con franjas negras. Se prueba la versión
  * 16:9 en alta (maxresdefault, luego hq720); si no existe, YouTube responde un gris de 120 px.
+ * La prueba pasa por el optimizador de Next (mismo origen): el navegador del visitante no contacta
+ * a Google hasta que decide reproducir un video (lo promete el aviso de privacidad). El optimizador
+ * no agranda imágenes, así que el gris sigue midiendo 120 px.
  */
 async function youtubeWide(poster: string): Promise<string> {
   const id = poster.match(/\/vi\/([^/]+)\//)?.[1];
@@ -61,7 +64,7 @@ async function youtubeWide(poster: string): Promise<string> {
       const img = new window.Image();
       img.onload = () => resolve(img.naturalWidth > 200);
       img.onerror = () => resolve(false);
-      img.src = url;
+      img.src = sameOriginImage(url, 640);
     });
     if (ok) return url;
   }

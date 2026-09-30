@@ -43,7 +43,12 @@ export function Footer() {
         data-reveal="fade"
         className="ui-label mt-14 flex flex-wrap items-center justify-between gap-3 text-fg-muted"
       >
-        <span>© {year} Foro Interuniversitario de Estudios de Posgrado</span>
+        <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          © {year} Foro Interuniversitario de Estudios de Posgrado
+          <Link href="/privacidad" className="underline-offset-4 hover:text-fg hover:underline">
+            Aviso de privacidad
+          </Link>
+        </span>
         <span className="flex items-center gap-4">
           Guatemala, C. A.
           <BackToTop />

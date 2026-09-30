@@ -22,19 +22,24 @@ completa para una computadora nueva (backend, base de datos, datos y frontend) e
 
 ## Comandos
 
-| Comando         | Qué hace                                    |
-| --------------- | ------------------------------------------- |
-| `npm run dev`   | Servidor de desarrollo (Turbopack)          |
-| `npm run build` | Build de producción                         |
-| `npm run start` | Sirve el build (`-p 3001` para otro puerto) |
-| `npm run lint`  | ESLint (config de Next + React Compiler)    |
+| Comando             | Qué hace                                                         |
+| ------------------- | ---------------------------------------------------------------- |
+| `npm run dev`       | Servidor de desarrollo (Turbopack)                               |
+| `npm run build`     | Build de producción (funciona aunque la API no responda)         |
+| `npm run start`     | Sirve el build (`-p 3001` para otro puerto)                      |
+| `npm run lint`      | ESLint (config de Next + React Compiler)                         |
+| `npm run typecheck` | TypeScript sin emitir                                            |
+| `npm test`          | Pruebas con Vitest (`tests/`; ver TESTING.md de la raíz)         |
+| `npm run icons`     | Regenera favicon, ícono de Apple y del manifiesto desde la marca |
 
 El formato lo aplica Prettier con la configuración de la raíz del repo (`npx prettier --write "frontend/**/*.{ts,tsx,css,md}"` desde la raíz); el hook de Husky lo verifica al hacer commit.
 
 ## Estructura
 
 ```
-app/            rutas (App Router), error.tsx, not-found.tsx, loading.tsx
+app/            rutas (App Router), error.tsx, not-found.tsx, loading.tsx, privacidad/
+                robots.ts, sitemap.ts, manifest.ts, opengraph-image.tsx, icon.svg, favicon.ico
+proxy.ts        404 real para ids imposibles en las páginas de detalle (sin tocar la API)
 components/
   nav/          Navbar (pill → barra, gooey, magnético), MobileMenu, Footer
   ui/           Button ("sello líquido"), Section, PageHeader, Magnetic, Prose, GooeyDefs
@@ -42,16 +47,26 @@ components/
   sections/     Un componente por capítulo de la portada
   cursor/       CustomCursor
   feedback/     ToasterMount (Sileo), ErrorScreen
+  seo/          JsonLd (datos estructurados)
   providers/    SmoothScroll (Lenis + GSAP), SectionThemeObserver
 hooks/          useMagnetic, useClickSpark, useSplitReveal, useReducedMotion
-lib/            api.ts (cliente tipado + errores), types.ts, format.ts, nav.ts, milestones.ts, gsap.ts
+lib/            api.ts (cliente tipado, errores, critical/safe/findOne), types.ts, format.ts, nav.ts,
+                milestones.ts, gsap.ts, site.ts (URL e indexación), seo.ts (metadatos por página),
+                json-ld.ts (schema.org), document-id.ts
+tests/          Vitest: lógica de lib/, proxy y cabeceras de seguridad
+scripts/        generate-icons.mjs
 styles/         tokens.css (paleta, tipografía, ritmo)
 ```
 
 ## Variables de entorno
 
-| Variable              | Descripción                             |
-| --------------------- | --------------------------------------- |
-| `NEXT_PUBLIC_API_URL` | URL del backend Strapi, sin barra final |
+| Variable                               | Descripción                                                                                                  |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `NEXT_PUBLIC_API_URL`                  | URL del backend Strapi, sin barra final                                                                      |
+| `NEXT_PUBLIC_MEDIA_URL`                | Producción: URL pública de los archivos en R2 (el `S3_PUBLIC_URL` del backend)                               |
+| `NEXT_PUBLIC_SITE_URL`                 | URL pública de este sitio: canónicas, sitemap, robots y Open Graph                                           |
+| `NEXT_PUBLIC_NOINDEX`                  | `true` en staging: que Google no lo indexe                                                                   |
+| `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | Opcional: verificación de Google Search Console por etiqueta HTML                                            |
+| `FRONTEND_API_TOKEN`                   | Solo servidor (sin `NEXT_PUBLIC_`): el mismo valor que en el backend; da un cupo propio en su límite de tasa |
 
-En producción, apunta al dominio público del backend (p. ej. el de Railway) y añade ese host a `images.remotePatterns` en `next.config.ts` si no es `*.railway.app`.
+Las `NEXT_PUBLIC_*` se incrustan al compilar. `npm run setup:env` (raíz) crea `.env.local` con el token ya igualado al del backend. Detalle de producción en [DESPLIEGUE.md](../DESPLIEGUE.md#331-variables-del-frontend-nextjs) y de las cabeceras de seguridad en [SEGURIDAD.md](../SEGURIDAD.md#12-frontend-nextjs).

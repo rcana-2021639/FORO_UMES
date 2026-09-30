@@ -12,6 +12,8 @@ import { Footer } from '@/components/nav/Footer';
 import { ClickSparkLayer } from '@/components/fx/ClickSparkLayer';
 import { QualityProbe } from '@/components/providers/QualityProbe';
 import { QUALITY_SCRIPT } from '@/lib/quality-script';
+import { DEFAULT_OG_IMAGE } from '@/lib/seo';
+import { INDEXABLE, SITE_DESCRIPTION, SITE_NAME, SITE_SHORT_NAME, SITE_URL } from '@/lib/site';
 
 const fraunces = Fraunces({
   variable: '--font-fraunces',
@@ -28,13 +30,34 @@ const geistMono = Geist_Mono({
   display: 'swap',
 });
 
-const SITE = 'Foro Interuniversitario de Estudios de Posgrado';
-
 export const metadata: Metadata = {
-  title: { default: SITE, template: `%s · ${SITE}` },
-  description:
-    'Nueve universidades de Guatemala coordinan sus estudios de posgrado: programas, actividades, aportes y noticias del Foro.',
-  openGraph: { type: 'website', locale: 'es_GT', siteName: SITE },
+  // Base de toda URL relativa en los metadatos (canónicas, Open Graph): el dominio público
+  metadataBase: new URL(SITE_URL),
+  title: { default: SITE_NAME, template: `%s · ${SITE_NAME}` },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_SHORT_NAME,
+  category: 'education',
+  // Solo producción se indexa (lib/site.ts). Vista previa grande en Google Discover y resultados.
+  robots: INDEXABLE
+    ? {
+        index: true,
+        follow: true,
+        googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 },
+      }
+    : { index: false, follow: false },
+  // Google Search Console: el valor que da al elegir "Etiqueta HTML" (la verificación por DNS no lo necesita)
+  verification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }
+    : undefined,
+  // iOS no convierte en enlaces de llamada los números (años, folios) que no son teléfonos
+  formatDetection: { telephone: false },
+  openGraph: {
+    type: 'website',
+    locale: 'es_GT',
+    siteName: SITE_NAME,
+    images: [DEFAULT_OG_IMAGE],
+  },
+  twitter: { card: 'summary_large_image' },
 };
 
 export const viewport: Viewport = {

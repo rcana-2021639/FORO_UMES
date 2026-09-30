@@ -2,12 +2,14 @@ import type { Metadata } from 'next';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { UniversitiesBento } from '@/components/sections/UniversitiesBento';
 import { api, critical } from '@/lib/api';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: 'Universidades',
   description:
     'Las nueve universidades integrantes del Foro Interuniversitario de Estudios de Posgrado.',
-};
+  path: '/universidades',
+});
 
 const EMPTY = { data: [], meta: { pagination: { page: 1, pageSize: 0, pageCount: 0, total: 0 } } };
 

@@ -1,12 +1,14 @@
 import type { Metadata } from 'next';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ContactForm } from '@/components/sections/ContactForm';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: 'Contacto',
   description:
     'Escribe a la secretaría técnica del Foro Interuniversitario de Estudios de Posgrado.',
-};
+  path: '/contacto',
+});
 
 export default function ContactoPage() {
   return (

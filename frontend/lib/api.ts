@@ -320,6 +320,22 @@ export async function findOne<T>(
   }
 }
 
+/**
+ * Todos los registros de un listado paginado, hasta `maxPages` páginas (el backend entrega como
+ * máximo 50 por página). Para el sitemap.
+ */
+export async function allPages<T>(
+  load: (page: number) => Promise<ListResponse<T>>,
+  maxPages = 20
+): Promise<T[]> {
+  const first = await load(1);
+  const pages = Math.min(first.meta.pagination.pageCount, maxPages);
+  const rest = await Promise.all(
+    Array.from({ length: Math.max(0, pages - 1) }, (_, i) => load(i + 2))
+  );
+  return [first, ...rest].flatMap((r) => r.data);
+}
+
 /** Tope de páginas de un listado paginado: `?pagina=` no puede generar consultas sin fin. */
 export const MAX_PAGE = 100;
 

@@ -6,7 +6,10 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Prose } from '@/components/ui/Prose';
 import { Button } from '@/components/ui/Button';
 import { api, findOne, mediaUrl } from '@/lib/api';
-import { ACTIVITY_LABEL, CONTRIBUTION_LABEL, acronymOf, formatDate } from '@/lib/format';
+import { ACTIVITY_LABEL, CONTRIBUTION_LABEL, acronymOf, excerpt, formatDate } from '@/lib/format';
+import { breadcrumbJsonLd, eventJsonLd } from '@/lib/json-ld';
+import { pageMetadata } from '@/lib/seo';
+import { JsonLd } from '@/components/seo/JsonLd';
 import type { Activity } from '@/lib/types';
 
 type Params = { params: Promise<{ documentId: string }> };
@@ -16,7 +19,15 @@ const load = (id: string) => findOne<Activity>(id, api.activity);
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { documentId } = await params;
   const a = await load(documentId).catch(() => null);
-  return { title: a?.title ?? 'Actividad' };
+  if (!a) return { title: 'Página no encontrada', robots: { index: false } };
+  return pageMetadata({
+    title: a.title,
+    description:
+      excerpt(a.description) || `${ACTIVITY_LABEL[a.type]} del Foro, ${formatDate(a.date)}.`,
+    path: `/actividades/${a.documentId}`,
+    image: mediaUrl(a.coverImage?.formats?.large?.url ?? a.coverImage?.url),
+    imageAlt: a.coverImage?.alternativeText,
+  });
 }
 
 export default async function ActividadPage({ params }: Params) {
@@ -27,6 +38,16 @@ export default async function ActividadPage({ params }: Params) {
 
   return (
     <>
+      <JsonLd
+        data={[
+          eventJsonLd(a),
+          breadcrumbJsonLd([
+            { name: 'Inicio', path: '/' },
+            { name: 'Actividades', path: '/actividades' },
+            { name: a.title, path: `/actividades/${a.documentId}` },
+          ]),
+        ]}
+      />
       <PageHeader
         kicker={`${ACTIVITY_LABEL[a.type]}, ${formatDate(a.date)}`}
         title={a.title}

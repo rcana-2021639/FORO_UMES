@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useId, useRef, useState, type FormEvent } from 'react';
 import { sileo } from 'sileo';
 import { api, ApiError, describeError } from '@/lib/api';
@@ -297,6 +298,14 @@ export function ContactForm() {
             </span>
           )}
         </div>
+        <p className="mt-6 max-w-[56ch] text-[0.85rem] leading-relaxed text-fg-muted">
+          Usamos tu nombre y tu correo solo para responderte; el mensaje se borra solo al año. Más
+          detalles en el{' '}
+          <Link href="/privacidad" className="underline underline-offset-4 hover:text-fg">
+            aviso de privacidad
+          </Link>
+          .
+        </p>
       </form>
     </div>
   );

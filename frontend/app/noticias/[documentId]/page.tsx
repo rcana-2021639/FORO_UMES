@@ -5,7 +5,10 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Prose } from '@/components/ui/Prose';
 import { Button } from '@/components/ui/Button';
 import { api, findOne, mediaUrl } from '@/lib/api';
-import { formatDate } from '@/lib/format';
+import { excerpt, formatDate } from '@/lib/format';
+import { breadcrumbJsonLd, newsArticleJsonLd } from '@/lib/json-ld';
+import { pageMetadata } from '@/lib/seo';
+import { JsonLd } from '@/components/seo/JsonLd';
 import type { NewsItem } from '@/lib/types';
 
 type Params = { params: Promise<{ documentId: string }> };
@@ -15,12 +18,17 @@ const load = (id: string) => findOne<NewsItem>(id, api.newsItem);
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { documentId } = await params;
   const n = await load(documentId).catch(() => null);
-  const image = mediaUrl(n?.coverImage?.formats?.large?.url ?? n?.coverImage?.url);
-  return {
-    title: n?.title ?? 'Noticia',
-    description: n?.summary ?? undefined,
-    openGraph: image ? { images: [{ url: image }] } : undefined,
-  };
+  if (!n) return { title: 'Página no encontrada', robots: { index: false } };
+  return pageMetadata({
+    title: n.title,
+    description: n.summary ?? excerpt(n.content),
+    path: `/noticias/${n.documentId}`,
+    image: mediaUrl(n.coverImage?.formats?.large?.url ?? n.coverImage?.url),
+    imageAlt: n.coverImage?.alternativeText,
+    type: 'article',
+    publishedTime: n.publishedAt,
+    modifiedTime: n.updatedAt,
+  });
 }
 
 export default async function NoticiaPage({ params }: Params) {
@@ -31,6 +39,16 @@ export default async function NoticiaPage({ params }: Params) {
 
   return (
     <article>
+      <JsonLd
+        data={[
+          newsArticleJsonLd(n),
+          breadcrumbJsonLd([
+            { name: 'Inicio', path: '/' },
+            { name: 'Noticias', path: '/noticias' },
+            { name: n.title, path: `/noticias/${n.documentId}` },
+          ]),
+        ]}
+      />
       <PageHeader
         kicker={`Publicada el ${formatDate(n.publishedAt)}`}
         title={n.title}

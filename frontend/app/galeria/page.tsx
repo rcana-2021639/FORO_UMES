@@ -3,11 +3,13 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { GalleryMasonry } from '@/components/sections/GalleryMasonry';
 import { GalleryShowcase } from '@/components/sections/GalleryShowcase';
 import { api, critical } from '@/lib/api';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: 'Galería',
   description: 'Fotografías y videos de las actividades del Foro.',
-};
+  path: '/galeria',
+});
 
 const EMPTY = { data: [], meta: { pagination: { page: 1, pageSize: 0, pageCount: 0, total: 0 } } };
 

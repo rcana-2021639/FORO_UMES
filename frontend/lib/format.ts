@@ -66,11 +66,17 @@ export const folio = (n: number) => String(n).padStart(2, '0');
 
 export const acronymOf = (u?: UniversityRef | null) => u?.acronym ?? u?.name ?? '';
 
-/** Recorta un texto largo en el último espacio antes de `max`. */
+/**
+ * Texto plano a partir del Markdown del backend, recortado en el último espacio antes de `max`.
+ * Las imágenes se quitan, los enlaces dejan solo su texto y el HTML embebido desaparece.
+ */
 export function excerpt(text?: string | null, max = 160) {
   if (!text) return '';
   const clean = text
-    .replace(/[#*_>`]/g, '')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/<[^>]+>/g, '')
+    .replace(/[#*_>`~]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
   if (clean.length <= max) return clean;
@@ -78,14 +84,22 @@ export function excerpt(text?: string | null, max = 160) {
   return `${cut.slice(0, cut.lastIndexOf(' '))}…`;
 }
 
+/** Ids válidos: YouTube usa 11 caracteres [A-Za-z0-9_-]; Vimeo, solo dígitos. */
+const YOUTUBE_ID = /^[\w-]{11}$/;
+const VIMEO_ID = /^\d+$/;
+
 /**
- * Miniatura de un video de YouTube o Vimeo a partir de su URL (la galería solo guarda el enlace).
- * Devuelve null si no se reconoce el proveedor.
+ * Proveedor e id de un video de YouTube o Vimeo a partir de su URL (la galería solo guarda el
+ * enlace). null si no es de uno de ellos o el id no tiene un formato posible: nada raro (como
+ * `?v=../../algo`) llega a armar la dirección del reproductor.
  */
-export function videoThumbnail(url?: string | null): string | null {
+export function parseVideo(
+  url?: string | null
+): { provider: 'youtube' | 'vimeo'; id: string } | null {
   if (!url) return null;
   try {
     const u = new URL(url);
+    if (u.protocol !== 'https:' && u.protocol !== 'http:') return null;
     const host = u.hostname.replace(/^www\./, '');
     let id: string | null = null;
     if (host === 'youtu.be') id = u.pathname.slice(1).split('/')[0];
@@ -94,10 +108,10 @@ export function videoThumbnail(url?: string | null): string | null {
       else if (u.pathname.startsWith('/shorts/') || u.pathname.startsWith('/embed/'))
         id = u.pathname.split('/')[2];
     }
-    if (id) return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+    if (id) return YOUTUBE_ID.test(id) ? { provider: 'youtube', id } : null;
     if (host === 'vimeo.com') {
       const v = u.pathname.split('/').filter(Boolean)[0];
-      if (v && /^\d+$/.test(v)) return `https://vumbnail.com/${v}.jpg`;
+      if (v && VIMEO_ID.test(v)) return { provider: 'vimeo', id: v };
     }
   } catch {
     /* URL inválida */
@@ -105,26 +119,20 @@ export function videoThumbnail(url?: string | null): string | null {
   return null;
 }
 
-/** URL para incrustar un video de YouTube o Vimeo (reproducción automática al abrir). */
+/** Miniatura del video (pasa por el optimizador de Next). null si no se reconoce. */
+export function videoThumbnail(url?: string | null): string | null {
+  const v = parseVideo(url);
+  if (!v) return null;
+  return v.provider === 'youtube'
+    ? `https://img.youtube.com/vi/${v.id}/hqdefault.jpg`
+    : `https://vumbnail.com/${v.id}.jpg`;
+}
+
+/** URL para incrustar el video (YouTube sin cookies; reproducción automática al abrir). */
 export function videoEmbed(url?: string | null): string | null {
-  if (!url) return null;
-  try {
-    const u = new URL(url);
-    const host = u.hostname.replace(/^www\./, '');
-    let id: string | null = null;
-    if (host === 'youtu.be') id = u.pathname.slice(1).split('/')[0];
-    else if (host === 'youtube.com' || host === 'm.youtube.com') {
-      if (u.pathname === '/watch') id = u.searchParams.get('v');
-      else if (u.pathname.startsWith('/shorts/') || u.pathname.startsWith('/embed/'))
-        id = u.pathname.split('/')[2];
-    }
-    if (id) return `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`;
-    if (host === 'vimeo.com') {
-      const v = u.pathname.split('/').filter(Boolean)[0];
-      if (v && /^\d+$/.test(v)) return `https://player.vimeo.com/video/${v}?autoplay=1`;
-    }
-  } catch {
-    /* URL inválida */
-  }
-  return null;
+  const v = parseVideo(url);
+  if (!v) return null;
+  return v.provider === 'youtube'
+    ? `https://www.youtube-nocookie.com/embed/${v.id}?autoplay=1&rel=0`
+    : `https://player.vimeo.com/video/${v.id}?autoplay=1`;
 }

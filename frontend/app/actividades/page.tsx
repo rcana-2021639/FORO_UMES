@@ -5,11 +5,13 @@ import { ActivitiesBoard } from '@/components/sections/ActivitiesBoard';
 import { MilestonesTrack } from '@/components/sections/MilestonesTrack';
 import { buildMilestones } from '@/lib/milestones';
 import { api, critical } from '@/lib/api';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: 'Actividades',
   description: 'Encuentros, conferencias, seminarios, reuniones y proyectos del Foro.',
-};
+  path: '/actividades',
+});
 
 const EMPTY = { data: [], meta: { pagination: { page: 1, pageSize: 0, pageCount: 0, total: 0 } } };
 
