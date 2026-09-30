@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { NewsArchive } from '@/components/sections/NewsArchive';
-import { api, safe } from '@/lib/api';
+import { api, critical, parsePage } from '@/lib/api';
 
 export const metadata: Metadata = {
   title: 'Noticias',
@@ -16,12 +17,14 @@ export default async function NoticiasPage({
   searchParams: Promise<{ pagina?: string }>;
 }) {
   const { pagina } = await searchParams;
-  const page = Math.max(1, Number(pagina) || 1);
-  const news = await safe(
+  const page = parsePage(pagina);
+  const news = await critical(
     api.news({ 'pagination[page]': page, 'pagination[pageSize]': 12 }),
     EMPTY
   );
   const { pageCount } = news.meta.pagination;
+  // Un enlace viejo a una página que ya no existe lleva a la última, no a un archivo vacío
+  if (pageCount > 0 && page > pageCount) redirect(`/noticias?pagina=${pageCount}`);
 
   return (
     <>

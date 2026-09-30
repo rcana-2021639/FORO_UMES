@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ProgramsCatalog } from '@/components/sections/ProgramsCatalog';
-import { api, safe } from '@/lib/api';
+import { api, critical } from '@/lib/api';
 
 export const metadata: Metadata = {
   title: 'Programas de posgrado',
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 const EMPTY = { data: [], meta: { pagination: { page: 1, pageSize: 0, pageCount: 0, total: 0 } } };
 
 export default async function ProgramasPage() {
-  const programs = (await safe(api.allPrograms(), EMPTY)).data;
+  const programs = (await critical(api.allPrograms(), EMPTY)).data;
 
   return (
     <>

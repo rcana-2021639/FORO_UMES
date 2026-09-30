@@ -1,19 +1,12 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { UniversityProfile } from '@/components/sections/UniversityProfile';
-import { api, ApiError, safe } from '@/lib/api';
+import { api, findOne, safe } from '@/lib/api';
 import type { University } from '@/lib/types';
 
 type Params = { params: Promise<{ documentId: string }> };
 
-async function load(documentId: string): Promise<University | null> {
-  try {
-    return (await api.university(documentId)).data;
-  } catch (err) {
-    if (err instanceof ApiError && err.status === 404) return null;
-    throw err;
-  }
-}
+const load = (id: string) => findOne<University>(id, api.university);
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { documentId } = await params;

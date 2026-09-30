@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { UniversitiesBento } from '@/components/sections/UniversitiesBento';
-import { api, safe } from '@/lib/api';
+import { api, critical } from '@/lib/api';
 
 export const metadata: Metadata = {
   title: 'Universidades',
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 const EMPTY = { data: [], meta: { pagination: { page: 1, pageSize: 0, pageCount: 0, total: 0 } } };
 
 export default async function UniversidadesPage() {
-  const universities = await safe(api.universities(), EMPTY);
+  const universities = await critical(api.universities(), EMPTY);
   return (
     <>
       <PageHeader

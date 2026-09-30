@@ -13,7 +13,7 @@ interface Props {
   title: string;
   text: string;
   error?: Error & { digest?: string };
-  reset?: () => void;
+  retry?: () => void;
   /** Sin layout (global-error): pinta su propio fondo. */
   bare?: boolean;
 }
@@ -22,7 +22,7 @@ interface Props {
  * Pantalla de error "fuera de acta": mismo lenguaje que el resto del sitio, con folio
  * (digest/requestId) para soporte, orbe ámbar de fondo y botones del sistema.
  */
-export function ErrorScreen({ code, title, text, error, reset, bare }: Props) {
+export function ErrorScreen({ code, title, text, error, retry, bare }: Props) {
   useEffect(() => {
     if (!error) return;
     const d = describeError(error);
@@ -59,8 +59,8 @@ export function ErrorScreen({ code, title, text, error, reset, bare }: Props) {
         </p>
         <div data-reveal="up" className="mt-12 flex flex-wrap gap-4">
           <Button href="/">Volver a la portada</Button>
-          {reset && (
-            <Button variant="secondary" onClick={reset}>
+          {retry && (
+            <Button variant="secondary" onClick={retry}>
               Intentar de nuevo
             </Button>
           )}

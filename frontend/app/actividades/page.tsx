@@ -4,7 +4,7 @@ import { Words } from '@/components/ui/Words';
 import { ActivitiesBoard } from '@/components/sections/ActivitiesBoard';
 import { MilestonesTrack } from '@/components/sections/MilestonesTrack';
 import { buildMilestones } from '@/lib/milestones';
-import { api, safe } from '@/lib/api';
+import { api, critical } from '@/lib/api';
 
 export const metadata: Metadata = {
   title: 'Actividades',
@@ -15,8 +15,8 @@ const EMPTY = { data: [], meta: { pagination: { page: 1, pageSize: 0, pageCount:
 
 export default async function ActividadesPage() {
   const [activities, universities] = await Promise.all([
-    safe(api.activities({ 'pagination[pageSize]': 50 }), EMPTY),
-    safe(api.universities(), EMPTY),
+    critical(api.activities({ 'pagination[pageSize]': 50 }), EMPTY),
+    critical(api.universities(), EMPTY),
   ]);
   // Aquí la historia completa, desde el primer ingreso (en la portada solo los últimos 14)
   const milestones = buildMilestones(universities.data, activities.data, 100);

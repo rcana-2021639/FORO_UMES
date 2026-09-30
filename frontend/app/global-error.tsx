@@ -5,10 +5,10 @@ import { ErrorScreen } from '@/components/feedback/ErrorScreen';
 /** Error del layout raíz: no hay fuentes ni estilos globales garantizados, así que pinta lo básico. */
 export default function GlobalError({
   error,
-  reset,
+  retry,
 }: {
   error: Error & { digest?: string };
-  reset: () => void;
+  retry: () => void;
 }) {
   return (
     <html lang="es">
@@ -18,7 +18,7 @@ export default function GlobalError({
           title="El sitio del Foro no pudo cargarse"
           text="Ocurrió un error inesperado. Intenta de nuevo en unos segundos."
           error={error}
-          reset={reset}
+          retry={retry}
           bare
         />
       </body>

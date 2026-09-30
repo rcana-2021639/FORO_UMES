@@ -5,20 +5,13 @@ import { notFound } from 'next/navigation';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Prose } from '@/components/ui/Prose';
 import { Button } from '@/components/ui/Button';
-import { api, ApiError, mediaUrl } from '@/lib/api';
+import { api, findOne, mediaUrl } from '@/lib/api';
 import { ACTIVITY_LABEL, CONTRIBUTION_LABEL, acronymOf, formatDate } from '@/lib/format';
 import type { Activity } from '@/lib/types';
 
 type Params = { params: Promise<{ documentId: string }> };
 
-async function load(id: string): Promise<Activity | null> {
-  try {
-    return (await api.activity(id)).data;
-  } catch (err) {
-    if (err instanceof ApiError && err.status === 404) return null;
-    throw err;
-  }
-}
+const load = (id: string) => findOne<Activity>(id, api.activity);
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { documentId } = await params;

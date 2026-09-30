@@ -4,18 +4,18 @@ import { ErrorScreen } from '@/components/feedback/ErrorScreen';
 
 export default function Error({
   error,
-  reset,
+  retry,
 }: {
   error: Error & { digest?: string };
-  reset: () => void;
+  retry: () => void;
 }) {
   return (
     <ErrorScreen
       code="500"
-      title="Algo salió mal en esta página"
-      text="Algo falló al preparar el contenido. El error ya quedó registrado con su referencia; puedes intentarlo de nuevo o volver a la portada."
+      title="No pudimos cargar esta página"
+      text="Suele ser una falla pasajera de conexión con el servidor del Foro. Espera unos segundos y pulsa «Intentar de nuevo»; si sigue igual, vuelve a la portada. Si escribes al Foro por esto, menciona la referencia de arriba."
       error={error}
-      reset={reset}
+      retry={retry}
     />
   );
 }

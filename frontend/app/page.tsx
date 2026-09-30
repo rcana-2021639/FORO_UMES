@@ -11,7 +11,7 @@ import { ProcessSteps } from '@/components/sections/ProcessSteps';
 import { ContributionsStrip } from '@/components/sections/ContributionsStrip';
 import { ContactForm } from '@/components/sections/ContactForm';
 import { SectionRail } from '@/components/nav/SectionRail';
-import { api, safe } from '@/lib/api';
+import { api, critical } from '@/lib/api';
 
 const EMPTY = { data: [], meta: { pagination: { page: 1, pageSize: 0, pageCount: 0, total: 0 } } };
 
@@ -31,13 +31,13 @@ export default async function Home() {
   const year = new Date().getFullYear();
   const [summary, universities, programs, activities, contributions, news, gallery] =
     await Promise.all([
-      safe(api.summary(), null),
-      safe(api.universities(), EMPTY),
-      safe(api.allPrograms(), EMPTY),
-      safe(api.activities({ 'pagination[pageSize]': 12 }), EMPTY),
-      safe(api.contributions(), EMPTY),
-      safe(api.news({ 'pagination[pageSize]': 4 }), EMPTY),
-      safe(api.gallery({ 'pagination[pageSize]': 13 }), EMPTY),
+      critical(api.summary(), null),
+      critical(api.universities(), EMPTY),
+      critical(api.allPrograms(), EMPTY),
+      critical(api.activities({ 'pagination[pageSize]': 12 }), EMPTY),
+      critical(api.contributions(), EMPTY),
+      critical(api.news({ 'pagination[pageSize]': 4 }), EMPTY),
+      critical(api.gallery({ 'pagination[pageSize]': 13 }), EMPTY),
     ]);
 
   const counts = summary?.data.counts ?? {

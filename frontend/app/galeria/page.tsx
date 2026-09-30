@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { GalleryMasonry } from '@/components/sections/GalleryMasonry';
 import { GalleryShowcase } from '@/components/sections/GalleryShowcase';
-import { api, safe } from '@/lib/api';
+import { api, critical } from '@/lib/api';
 
 export const metadata: Metadata = {
   title: 'Galería',
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 const EMPTY = { data: [], meta: { pagination: { page: 1, pageSize: 0, pageCount: 0, total: 0 } } };
 
 export default async function GaleriaPage() {
-  const gallery = await safe(api.gallery({ 'pagination[pageSize]': 50 }), EMPTY);
+  const gallery = await critical(api.gallery({ 'pagination[pageSize]': 50 }), EMPTY);
 
   return (
     <>

@@ -12,6 +12,7 @@ import type {
   SingleResponse,
   University,
 } from './types';
+import { isDocumentId } from './document-id';
 
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:1337').replace(
   /\/$/,
@@ -86,6 +87,17 @@ interface FetchOptions {
 const DEV_REVALIDATE = process.env.NODE_ENV === 'development' ? 10 : null;
 
 /**
+ * Credencial del servidor de Next ante el backend. Todas sus consultas salen de la misma IP, así
+ * que sin ella compartirían el límite de tasa de UN visitante (120/min): quien pidiera URLs
+ * inventadas podría agotarlo y dejar el sitio sin datos. Con ella el backend les da un cupo propio.
+ * Solo existe en el servidor (no lleva NEXT_PUBLIC_): nunca viaja al navegador.
+ */
+const SERVER_HEADERS: Record<string, string> =
+  typeof window === 'undefined' && process.env.FRONTEND_API_TOKEN
+    ? { 'X-Frontend-Token': process.env.FRONTEND_API_TOKEN }
+    : {};
+
+/**
  * Único punto de entrada a la API. Entiende el formato de error del backend y lanza ApiError.
  * Se usa tanto en Server Components (con `revalidate`) como en el cliente.
  */
@@ -93,7 +105,7 @@ export async function apiFetch<T>(path: string, opts: FetchOptions = {}): Promis
   const url = `${API_URL}/api${path}${toSearch(opts.query)}`;
   const res = await fetch(url, {
     ...opts.init,
-    headers: { Accept: 'application/json', ...(opts.init?.headers ?? {}) },
+    headers: { Accept: 'application/json', ...SERVER_HEADERS, ...(opts.init?.headers ?? {}) },
     // Un 0 explícito (p. ej. el envío del formulario) nunca se cachea, tampoco en desarrollo
     next: {
       revalidate: opts.revalidate === 0 ? 0 : (DEV_REVALIDATE ?? opts.revalidate ?? 60),
@@ -252,15 +264,67 @@ export const api = {
     }),
 };
 
+/* ---------- Carga de datos en Server Components ---------- */
+
+const errorText = (err: unknown) => (err instanceof Error ? err.message : String(err));
+
+/** `next build` en curso: se están generando las páginas estáticas. */
+const building = () => process.env.NEXT_PHASE === 'phase-production-build';
+
 /**
- * Para Server Components: nunca rompe el render por un fallo de la API. Devuelve `fallback`
- * y deja el error en consola del servidor (el error boundary queda para fallos de render).
+ * Datos principales de una página. Si la API falla se lanza el error, a propósito:
+ * - en una página estática, Next conserva la última versión buena en caché y reintenta en la
+ *   siguiente visita, en lugar de reemplazarla por una vacía que diría "no hay noticias";
+ * - en una dinámica, se muestra la pantalla de error (con "Reintentar"), que es la verdad.
+ * Solo durante `next build` se usa `fallback`: una API caída no debe impedir desplegar, y la
+ * página se regenera sola al vencer su `revalidate`.
+ */
+export async function critical<T>(promise: Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await promise;
+  } catch (err) {
+    if (!building()) throw err;
+    console.warn('[api] build sin datos, se regenerará al vencer la caché:', errorText(err));
+    return fallback;
+  }
+}
+
+/**
+ * Datos complementarios (p. ej. la universidad anterior y la siguiente de un perfil): si fallan,
+ * la página se muestra igual, sin ellos. El error queda en la consola del servidor.
  */
 export async function safe<T>(promise: Promise<T>, fallback: T): Promise<T> {
   try {
     return await promise;
   } catch (err) {
-    console.warn('[api]', err instanceof Error ? err.message : err);
+    console.warn('[api]', errorText(err));
     return fallback;
   }
+}
+
+/**
+ * Un registro para su página de detalle; `null` = no existe (la página llama a notFound()).
+ * Un id con formato imposible ni siquiera llega al backend: una URL inventada o con `../` no debe
+ * gastar consultas (ver SERVER_HEADERS) ni componer rutas raras hacia la API.
+ */
+export async function findOne<T>(
+  documentId: string,
+  load: (id: string) => Promise<SingleResponse<T>>
+): Promise<T | null> {
+  if (!isDocumentId(documentId)) return null;
+  try {
+    return (await load(documentId)).data;
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) return null;
+    throw err;
+  }
+}
+
+/** Tope de páginas de un listado paginado: `?pagina=` no puede generar consultas sin fin. */
+export const MAX_PAGE = 100;
+
+/** `?pagina=` a número de página válido (entero entre 1 y MAX_PAGE); cualquier otra cosa → 1. */
+export function parsePage(raw: string | string[] | undefined): number {
+  const n = Number(Array.isArray(raw) ? raw[0] : raw);
+  return Number.isSafeInteger(n) && n >= 1 ? Math.min(n, MAX_PAGE) : 1;
 }
