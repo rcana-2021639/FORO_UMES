@@ -99,6 +99,7 @@ DATABASE_POOL_MIN=2
 DATABASE_POOL_MAX=10
 
 CONTACT_NOTIFY_EMAIL=<correo del responsable de comunicación>
+CONTACT_RETENTION_DAYS=365                  # lo promete el aviso de privacidad (/privacidad)
 SMTP_HOST=smtp.resend.com
 SMTP_PORT=465
 SMTP_SECURE=true
@@ -120,6 +121,22 @@ SENTRY_ENVIRONMENT=production
 
 Servicios externos que hay que crear antes (todos con nivel gratuito): **Resend** (dominio verificado para `MAIL_FROM`), **Cloudflare R2** (bucket con acceso público o dominio propio; token de API con permiso _Object Read & Write_ al bucket), **Sentry** (proyecto Node.js).
 
+### 3.3.1 Variables del frontend (Next.js)
+
+Las `NEXT_PUBLIC_*` se incrustan **al compilar**: si cambian, hay que volver a desplegar el frontend.
+
+```
+NEXT_PUBLIC_API_URL=https://api.<dominio>          # URL pública del backend, sin barra final
+NEXT_PUBLIC_MEDIA_URL=https://<dominio público de R2> # el mismo S3_PUBLIC_URL del backend
+NEXT_PUBLIC_SITE_URL=https://<dominio-del-sitio>   # canónicas, sitemap, robots, Open Graph
+FRONTEND_API_TOKEN=<el mismo valor que en el backend>  # solo servidor: sin NEXT_PUBLIC_
+NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=<opcional, ver 3.6>
+NEXT_TELEMETRY_DISABLED=1
+```
+
+- El sitio solo se deja indexar si `NEXT_PUBLIC_SITE_URL` es `https://` y **no** está `NEXT_PUBLIC_NOINDEX=true`. En **staging** hay que poner `NEXT_PUBLIC_NOINDEX=true` para que Google no lo indexe como un duplicado de producción.
+- Sin `NEXT_PUBLIC_MEDIA_URL`, las imágenes guardadas en R2 no pasarían por el optimizador de Next (el origen no estaría permitido).
+
 ### 3.4 Staging
 
 _Project → Environments → New_ → `staging` (duplicar desde `production`). Cambiar: servicio Postgres propio (crear otro), **todos** los secretos regenerados, `SENTRY_ENVIRONMENT=staging`, `FRONTEND_URL` del frontend de staging, rama de despliegue `jonathan`.
@@ -130,6 +147,13 @@ _Project → Environments → New_ → `staging` (duplicar desde `production`). 
 2. **No** crear API Tokens para el frontend: lee la API pública sin credenciales. Lo único que comparte con el backend es `FRONTEND_API_TOKEN` (sección 3.3), que solo le da un cupo propio en el límite de tasa. Un token _Read-only_ de Strapi no aportaría nada (los controladores ya sirven solo contenido publicado) y sería una credencial sin vencimiento que nadie usa: una más que podría filtrarse.
 3. Crear las 9 universidades (o importar con `npm run seed` apuntando `DATABASE_*` a staging desde una máquina local — nunca directamente contra producción sin revisar los datos provisionales).
 4. Invitar a los editores (_Settings → Users → Invite_, rol **Editor de Universidad**) y crear su **Perfil de editor**.
+
+### 3.6 Google Search Console (una vez que el dominio definitivo responde)
+
+1. Entrar a https://search.google.com/search-console con la cuenta institucional del Foro → _Agregar propiedad_ → **Dominio** → escribir el dominio → Google da un registro `TXT` → agregarlo en el DNS del dominio. (Alternativa sin acceso al DNS: propiedad de tipo _Prefijo de URL_ con _Etiqueta HTML_, copiar solo el valor de `content` en `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` y redesplegar el frontend.)
+2. _Sitemaps_ → enviar `https://<dominio-del-sitio>/sitemap.xml`.
+3. _Inspección de URLs_ → la portada → _Solicitar indexación_.
+4. Probar una noticia en https://search.google.com/test/rich-results (debe detectar `NewsArticle` y `BreadcrumbList`).
 
 ## 4. Checklist de validación (staging y producción)
 

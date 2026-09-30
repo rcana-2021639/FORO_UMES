@@ -31,6 +31,8 @@ npm run format / format:check
 npm run typecheck
 npm run openapi:export    # regenerate openapi.yaml from the running schema
 npm run seed               # idempotent test data; `-- --reset` wipes and reloads
+
+cd frontend && npm test   # Vitest (lib/, proxy, security headers); also lint / typecheck / build
 ```
 
 Before running integration/API tests once: `npm run db:up` then `npm run db:test:create` (creates the `foro_posgrado_test` database). Integration/API tests boot a real Strapi instance inside the Jest process against that DB (never `foro_posgrado_dev`), run serially (`maxWorkers: 1` — Strapi allows only one instance per process), and force env vars via `tests/helpers/env.ts` (`NODE_ENV=test`, `TRUST_PROXY=true` to simulate distinct IPs via `X-Forwarded-For`, no SMTP/Sentry/S3). Strapi secrets are read from the normal `.env`.
@@ -67,6 +69,13 @@ The core architectural concept is **per-university row-level ownership** in the 
 - `admin-security.ts` — password policy + login audit logging for `/admin/*`
 
 Custom API routes (`contact`, `forum-summary`) live under `src/api/<name>/{controllers,routes}` like any content-type but aren't backed by a `content-types` folder; they're documented for `/documentation` via `src/openapi/custom-routes.ts` and `strapi.plugin('documentation').service('override').registerOverride(...)`.
+
+### Frontend data loading and hardening
+
+- In Server Components, load a page's main data with `critical()` (throws at runtime so ISR keeps the last good page instead of caching an empty one; falls back only during `next build`) and optional data with `safe()`. Detail pages use `findOne()`, which never calls the API with an impossible `documentId`; `proxy.ts` returns a real 404 for those.
+- The Next server identifies itself to Strapi with `X-Frontend-Token` = `FRONTEND_API_TOKEN` (same value in both `.env` files) to get its own rate-limit bucket — all SSR traffic shares one IP.
+- CSP and security headers live in `frontend/next.config.ts` (closed origin list, no nonces on purpose to keep ISR); a new external origin must be added there and in `images.remotePatterns`. SEO: `lib/site.ts` (indexable only on HTTPS without `NEXT_PUBLIC_NOINDEX`), `lib/seo.ts` (`pageMetadata` — a page's `openGraph` replaces the layout's entirely), `lib/json-ld.ts`.
+- `/privacidad` describes exactly what the system does with personal data (e.g. contact messages auto-deleted after `CONTACT_RETENTION_DAYS`); change it together with any such behavior.
 
 ### Config
 

@@ -139,18 +139,60 @@ Hallazgos:
 - **F0-6 (Alta, seguridad)** — El frontend Next.js no envía cabeceras de seguridad propias (CSP, HSTS, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`). → Fase 1.
 - **F0-7 (Media, legal)** — No hay aviso de privacidad, y el formulario de contacto recoge nombre y correo. → Fase 7.
 
+Línea base completada con Docker: **51/51** pruebas de integración y API.
+
+---
+
+## Corrección de los hallazgos de la Fase 0 (29-sep-2026)
+
+| Hallazgo | Estado    | Qué se hizo                                                                                                                                                                                                                                                                 | Cómo se verificó                                                                                                                                                                          |
+| -------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| F0-1     | Corregido | `sanitize-html` 2.17.7; Jest transpila `htmlparser2` (ESM); enlaces con `target` llevan `rel="noopener noreferrer"`                                                                                                                                                         | 10 pruebas de regresión nuevas con los vectores de los tres avisos                                                                                                                        |
+| F0-2     | Corregido | Strapi 5.55.1 (versiones exactas); overrides `qs` 6.16.0, `markdown-it` 14.3.2, `webpack-dev-middleware` 7.4.6; transferencia remota apagada                                                                                                                                | `npm audit`: 0 altas (antes 5); quedan 17 moderadas sin vía de explotación (SEGURIDAD.md §13); panel compila; suite completa verde                                                        |
+| F0-3     | Corregido | Vitest en el frontend: 34 pruebas (API, formato, SEO, proxy, cabeceras) y trabajo `frontend` en CI                                                                                                                                                                          | `npm test` en `frontend/`                                                                                                                                                                 |
+| F0-4     | Corregido | `critical()` lanza el error en tiempo de ejecución (Next conserva la última versión buena) y usa respaldo solo en `next build`                                                                                                                                              | Prueba real en modo producción apagando la API: la portada conservó su contenido tras vencer la caché; una página sin caché mostró la pantalla de error y «Intentar de nuevo» la recuperó |
+| F0-5     | Corregido | `robots.txt`, `sitemap.xml` (56 URLs con `lastmod` e imágenes), manifiesto, íconos propios, imagen Open Graph, canónicas y metadatos completos por página, JSON-LD (Organization con sus 9 universidades, WebSite, NewsArticle, Event, CollegeOrUniversity, BreadcrumbList) | Rutas en 200; metadatos y JSON-LD revisados en el HTML de portada y noticia                                                                                                               |
+| F0-6     | Corregido | CSP de lista cerrada + HSTS, `X-Frame-Options`, `nosniff`, `Referrer-Policy`, COOP, `Permissions-Policy`; sin `X-Powered-By`                                                                                                                                                | En navegador: bloquea script, imagen, iframe y `fetch` ajenos; permite reproductor y API. Pruebas de cabeceras                                                                            |
+| F0-7     | Corregido | `/privacidad` (lenguaje claro, solo lo que el sistema hace), enlace en el pie y junto al formulario; los mensajes se borran solos al año (tarea diaria)                                                                                                                     | Prueba de integración del borrado; revisión en navegador                                                                                                                                  |
+
+### Hallazgos nuevos encontrados durante las correcciones
+
+| ID   | Severidad | Hallazgo                                                                                                                                                                                        | Estado                                                                                                  |
+| ---- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| N-1  | Alta      | Todas las consultas del servidor de Next comparten la IP y el cupo de **un** visitante (120/min): pidiendo URLs inventadas (`/noticias/xxxx`, `?pagina=N`) cualquiera dejaba al sitio sin datos | Corregido: cupo propio con `FRONTEND_API_TOKEN`, ids imposibles no consultan la API, `?pagina=` acotado |
+| N-2  | Alta      | Imágenes de producción (R2) no permitidas en el optimizador de Next: no se habrían mostrado optimizadas. Y el comodín `**.railway.app` lo volvía un proxy de imágenes para cualquiera           | Corregido: `NEXT_PUBLIC_MEDIA_URL`, lista cerrada                                                       |
+| N-3  | Alta      | DESPLIEGUE.md creaba el Super Admin **después** de publicar el dominio: mientras no hay admin, cualquiera en `/admin` puede registrarse como tal                                                | Corregido: se crea por consola antes de generar el dominio                                              |
+| N-4  | Media     | Transferencia remota de datos encendida: con un token permite reemplazar toda la base                                                                                                           | Corregido: apagada (`REMOTE_TRANSFER_ENABLED`)                                                          |
+| N-5  | Media     | «Intentar de nuevo» usaba `reset()`, que en Next 16 no vuelve a pedir los datos: el botón no hacía nada ante una falla del servidor                                                             | Corregido: `retry()` y mensaje comprensible                                                             |
+| N-6  | Media     | Ids basura (`/noticias/abc`, `..%2F..`) respondían 200 y armaban rutas raras hacia la API                                                                                                       | Corregido: `proxy.ts` da 404 real; `findOne` no consulta ids imposibles                                 |
+| N-7  | Media     | Privacidad: la sonda de miniaturas de la galería hacía que el navegador del visitante contactara a Google (i.ytimg.com) sin reproducir nada                                                     | Corregido: pasa por el optimizador; CSP más estricta                                                    |
+| N-8  | Media     | El CI habría fallado en `npm audit --audit-level=high` (aviso nuevo de `webpack-dev-middleware`) y no validaba el frontend                                                                      | Corregido                                                                                               |
+| N-9  | Media     | Los mensajes de contacto se guardaban para siempre                                                                                                                                              | Corregido: conservación de 365 días                                                                     |
+| N-10 | Baja      | Favicon por defecto de Next/Vercel                                                                                                                                                              | Corregido: íconos de la marca                                                                           |
+| N-11 | Baja      | DESPLIEGUE.md pedía un API Token _Read-only_ sin vencimiento que nadie usa                                                                                                                      | Corregido: eliminado                                                                                    |
+| N-12 | Baja      | Los ids de YouTube no se validaban al armar el reproductor                                                                                                                                      | Corregido: `parseVideo`                                                                                 |
+| N-13 | Baja      | Las descripciones (Google, tarjetas) mostraban enlaces Markdown crudos `[texto](url)`                                                                                                           | Corregido: `excerpt`                                                                                    |
+
+### Anotado para las fases siguientes
+
+- **Fase 3/6** — El editor Markdown de Strapi tiene botón «Subrayado», que inserta `<u>…</u>`; el sitio muestra HTML embebido como texto literal (react-markdown no lo ejecuta). Verificar con contenido real y decidir: renderizar un subconjunto seguro (rehype-sanitize) o limpiar al guardar.
+- **Fase 4** — En `/galeria`, los enlaces de los videos no tienen nombre accesible (un lector de pantalla solo dice «enlace»).
+- **Fase 6** — Avisos de Strapi para el panel (encuestas NPS, publicidad de la edición Enterprise) activos por defecto: ruido para editores no técnicos.
+- **Fase 7** — Falta un correo público oficial del Foro. El aviso de privacidad debe revisarlo quien represente legalmente al Foro (plazo de respuesta de 10 días hábiles, lista de proveedores).
+- **Fase 8** — DESPLIEGUE.md no documenta dónde ni cómo se publica el frontend. Recomendado: Cloudflare delante del dominio (límite por IP y protección DDoS en el borde).
+
 ---
 
 ## Registro de fases
 
-| Fase               | Estado                            | Fecha       | Resumen                          |
-| ------------------ | --------------------------------- | ----------- | -------------------------------- |
-| 0 — Reconocimiento | Hecha (falta integración: Docker) | 29-sep-2026 | Todo compila y pasa; 7 hallazgos |
-| 1 — Seguridad      | Pendiente                         |             |                                  |
-| 2 — Robustez       | Pendiente                         |             |                                  |
-| 3 — UX             | Pendiente                         |             |                                  |
-| 4 — Accesibilidad  | Pendiente                         |             |                                  |
-| 5 — SEO            | Pendiente                         |             |                                  |
-| 6 — Panel          | Pendiente                         |             |                                  |
-| 7 — Legal          | Pendiente                         |             |                                  |
-| 8 — Despliegue     | Pendiente                         |             |                                  |
+| Fase               | Estado     | Fecha       | Resumen                                                                                                                                |
+| ------------------ | ---------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| 0 — Reconocimiento | Hecha      | 29-sep-2026 | Todo compila y pasa; 7 hallazgos, corregidos junto con 13 nuevos (ver arriba)                                                          |
+| 1 — Seguridad      | En curso   | 29-sep-2026 | Dependencias, cabeceras, límite de tasa, transferencia remota y despliegue corregidos; falta la revisión a fondo del resto de la lista |
+| 2 — Robustez       | Pendiente  |             |                                                                                                                                        |
+| 3 — UX             | Pendiente  |             |                                                                                                                                        |
+| 4 — Accesibilidad  | Pendiente  |             |                                                                                                                                        |
+| 5 — SEO            | Adelantada | 29-sep-2026 | Lo básico hecho (F0-5); faltan Core Web Vitals y revisión con datos reales                                                             |
+| 6 — Panel          | Pendiente  |             |                                                                                                                                        |
+| 7 — Legal          | Adelantada | 29-sep-2026 | Aviso de privacidad y conservación de datos; falta revisión legal y correo oficial                                                     |
+| 8 — Despliegue     | Pendiente  |             |                                                                                                                                        |

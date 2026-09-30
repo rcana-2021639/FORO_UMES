@@ -1,4 +1,4 @@
-# Pruebas automatizadas — Backend del Foro Interuniversitario
+# Pruebas automatizadas — Foro Interuniversitario (backend y frontend)
 
 Sprint 7. Marco: **Jest 30 + ts-jest + supertest**. Umbral de cobertura obligatorio: **70 %** (líneas, sentencias y funciones; 60 % ramas) sobre la lógica propia del Foro. La suite falla si baja de ahí.
 
@@ -15,25 +15,28 @@ npm run test:coverage    # toda la suite con informe de cobertura en coverage/
 
 Las pruebas de integración/API arrancan Strapi **dentro del proceso de Jest** contra la base `foro_posgrado_test`, aislada de la de desarrollo (nunca tocan `foro_posgrado_dev`). Cada archivo arranca su propia instancia, limpia el contenido al inicio y al final, y se ejecutan en serie (`maxWorkers: 1`) porque Strapi solo admite una instancia por proceso. Variables forzadas en `tests/helpers/env.ts`: `NODE_ENV=test`, `DATABASE_NAME=foro_posgrado_test`, `LOG_LEVEL=error`, `TRUST_PROXY=true` (para simular IPs distintas con `X-Forwarded-For`), sin SMTP, Sentry ni S3. Los secretos de Strapi se leen del `.env` normal.
 
-Duración de referencia: unitarias 3 s; suite completa ~45 s en local (133 pruebas).
+Duración de referencia: unitarias 3 s; suite completa ~45 s en local (154 pruebas del backend + 34 del frontend).
+
+`sanitize-html` ≥ 2.17.6 depende de `htmlparser2` 12 y su familia, publicados solo como ESM: `jest.config.ts` los transpila a CommonJS (y solo a ellos). En producción Node 24 los carga directamente con `require(esm)`.
 
 ## Qué cubre cada suite
 
-### `tests/unit` — funciones puras y middlewares con contexto simulado (82 pruebas)
+### `tests/unit` — funciones puras y middlewares con contexto simulado (99 pruebas)
 
-| Archivo                      | Cubre                                                                                                                                               |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `contact-validation.test.ts` | Validación y sanitización del formulario de contacto; honeypot                                                                                      |
-| `query-whitelist.test.ts`    | Lista blanca de `filters` (anidados, `$and/$or/$not`, operadores), `sort` y `populate`                                                              |
-| `rate-limiter.test.ts`       | Ventana fija por clave, expiración, limpieza, reinicio                                                                                              |
-| `image-signature.test.ts`    | Magic bytes PNG/JPEG/WebP; coincidencia con MIME y extensión                                                                                        |
-| `relation-input.test.ts`     | Lectura de relaciones en todos los formatos que acepta Strapi                                                                                       |
-| `admin-security.test.ts`     | Política de contraseñas en cada ruta; auditoría de login sin contraseña                                                                             |
-| `admin-guard.test.ts`        | **Guard de propiedad**: crear/editar/clonar a nombre de otra universidad, auto-asignación, actividades, editor sin perfil, Super Admin, auditoría   |
-| `richtext-sanitizer.test.ts` | Eliminación de `script`, `iframe`, `on*`, `javascript:`; conservación de formato                                                                    |
-| `api-errors.test.ts`         | Normalización al formato estándar; 5xx sin detalle; panel intacto                                                                                   |
-| `middlewares.test.ts`        | rate-limit, query-whitelist, request-context (requestId), upload-guard (archivos reales), compress                                                  |
-| `api-logic.test.ts`          | Controlador de contacto, servicio de resumen (cache), bitácora, lifecycles de galería/actividad/contacto, sanitizador como middleware de documentos |
+| Archivo                      | Cubre                                                                                                                                                                                                                                                        |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `contact-validation.test.ts` | Validación y sanitización del formulario de contacto; honeypot                                                                                                                                                                                               |
+| `query-whitelist.test.ts`    | Lista blanca de `filters` (anidados, `$and/$or/$not`, operadores), `sort` y `populate`                                                                                                                                                                       |
+| `rate-limiter.test.ts`       | Ventana fija por clave, expiración, limpieza, reinicio                                                                                                                                                                                                       |
+| `image-signature.test.ts`    | Magic bytes PNG/JPEG/WebP; coincidencia con MIME y extensión                                                                                                                                                                                                 |
+| `relation-input.test.ts`     | Lectura de relaciones en todos los formatos que acepta Strapi                                                                                                                                                                                                |
+| `admin-security.test.ts`     | Política de contraseñas en cada ruta; auditoría de login sin contraseña                                                                                                                                                                                      |
+| `admin-guard.test.ts`        | **Guard de propiedad**: crear/editar/clonar a nombre de otra universidad, auto-asignación, actividades, editor sin perfil, Super Admin, auditoría                                                                                                            |
+| `richtext-sanitizer.test.ts` | Eliminación de `script`, `iframe`, `on*`, `javascript:`; conservación de formato; regresión de los avisos de sanitize-html < 2.17.7 (`action`/`formaction`, `poster`, SVG SMIL, `</textarea/>`) y ofuscaciones de `javascript:`; `rel="noopener noreferrer"` |
+| `api-errors.test.ts`         | Normalización al formato estándar; 5xx sin detalle; panel intacto                                                                                                                                                                                            |
+| `middlewares.test.ts`        | rate-limit (incluido el cupo propio del servidor del frontend: token válido, falso o demasiado corto), query-whitelist, request-context (requestId), upload-guard (archivos reales), compress                                                                |
+| `contact-retention.test.ts`  | Plazo de conservación de los mensajes de contacto (valores inválidos → 365 días) y fecha de corte                                                                                                                                                            |
+| `api-logic.test.ts`          | Controlador de contacto, servicio de resumen (cache), bitácora, lifecycles de galería/actividad/contacto, sanitizador como middleware de documentos                                                                                                          |
 
 ### `tests/integration/university-ownership.test.ts` — política de propiedad (11 pruebas)
 
@@ -61,11 +64,27 @@ Tres editores (UA, UB, UC) intentan todo lo que un usuario malintencionado o des
 - Perfil de editor duplicado para el mismo usuario → rechazado; cambiar la universidad del perfil cambia el acceso de inmediato.
 - API pública: populate/fields anidados no exponen `createdBy`, correos de editores, contraseñas ni tokens; filtros por relaciones internas → 400; ids inexistentes o con inyección → 404.
 
-### `tests/api` — endpoints reales con supertest (22 pruebas)
+### `tests/api` — endpoints reales con supertest (26 pruebas)
 
 `public-api.test.ts`: `GET /api/universities` 200 paginado y ordenado; `pageSize` máximo 50; filtros de lista blanca (y rechazo de los demás); `GET /api/news-items` **nunca** incluye borradores (ni con `status=draft`); aportes solo publicados; sin rutas de escritura (405); recursos privados no expuestos; `/api/forum-summary` completo; formato estándar de error con `requestId`.
 
-`security.test.ts`: contacto válido (201), inválido (400 con campos), honeypot (201 sin guardar), **6.º envío → 429** con `Retry-After` y otra IP no afectada; panel sin token/token inválido → 401; contraseña débil → 400; **6.º login fallido → 429**; uploads: ejecutable renombrado `.png` → 400 `INVALID_IMAGE`, SVG y extensión incorrecta → 400, **>5 MB → 413**, PNG válido → 201 con hash; richtext guardado sin `script`/`onclick`.
+`security.test.ts`: contacto válido (201), inválido (400 con campos), honeypot (201 sin guardar), **6.º envío → 429** con `Retry-After` y otra IP no afectada; panel sin token/token inválido → 401; contraseña débil → 400; **6.º login fallido → 429**; uploads: ejecutable renombrado `.png` → 400 `INVALID_IMAGE`, SVG y extensión incorrecta → 400, **>5 MB → 413**, PNG válido → 201 con hash; richtext guardado sin `script`/`onclick`; transferencia remota de datos apagada; `X-Frontend-Token` válido → cupo de 1500/min y uno falso → 120/min; borrado de mensajes de contacto vencidos (el reciente se conserva) y tarea diaria programada.
+
+## Frontend — `frontend/tests` (Vitest, 34 pruebas)
+
+```bash
+cd frontend
+npm test            # una vez (~1 s, sin navegador ni backend: fetch se simula)
+npm run test:watch  # modo observador
+```
+
+| Archivo                    | Cubre                                                                                                                                                                                                                                                                                     |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `api.test.ts`              | Formato de `documentId`; `?pagina=` acotado; `critical` lanza en tiempo de ejecución y usa el respaldo solo en `next build`; `findOne` (id imposible no consulta, 404 → null, otros errores se propagan); `allPages` con tope; `ApiError`; `X-Frontend-Token` solo cuando existe el token |
+| `format.test.ts`           | Texto plano desde Markdown; fechas sin corrimiento de zona horaria; URLs de YouTube/Vimeo válidas y rechazo de ids imposibles, dominios parecidos y `javascript:`                                                                                                                         |
+| `seo.test.tsx`             | Solo producción en HTTPS se indexa (staging con `NEXT_PUBLIC_NOINDEX`); metadatos completos por página; JSON-LD de organización, noticia, evento, universidad y migas; `<JsonLd>` escapa `</script>`                                                                                      |
+| `proxy.test.ts`            | El proxy corre solo en las páginas de detalle y reescribe a 404 los ids imposibles                                                                                                                                                                                                        |
+| `security-headers.test.ts` | Cabeceras de seguridad y CSP de producción (lista cerrada, sin `unsafe-eval`, sin comodines) y de desarrollo; optimizador de imágenes sin comodines                                                                                                                                       |
 
 ## Bugs encontrados por la suite antes de llegar a producción
 
@@ -78,11 +97,11 @@ Tres editores (UA, UB, UC) intentan todo lo que un usuario malintencionado o des
 
 ## Cobertura
 
-Se mide sobre `src/lib`, `src/security`, `src/middlewares`, el controlador de contacto, el servicio de resumen y los lifecycles (ver `collectCoverageFrom` en `jest.config.ts`). Quedan fuera los archivos que solo sincronizan configuración en el arranque (`university-editor-role.ts`, `public-permissions.ts`, `ownership-condition.ts`) — su efecto se verifica de extremo a extremo en `tests/integration` — y el código generado por Strapi. Resultado actual: ~97 % de sentencias, ~99 % de líneas.
+Se mide sobre `src/lib`, `src/security`, `src/middlewares`, el controlador de contacto, el servicio de resumen y los lifecycles (ver `collectCoverageFrom` en `jest.config.ts`). Quedan fuera los archivos que solo sincronizan configuración en el arranque (`university-editor-role.ts`, `public-permissions.ts`, `ownership-condition.ts`) — su efecto se verifica de extremo a extremo en `tests/integration` — y el código generado por Strapi. Resultado actual: ~97 % de sentencias, ~99 % de líneas, ~87 % de ramas.
 
 ## En CI
 
-`.github/workflows/ci.yml` (Sprint 8) levanta un servicio PostgreSQL 18 con la base `foro_posgrado_test`, ejecuta lint, formato, typecheck y `npm run test:coverage`, y bloquea la fusión si algo falla o la cobertura baja del umbral.
+`.github/workflows/ci.yml` (Sprint 8) levanta un servicio PostgreSQL 18 con la base `foro_posgrado_test`, ejecuta lint, formato, typecheck y `npm run test:coverage`, y bloquea la fusión si algo falla o la cobertura baja del umbral. El trabajo `frontend` corre lint, typecheck, `npm test`, `npm audit --audit-level=high` y `next build` (sin backend: el build usa los respaldos de `critical`).
 
 ## Añadir pruebas
 
