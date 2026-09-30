@@ -63,7 +63,7 @@ Con dos cuentas (Jonathan abre el PR, rcana-2021639 lo aprueba, o viceversa) se 
 
 1. _New → GitHub Repo_ → `rcana-2021639/FORO_UMES`. Railway detecta `railway.json` y construye con el `Dockerfile`.
 2. _Settings → Source_: rama `main` (producción). Activar **Wait for CI** (_Check Suites_) para que no despliegue si CI falla — o dejar que lo haga el flujo `deploy.yml` (sección 2); no activar ambos a la vez para no desplegar dos veces.
-3. _Settings → Networking → Generate Domain_ (URL temporal `*.up.railway.app`). Más adelante, _Custom Domain_ → `api.<dominio-del-foro>`; Railway emite el certificado SSL automáticamente. Añadir el `CNAME` que indique Railway en el DNS del dominio.
+3. _Settings → Networking → Generate Domain_ (URL temporal `*.up.railway.app`) — **solo después de crear el Super Admin (sección 3.5, paso 1)**. Más adelante, _Custom Domain_ → `api.<dominio-del-foro>`; Railway emite el certificado SSL automáticamente. Añadir el `CNAME` que indique Railway en el DNS del dominio.
 4. _Settings → Deploy_: Health check path `/_health` (ya viene de `railway.json`).
 
 ### 3.3 Variables de entorno (producción)
@@ -77,6 +77,7 @@ PORT=1337
 PUBLIC_URL=https://api.<dominio>            # o la URL *.up.railway.app mientras no haya dominio
 TRUST_PROXY=true
 FRONTEND_URL=https://<dominio-del-sitio>    # CORS; varios separados por coma
+FRONTEND_API_TOKEN=<openssl rand -hex 32>   # el MISMO valor en el servicio del frontend
 LOG_LEVEL=info
 
 APP_KEYS=<secreto1>,<secreto2>
@@ -85,6 +86,7 @@ ADMIN_JWT_SECRET=<secreto>
 JWT_SECRET=<secreto>
 TRANSFER_TOKEN_SALT=<secreto>
 ENCRYPTION_KEY=<secreto>
+REMOTE_TRANSFER_ENABLED=false               # `strapi transfer` remoto apagado (ver SEGURIDAD.md)
 
 DATABASE_CLIENT=postgres
 DATABASE_HOST=${{Postgres.PGHOST}}          # referencias de Railway al servicio Postgres
@@ -124,8 +126,8 @@ _Project → Environments → New_ → `staging` (duplicar desde `production`). 
 
 ### 3.5 Primer arranque
 
-1. Abrir `https://<url>/admin` y crear el **Super Admin de producción** con el correo institucional del Foro y una contraseña de 12+ caracteres (la política la exige). Guardar la contraseña en un gestor de contraseñas; entregarla por un canal seguro (nunca por correo sin cifrar).
-2. En el panel: _Settings → API Tokens → Create_: nombre `frontend-ssr`, tipo **Read-only**, duración _Unlimited_. Copiar el token a las variables del frontend (Next.js, lado servidor). Solo se muestra una vez.
+1. Crear el **Super Admin de producción** por consola, **antes** de generar el dominio público: mientras no existe ningún administrador, cualquiera que abra `/admin` puede registrarse como Super Admin. Con el servicio ya desplegado y sin dominio: `railway ssh` (o _Service → ⋯ → Shell_) y dentro `npx strapi admin:create-user` (pregunta los datos; así la contraseña no queda en el historial). Correo institucional del Foro y contraseña de 12+ caracteres (la política la exige). Guardarla en un gestor de contraseñas; entregarla por un canal seguro (nunca por correo sin cifrar). Recién entonces, _Generate Domain_ (sección 3.2).
+2. **No** crear API Tokens para el frontend: lee la API pública sin credenciales. Lo único que comparte con el backend es `FRONTEND_API_TOKEN` (sección 3.3), que solo le da un cupo propio en el límite de tasa. Un token _Read-only_ de Strapi no aportaría nada (los controladores ya sirven solo contenido publicado) y sería una credencial sin vencimiento que nadie usa: una más que podría filtrarse.
 3. Crear las 9 universidades (o importar con `npm run seed` apuntando `DATABASE_*` a staging desde una máquina local — nunca directamente contra producción sin revisar los datos provisionales).
 4. Invitar a los editores (_Settings → Users → Invite_, rol **Editor de Universidad**) y crear su **Perfil de editor**.
 

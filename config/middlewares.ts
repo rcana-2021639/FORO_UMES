@@ -57,8 +57,8 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Middlewar
     'strapi::query',
     // Lista blanca de filtros/orden/populate en GET /api/* (Sprint 4)
     'global::query-whitelist',
-    // Límite de tasa por ruta (Sprint 5)
-    'global::rate-limit',
+    // Límite de tasa por ruta (Sprint 5); el servidor del frontend se identifica con su token
+    { name: 'global::rate-limit', config: { frontendToken: env('FRONTEND_API_TOKEN', '') } },
     {
       name: 'strapi::body',
       config: {

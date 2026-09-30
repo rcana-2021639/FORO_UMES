@@ -55,6 +55,38 @@ describe('rate-limit middleware', () => {
     expect(next).toHaveBeenCalled();
     expect(other.headers['x-ratelimit-limit']).toBe('120');
   });
+
+  describe('servidor del frontend (X-Frontend-Token)', () => {
+    const TOKEN = 'f'.repeat(48);
+    const withToken = rateLimit({ frontendToken: TOKEN }, { strapi });
+    const limitFor = async (mwToTest: typeof withToken, incoming: Record<string, string>) => {
+      const ctx = ctxOf({ path: '/api/universities', incoming });
+      await mwToTest(ctx as never, jest.fn());
+      return ctx.headers['x-ratelimit-limit'];
+    };
+
+    it('con el token correcto usa su propio cupo, más amplio', async () => {
+      expect(await limitFor(withToken, { 'x-frontend-token': TOKEN })).toBe('1500');
+    });
+    it('sin token o con uno equivocado es un visitante más', async () => {
+      expect(await limitFor(withToken, {})).toBe('120');
+      expect(await limitFor(withToken, { 'x-frontend-token': `${TOKEN}x` })).toBe('120');
+      expect(await limitFor(withToken, { 'x-frontend-token': 'f' })).toBe('120');
+    });
+    it('un token configurado demasiado corto se ignora (se podría adivinar)', async () => {
+      const weak = rateLimit({ frontendToken: 'corto' }, { strapi });
+      expect(await limitFor(weak, { 'x-frontend-token': 'corto' })).toBe('120');
+    });
+    it('el formulario de contacto conserva su límite estricto aunque llegue con token', async () => {
+      const ctx = ctxOf({
+        method: 'POST',
+        path: '/api/contact',
+        incoming: { 'x-frontend-token': TOKEN },
+      });
+      await withToken(ctx as never, jest.fn());
+      expect(ctx.headers['x-ratelimit-limit']).toBe('5');
+    });
+  });
 });
 
 describe('query-whitelist middleware', () => {

@@ -9,6 +9,8 @@ process.env.LOG_LEVEL = process.env.TEST_LOG_LEVEL || 'error';
 process.env.TRUST_PROXY = 'true';
 process.env.PORT = '0';
 process.env.CONTACT_NOTIFY_EMAIL = 'pruebas@example.org';
+// Valor fijo (no el del .env) para probar el cupo propio del servidor del frontend
+process.env.FRONTEND_API_TOKEN = 'token-de-pruebas-del-frontend-0123456789';
 delete process.env.SMTP_HOST; // nunca enviar correos reales desde las pruebas
 delete process.env.SENTRY_DSN;
 delete process.env.S3_BUCKET;

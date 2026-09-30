@@ -132,6 +132,27 @@ describe('POST /api/contact', () => {
   });
 });
 
+describe('límite de tasa del servidor del frontend', () => {
+  it('con X-Frontend-Token válido tiene cupo propio; sin él, el de un visitante', async () => {
+    const ip = '10.0.2.1';
+    const fromFrontend = await api()
+      .get('/api/universities')
+      .set('X-Forwarded-For', ip)
+      .set('X-Frontend-Token', process.env.FRONTEND_API_TOKEN!);
+    expect(fromFrontend.status).toBe(200);
+    expect(fromFrontend.headers['x-ratelimit-limit']).toBe('1500');
+
+    const visitor = await api().get('/api/universities').set('X-Forwarded-For', ip);
+    expect(visitor.headers['x-ratelimit-limit']).toBe('120');
+
+    const forged = await api()
+      .get('/api/universities')
+      .set('X-Forwarded-For', ip)
+      .set('X-Frontend-Token', 'adivinado-adivinado-adivinado-adivinado');
+    expect(forged.headers['x-ratelimit-limit']).toBe('120');
+  });
+});
+
 describe('panel administrativo', () => {
   it('sin token → 401; con token inválido → 401', async () => {
     expect((await api().get(`${CM}/api::university.university`)).status).toBe(401);
