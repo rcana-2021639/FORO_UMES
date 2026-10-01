@@ -54,17 +54,24 @@ export default async function ActividadPage({ params }: Params) {
         kicker={`${ACTIVITY_LABEL[a.type]}, ${formatDate(a.date)}`}
         title={a.title}
         aside={
-          <p className="ui-label text-fg-muted md:text-right">
-            {(a.participatingUniversities ?? []).map((u) => (
-              <Link
-                key={u.documentId}
-                href={`/universidades/${u.documentId}`}
-                className="ml-3 text-accent-sage underline decoration-transparent underline-offset-4 transition-[text-decoration-color] duration-300 hover:decoration-current"
-              >
-                {acronymOf(u)}
-              </Link>
-            ))}
-          </p>
+          !!a.participatingUniversities?.length && (
+            <div>
+              <p className="eyebrow text-fg-muted md:text-right">Participan</p>
+              {/* Lista que salta de línea: en una sola fila las siglas se salían de la pantalla */}
+              <ul className="ui-label mt-2 flex flex-wrap gap-x-3 gap-y-1 md:justify-end">
+                {a.participatingUniversities.map((u) => (
+                  <li key={u.documentId}>
+                    <Link
+                      href={`/universidades/${u.documentId}`}
+                      className="font-semibold text-accent-lilac underline decoration-transparent underline-offset-4 transition-[text-decoration-color] duration-300 hover:decoration-current"
+                    >
+                      {acronymOf(u)}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )
         }
       />
       <div className="container-x grid gap-12 pb-[var(--section-y)] md:grid-cols-12">

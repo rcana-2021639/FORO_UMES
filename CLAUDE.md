@@ -76,6 +76,8 @@ Custom API routes (`contact`, `forum-summary`) live under `src/api/<name>/{contr
 - The Next server identifies itself to Strapi with `X-Frontend-Token` = `FRONTEND_API_TOKEN` (same value in both `.env` files) to get its own rate-limit bucket — all SSR traffic shares one IP.
 - CSP and security headers live in `frontend/next.config.ts` (closed origin list, no nonces on purpose to keep ISR); a new external origin must be added there and in `images.remotePatterns`. SEO: `lib/site.ts` (indexable only on HTTPS without `NEXT_PUBLIC_NOINDEX`), `lib/seo.ts` (`pageMetadata` — a page's `openGraph` replaces the layout's entirely), `lib/json-ld.ts`.
 - `/privacidad` describes exactly what the system does with personal data (e.g. contact messages auto-deleted after `CONTACT_RETENTION_DAYS`); change it together with any such behavior.
+- Visual system v5 ("Anuario", `frontend/DESIGN_NOTES.md` §27): Newsreader (headings) + Schibsted Grotesk (text), flat color, 1px rules, small-caps labels, the Maya-numeral-9 emblem (`components/ui/Emblem.tsx`). Styling layers load in order `globals.css` → `styles/v3.css` → `v4.css` → `v5.css`; v5 re-dresses existing pieces without touching their animations — the user wants every existing animation kept. Element defaults (h1–h3) go in `globals.css` `@layer base`, because unlayered rules in `styles/*.css` override Tailwind utilities.
+- Public API nested `populate` is whitelisted by path (`representatives.photo`, `galleryItems.file` in `src/lib/query-whitelist.ts`); a new second-level populate in `frontend/lib/api.ts` needs its path added there or the API answers 400.
 
 ### Config
 

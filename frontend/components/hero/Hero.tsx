@@ -109,7 +109,7 @@ export function Hero({ year, counts, universities }: Props) {
           <h1
             id="hero-title"
             data-reveal-group
-            className="mt-6 max-w-[13ch] text-[clamp(2.7rem,6.6vw,6.4rem)] leading-[0.96] text-fg"
+            className="mt-6 max-w-[13ch] text-[clamp(2.25rem,11.2vw,2.75rem)] leading-[0.96] text-fg sm:text-[clamp(2.75rem,6.6vw,6.4rem)]"
           >
             <Words text="Foro Interuniversitario de Estudios de" />{' '}
             <Word className="text-violet-grad">Posgrado</Word>
