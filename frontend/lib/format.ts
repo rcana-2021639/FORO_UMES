@@ -76,16 +76,34 @@ export function countByUniversity(programs: { university?: UniversityRef | null 
   return counts;
 }
 
+const ENTITIES: Record<string, string> = {
+  '&amp;': '&',
+  '&lt;': '<',
+  '&gt;': '>',
+  '&quot;': '"',
+  '&#39;': "'",
+  '&nbsp;': ' ',
+};
+
+/**
+ * Las entidades HTML básicas a su carácter. El backend guardaba el Markdown escapado (`&amp;`,
+ * `&gt;`) y en un resumen de texto plano se veían tal cual. Solo para texto que React escapa.
+ */
+export const decodeEntities = (text: string) =>
+  text.replace(/&(?:amp|lt|gt|quot|#39|nbsp);/g, (e) => ENTITIES[e] ?? e);
+
 /**
  * Texto plano a partir del Markdown del backend, recortado en el último espacio antes de `max`.
  * Las imágenes se quitan, los enlaces dejan solo su texto y el HTML embebido desaparece.
  */
 export function excerpt(text?: string | null, max = 160) {
   if (!text) return '';
-  const clean = text
-    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
-    .replace(/<[^>]+>/g, '')
+  const clean = decodeEntities(
+    text
+      .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+      .replace(/<[^>]+>/g, '')
+  )
     .replace(/[#*_>`~]/g, '')
     .replace(/\s+/g, ' ')
     .trim();

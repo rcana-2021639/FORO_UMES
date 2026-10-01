@@ -210,10 +210,11 @@ export const api = {
   activity: (documentId: string) =>
     apiFetch<SingleResponse<Activity>>(`/activities/${documentId}`, {
       query: {
-        'populate[0]': 'coverImage',
-        'populate[1]': 'participatingUniversities',
-        'populate[2]': 'contributions',
-        'populate[3]': 'galleryItems',
+        'populate[coverImage]': 'true',
+        'populate[participatingUniversities]': 'true',
+        'populate[contributions]': 'true',
+        // Sin el archivo de cada foto, las miniaturas de la galería salían vacías
+        'populate[galleryItems][populate][file]': 'true',
       },
       revalidate: 120,
     }),

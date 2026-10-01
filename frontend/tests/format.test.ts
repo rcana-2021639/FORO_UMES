@@ -11,6 +11,11 @@ describe('excerpt', () => {
     expect(excerpt('uno dos tres cuatro', 12)).toBe('uno dos…');
     expect(excerpt(null)).toBe('');
   });
+  it('muestra los caracteres, no las entidades que guardaba el backend', () => {
+    expect(excerpt('I+D &amp; innovación: 5 &lt; 9')).toBe('I+D & innovación: 5 < 9');
+    // Una cita escapada pierde su marca como cualquier otra cita
+    expect(excerpt('&gt; «Una cita»')).toBe('«Una cita»');
+  });
 });
 
 describe('formatDate', () => {

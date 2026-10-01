@@ -991,3 +991,232 @@ html[data-quality='still'] .nav-bar {
     display: none;
   }
 }
+
+/* ---------- Catálogo: ficha compacta ---------- */
+.catalog-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 1.15rem 1.15rem 1.1rem 1.35rem;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 0 0 1px var(--rule);
+}
+.catalog-card__bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--lv);
+  transition: width 0.5s var(--ease-out-premium);
+}
+.catalog-card:hover .catalog-card__bar {
+  width: 6px;
+}
+.catalog-card__kicker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+.catalog-card__title {
+  margin-top: 0.75rem;
+  font-size: 1.22rem;
+  font-weight: 500;
+  line-height: 1.18;
+  font-variation-settings: 'opsz' 24;
+  color: var(--fg);
+}
+.catalog-card__foot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: auto;
+  padding-top: 1rem;
+}
+.catalog-card__uni {
+  font-weight: 600;
+  color: var(--fg);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+  transition: text-decoration-color 0.3s;
+}
+.catalog-card__uni:hover {
+  text-decoration-color: currentColor;
+}
+.catalog-card__go {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.38rem 0.7rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--fg);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--fg) 22%, transparent);
+  transition:
+    background-color 0.3s,
+    color 0.3s,
+    box-shadow 0.3s;
+}
+.catalog-card__go:hover,
+.catalog-card__go:focus-visible {
+  color: #fff;
+  background: var(--lv);
+  box-shadow: inset 0 0 0 1px var(--lv);
+}
+
+/* ---------- Perfil de universidad: filtros de forma contenida ---------- */
+.u-tab {
+  border-radius: 7px;
+  font-weight: 500;
+}
+.u-tab__count {
+  border-radius: 5px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Artículos (noticias, actividades, aviso de privacidad) ---------- */
+.prose-acta {
+  color: var(--color-ink-2);
+}
+.prose-acta > p:first-child {
+  font-size: 1.16em;
+  line-height: 1.62;
+  color: var(--color-ink);
+}
+.prose-acta h2,
+.prose-acta h3 {
+  font-weight: 500;
+  color: var(--color-ink);
+}
+.prose-acta h2 {
+  padding-top: 0.9em;
+  border-top: 1px solid var(--rule);
+}
+.prose-acta strong {
+  color: var(--color-ink);
+}
+.prose-acta ul {
+  list-style: none;
+  padding-left: 0;
+}
+.prose-acta ul > li {
+  position: relative;
+  padding-left: 1.4em;
+}
+.prose-acta ul > li::before {
+  content: '';
+  position: absolute;
+  top: 0.72em;
+  left: 0.2em;
+  width: 0.55em;
+  height: 1.5px;
+  background: var(--color-violet-500);
+}
+/* Cita destacada: itálica grande de Newsreader con filete violeta */
+.prose-acta blockquote {
+  margin-block: 1.8em;
+  padding: 0.2em 0 0.2em 1.1em;
+  border-left: 3px solid var(--color-violet-600);
+  font-size: 1.42em;
+  font-style: italic;
+  line-height: 1.32;
+  font-variation-settings: 'opsz' 36;
+  color: var(--color-violet-900);
+}
+.prose-acta blockquote p {
+  margin: 0;
+}
+.prose-acta a {
+  color: var(--color-violet-700);
+  text-decoration-color: color-mix(in oklab, var(--color-violet-700) 40%, transparent);
+}
+.prose-acta a:hover {
+  text-decoration-color: currentColor;
+}
+.prose-acta img {
+  border-radius: 8px;
+}
+
+/* ---------- Galería en mosaico: pie de foto apilado (antes la fecha se partía en dos líneas) ---------- */
+.gallery-cap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.7rem 0.85rem 0.8rem;
+}
+.gallery-cap__date {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--fg-muted);
+}
+.gallery-cap__title {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.25;
+  font-variation-settings: 'opsz' 18;
+  color: var(--fg);
+}
+
+.prose-acta > h2:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+/* ---------- Pantallas de error: atajos para no quedar sin salida ---------- */
+.error-shortcuts {
+  max-width: 40rem;
+  margin-top: 3rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--rule);
+}
+.error-shortcuts .eyebrow {
+  color: var(--color-violet-700);
+}
+.error-shortcuts ul {
+  display: grid;
+  gap: 0.15rem 2rem;
+  margin-top: 0.85rem;
+}
+@media (min-width: 560px) {
+  .error-shortcuts ul {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.error-shortcuts a {
+  display: inline-flex;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: var(--fg);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 4px;
+  transition: text-decoration-color 0.3s;
+}
+.error-shortcuts a:hover,
+.error-shortcuts a:focus-visible {
+  text-decoration-color: var(--color-violet-500);
+}
+.error-shortcuts a span {
+  color: var(--color-violet-600);
+}

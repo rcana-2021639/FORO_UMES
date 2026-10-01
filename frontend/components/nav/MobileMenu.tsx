@@ -66,8 +66,22 @@ export function MobileMenu({ open, onClose, activeIndex }: Props) {
                 </Link>
               </motion.div>
             ))}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="mt-8"
+            >
+              <Link
+                href="/programas#buscar"
+                onClick={onClose}
+                className="inline-flex h-12 items-center gap-2 rounded-[6px] bg-paper px-5 text-[0.98rem] font-semibold text-violet-950"
+              >
+                Buscar un programa <span aria-hidden>→</span>
+              </Link>
+            </motion.div>
             <motion.p
-              className="eyebrow mt-10 text-paper/60"
+              className="eyebrow mt-8 text-paper/60"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.6 }}

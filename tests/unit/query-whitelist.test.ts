@@ -68,4 +68,50 @@ describe('validatePopulate', () => {
       'updatedBy'
     );
   });
+
+  const universities = PUBLIC_QUERY_RULES.universities;
+  const activities = PUBLIC_QUERY_RULES.activities;
+
+  it('acepta el segundo nivel que usa el sitio, como objeto o como ruta', () => {
+    expect(
+      validatePopulate({ representatives: { populate: { photo: 'true' } } }, universities.populate)
+    ).toBeNull();
+    expect(validatePopulate('representatives.photo', universities.populate)).toBeNull();
+    expect(
+      validatePopulate({ galleryItems: { populate: { file: 'true' } } }, activities.populate)
+    ).toBeNull();
+  });
+
+  // Regresión: una sola petición encadenaba cuatro niveles y devolvía ~580 KB
+  it('rechaza cadenas profundas que no están en la lista', () => {
+    const deep = {
+      participatingUniversities: {
+        populate: { representatives: { populate: { university: { populate: '*' } } } },
+      },
+    };
+    expect(validatePopulate(deep, activities.populate)?.field).toBe(
+      'participatingUniversities.representatives'
+    );
+    expect(validatePopulate('representatives.university', universities.populate)?.field).toBe(
+      'representatives.university'
+    );
+  });
+
+  it('rechaza "*" anidado y filtros u orden escondidos dentro del populate', () => {
+    expect(validatePopulate({ galleryItems: { populate: '*' } }, activities.populate)?.field).toBe(
+      'galleryItems.*'
+    );
+    expect(validatePopulate({ galleryItems: '*' }, activities.populate)?.field).toBe(
+      'galleryItems.*'
+    );
+    expect(
+      validatePopulate(
+        { representatives: { filters: { institutionalEmail: { $contains: '@' } } } },
+        universities.populate
+      )?.field
+    ).toBe('representatives.filters');
+    expect(
+      validatePopulate({ representatives: { sort: 'fullName' } }, universities.populate)?.field
+    ).toBe('representatives.sort');
+  });
 });

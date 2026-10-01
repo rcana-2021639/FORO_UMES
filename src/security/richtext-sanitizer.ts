@@ -56,8 +56,12 @@ const OPTIONS: sanitizeHtml.IOptions = {
       attribs: attribs.target ? { ...attribs, rel: 'noopener noreferrer' } : attribs,
     }),
   },
-  // Markdown legítimo usa < y > como texto (p. ej. "a < b"); no se escapan porque no son etiquetas
   disallowedTagsMode: 'discard',
+  // El campo es Markdown, no HTML: sanitize-html escapa todo el texto (& < >) y eso rompía la
+  // sintaxis («> cita» llegaba como «&gt; cita» y se mostraba literal) y corrompía el contenido en
+  // cada guardado del panel («I+D & innovación» → «&amp;» → «&amp;amp;»…). Se devuelven a su
+  // carácter solo `>` y `&`: ninguno de los dos puede abrir una etiqueta. `<` sigue escapado.
+  textFilter: (text) => text.replace(/&gt;/g, '>').replace(/&amp;/g, '&'),
 };
 
 export const sanitizeRichText = (value: string): string => sanitizeHtml(value, OPTIONS);

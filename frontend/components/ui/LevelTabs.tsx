@@ -122,27 +122,29 @@ export function LevelTabs({ value, onChange, counts, showSaved, className, compa
                   className="pointer-events-none absolute inset-0 -z-[5] bg-[radial-gradient(circle_at_15%_0%,rgb(255_255_255/0.28),transparent_55%)] opacity-0 transition-opacity duration-500 group-hover:opacity-100"
                   style={{ opacity: active ? 1 : undefined }}
                 />
-                {/* Monograma del nivel con profundidad: entero dentro de la losa (v5; antes se
-                    recortaba en el borde y parecía un error) */}
+                {/* Monograma del nivel con profundidad, arriba a la izquierda: identifica el nivel
+                    (como antes el punto de color) sin pisar el título en pestañas estrechas */}
                 <span
                   aria-hidden
                   className={cn(
-                    'pointer-events-none absolute top-10 right-3 select-none transition-opacity duration-500',
-                    active ? 'opacity-25' : 'opacity-[0.1] group-hover:opacity-[0.2]'
+                    'pointer-events-none absolute top-3 left-4 select-none transition-opacity duration-500',
+                    active ? 'opacity-100' : 'opacity-80 group-hover:opacity-100'
                   )}
                 >
                   <DepthText
                     text={t.glyph}
-                    layers={10}
-                    depth={1.2}
-                    faceColor={active ? 'var(--color-paper)' : 'var(--fg)'}
-                    depthColor={active ? 'var(--color-ink)' : 'var(--lv)'}
-                    fontSize="2.6rem"
+                    layers={8}
+                    depth={0.9}
+                    faceColor={active ? 'var(--color-paper)' : 'var(--lv)'}
+                    depthColor={
+                      active ? 'var(--color-ink)' : 'color-mix(in oklab, var(--lv) 40%, #fff)'
+                    }
+                    fontSize="1.45rem"
                     tilt={4}
                     shadow={false}
                     pointerTracking={false}
                     orbitSpeed={0.12}
-                    fontVariationSettings="'opsz' 144, 'SOFT' 80"
+                    fontVariationSettings="'opsz' 36"
                   />
                 </span>
 
@@ -151,13 +153,7 @@ export function LevelTabs({ value, onChange, counts, showSaved, className, compa
                   data-depth
                   style={{ '--z': 14 } as React.CSSProperties}
                 >
-                  <span
-                    className={cn(
-                      'inline-block h-2.5 w-2.5 rounded-full',
-                      active ? 'bg-paper' : 'bg-[var(--lv)]'
-                    )}
-                    aria-hidden
-                  />
+                  <span className="inline-block h-6 w-8" aria-hidden />
                   <span
                     className={cn(
                       'mono-label rounded-full px-2 py-0.5',

@@ -24,6 +24,9 @@ const dealFrom = (i: number) => ({
   rotateZ: [-3, 0, 3][i % 3],
   scale: 0.94,
 });
+/** Cuántos programas se muestran de entrada y cuántos más con cada "Mostrar más". */
+const PAGE = 18;
+
 /** Retardo por columna y fila, con tope para que las listas largas no esperen de más. */
 const dealDelay = (i: number) => Math.min((i % 3) * 0.08 + Math.floor(i / 3) * 0.06, 0.7);
 
@@ -89,13 +92,22 @@ export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
     return base.filter((p) => p.level === level);
   }, [base, level, saved]);
 
-  const groups = useMemo(
-    () =>
-      LEVELS.map((l) => ({ level: l, items: visible.filter((p) => p.level === l) })).filter(
-        (g) => g.items.length
-      ),
-    [visible]
-  );
+  // Se muestran por tandas (la lista completa medía 27 000 px en el teléfono). Cada combinación de
+  // filtros vuelve a empezar por la primera tanda.
+  const [shown, setShown] = useState({ key: '', n: PAGE });
+  const limit = shown.key === dealKey ? shown.n : PAGE;
+  const showMore = () => setShown({ key: dealKey, n: limit + PAGE });
+  const remaining = Math.max(0, visible.length - limit);
+
+  const groups = useMemo(() => {
+    // Orden de lectura: por nivel, y dentro de cada nivel tal como vienen
+    const ordered = LEVELS.flatMap((l) => visible.filter((p) => p.level === l));
+    const page = new Set(ordered.slice(0, limit).map((p) => p.documentId));
+    return LEVELS.map((l) => {
+      const all = ordered.filter((p) => p.level === l);
+      return { level: l, total: all.length, items: all.filter((p) => page.has(p.documentId)) };
+    }).filter((g) => g.items.length);
+  }, [visible, limit]);
 
   const clear = () => {
     setLevel('all');
@@ -111,7 +123,7 @@ export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
 
       <div
         id="buscar"
-        className="mt-6 grid scroll-mt-28 gap-4 rounded-[10px] border border-line bg-surface-1 p-4 md:grid-cols-12 md:items-center md:p-5"
+        className="mt-6 grid scroll-mt-28 gap-4 rounded-[10px] border border-[var(--rule)] bg-white p-4 md:grid-cols-12 md:items-center md:p-5"
       >
         <label className="relative block md:col-span-4">
           <span className="sr-only">Buscar programa</span>
@@ -126,7 +138,7 @@ export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
             placeholder="Buscar por nombre…"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            className="w-full rounded-full border border-line bg-bg py-2.5 pr-4 pl-10 text-[0.95rem] text-fg outline-none transition-[border-color,box-shadow] duration-300 placeholder:text-fg-muted focus:border-accent-sage focus:shadow-[0_0_0_3px_color-mix(in_oklab,var(--accent-sage)_18%,transparent)]"
+            className="w-full rounded-[8px] border border-fg/20 bg-bg py-2.5 pr-4 pl-10 text-[0.95rem] text-fg outline-none transition-[border-color,box-shadow] duration-300 placeholder:text-fg-muted focus:border-accent-sage focus:shadow-[0_0_0_3px_color-mix(in_oklab,var(--accent-sage)_18%,transparent)]"
           />
         </label>
 
@@ -152,7 +164,7 @@ export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
             <select
               value={uni}
               onChange={(e) => setUni(e.target.value)}
-              className="rounded-full border border-line bg-bg px-3 py-2 text-[0.9rem] text-fg outline-none transition-colors duration-300 focus:border-accent-sage"
+              className="rounded-[8px] border border-fg/20 bg-bg px-3 py-2 text-[0.9rem] text-fg outline-none transition-colors duration-300 focus:border-accent-sage"
             >
               <option value="">Todas</option>
               {universities.map((u) => (
@@ -167,8 +179,17 @@ export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
         <p className="ui-label text-fg-muted" aria-live="polite">
-          Mostrando <strong className="font-medium text-fg">{visible.length}</strong> de{' '}
-          {programs.length} programas
+          {visible.length === programs.length ? (
+            <>
+              <strong className="font-semibold text-fg">{programs.length}</strong> programas
+            </>
+          ) : (
+            <>
+              <strong className="font-semibold text-fg">{visible.length}</strong> de{' '}
+              {programs.length} programas coinciden
+            </>
+          )}
+          {remaining > 0 && <> · ves los primeros {limit}</>}
           {saved.length > 0 && (
             <>
               {' '}
@@ -204,7 +225,7 @@ export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
                 <div className="flex items-center gap-4">
                   <motion.span
                     aria-hidden
-                    className="grid h-12 w-12 place-items-center rounded-[12px] font-display text-[1.5rem] text-paper shadow-[0_12px_24px_-12px_var(--lv)]"
+                    className="grid h-12 w-12 place-items-center rounded-[8px] font-display text-[1.5rem] text-paper"
                     style={
                       {
                         background: meta.color,
@@ -225,9 +246,7 @@ export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
                       className="text-[clamp(1.5rem,2.6vw,2rem)] leading-none text-fg"
                     >
                       {meta.plural}{' '}
-                      <span className="mono-label align-middle text-fg-muted">
-                        {g.items.length}
-                      </span>
+                      <span className="mono-label align-middle text-fg-muted">{g.total}</span>
                     </h2>
                     <p className="ui-label mt-1 text-fg-muted">
                       {meta.hint} Duración típica: {meta.span}.
@@ -272,6 +291,16 @@ export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
             </section>
           );
         })}
+        {remaining > 0 && (
+          <div className="flex flex-col items-center gap-2">
+            <button type="button" onClick={showMore} className="cta-ghost">
+              Mostrar {Math.min(PAGE, remaining)} programas más
+            </button>
+            <span className="ui-label text-fg-muted">
+              Quedan {remaining}. También puedes buscar por nombre o filtrar arriba.
+            </span>
+          </div>
+        )}
         {visible.length === 0 && (
           <div className="rounded-[10px] border border-dashed border-line p-10 text-center text-fg-muted">
             {level === 'saved'
@@ -296,25 +325,16 @@ function Card({
   const meta = LEVEL_META[p.level];
   return (
     <article
-      className="lift hover:lift-on group relative flex h-full flex-col overflow-hidden rounded-[10px] border border-line bg-surface-1 p-5"
+      className="catalog-card lift hover:lift-on group"
       style={{ '--lv': meta.color } as React.CSSProperties}
     >
-      <span
-        aria-hidden
-        className="absolute inset-y-0 left-0 w-1 bg-[var(--lv)] transition-[width] duration-500 ease-(--ease-out-premium) group-hover:w-1.5"
-      />
+      <span aria-hidden className="catalog-card__bar" />
       <div className="flex items-start justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <span
-            className="ui-label rounded-full px-2.5 py-0.5 text-paper"
-            style={{ background: 'var(--lv)' }}
-          >
-            {LEVEL_LABEL[p.level]}
-          </span>
-          <span className="ui-label rounded-full border border-line px-2.5 py-0.5 text-fg-muted">
-            {MODALITY_LABEL[p.modality]}
-          </span>
-        </div>
+        <p className="catalog-card__kicker">
+          <span style={{ color: 'var(--lv)' }}>{LEVEL_LABEL[p.level]}</span>
+          <span aria-hidden>·</span>
+          <span>{MODALITY_LABEL[p.modality]}</span>
+        </p>
         <PulseStar
           active={saved}
           onToggle={onToggle}
@@ -322,38 +342,29 @@ function Card({
           size={30}
         />
       </div>
-      <h3
-        className="mt-4 text-[1.25rem] leading-[1.15] text-fg"
-        style={{ fontVariationSettings: "'opsz' 32, 'SOFT' 30" }}
-      >
-        {p.name}
-      </h3>
-      <div className="mt-auto flex items-end justify-between gap-3 pt-5">
-        <div className="ui-label text-fg-muted">
+      <h3 className="catalog-card__title">{p.name}</h3>
+      <div className="catalog-card__foot">
+        <p className="ui-label text-fg-muted">
           {p.university && (
-            <Link
-              href={`/universidades/${p.university.documentId}`}
-              className="text-fg underline decoration-transparent underline-offset-4 transition-[text-decoration-color,color] duration-300 hover:text-accent-sage hover:decoration-current"
-            >
+            <Link href={`/universidades/${p.university.documentId}`} className="catalog-card__uni">
               {acronymOf(p.university)}
             </Link>
           )}
-          {p.duration && <span className="block">{p.duration}</span>}
-        </div>
+          {p.university && p.duration && <span aria-hidden> · </span>}
+          {p.duration && <span>{p.duration}</span>}
+        </p>
         {p.infoUrl ? (
           <a
             href={p.infoUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="ui-label inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-fg transition-[background-color,border-color,color] duration-300 hover:border-[var(--lv)] hover:bg-[var(--lv)] hover:text-paper"
+            className="catalog-card__go"
+            aria-label={`Ficha oficial de ${p.name} (se abre en otra pestaña)`}
           >
             Ficha oficial <span aria-hidden>↗</span>
           </a>
         ) : p.university ? (
-          <Link
-            href={`/universidades/${p.university.documentId}`}
-            className="ui-label inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-fg transition-[background-color,border-color,color] duration-300 hover:border-[var(--lv)] hover:bg-[var(--lv)] hover:text-paper"
-          >
+          <Link href={`/universidades/${p.university.documentId}`} className="catalog-card__go">
             Universidad <span aria-hidden>→</span>
           </Link>
         ) : null}
@@ -377,8 +388,8 @@ function Pill({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        'ui-label rounded-full border px-3 py-1.5 transition-[background-color,border-color,color] duration-300 ease-(--ease-snap)',
-        active ? 'border-fg bg-fg text-bg' : 'border-line bg-bg text-fg hover:border-fg/50'
+        'ui-label rounded-[6px] border px-3 py-1.5 transition-[background-color,border-color,color] duration-300 ease-(--ease-snap)',
+        active ? 'border-fg bg-fg text-bg' : 'border-fg/20 bg-bg text-fg hover:border-fg/50'
       )}
     >
       {children}

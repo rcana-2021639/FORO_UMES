@@ -151,10 +151,10 @@ function Ticket({ a, i }: { a: Activity; i: number }) {
       className="[transform-style:preserve-3d]"
     >
       <TearTicket
-        width={560}
-        height={270}
+        width={640}
+        height={280}
         stubSize={150}
-        radius={18}
+        radius={12}
         holes={11}
         holeSize={6}
         notch={4}
@@ -187,10 +187,10 @@ function Ticket({ a, i }: { a: Activity; i: number }) {
             </span>
             <span className="mono-label opacity-70">{YEAR.format(d)}</span>
             <span
-              className="ui-label mt-3 rounded-full border border-paper/40 px-2.5 py-0.5"
+              className="mt-3 rounded-[4px] border border-paper/40 px-2 py-0.5 text-[0.66rem] font-semibold tracking-[0.08em] uppercase"
               style={{ color: ink.accent }}
             >
-              tira ⤴
+              Tira ⤴
             </span>
           </div>
         }
@@ -198,7 +198,7 @@ function Ticket({ a, i }: { a: Activity; i: number }) {
         <Link href={href} className="group flex h-full flex-col justify-end p-5 text-paper md:p-6">
           <span className="flex items-center gap-2">
             <span
-              className="ui-label rounded-full px-2.5 py-0.5 text-ink"
+              className="rounded-[4px] px-2 py-0.5 text-[0.68rem] font-semibold tracking-[0.07em] text-ink uppercase"
               style={{ background: ink.accent }}
             >
               {ACTIVITY_LABEL[a.type]}
@@ -246,13 +246,13 @@ function Pill({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        'ui-label inline-flex items-center gap-2 rounded-full border px-3.5 py-2 transition-[background-color,border-color,color,transform] duration-300 ease-(--ease-snap) hover:-translate-y-0.5',
-        active ? 'border-fg bg-fg text-bg' : 'border-line bg-surface-1 text-fg hover:border-fg/40'
+        'ui-label inline-flex items-center gap-2 rounded-[6px] border px-3.5 py-2 transition-[background-color,border-color,color,transform] duration-300 ease-(--ease-snap) hover:-translate-y-0.5',
+        active ? 'border-fg bg-fg text-bg' : 'border-fg/20 bg-white text-fg hover:border-fg/40'
       )}
     >
       <span
         aria-hidden
-        className="h-2 w-2 rounded-full"
+        className="h-2 w-2 rounded-[2px]"
         style={{ background: active ? 'var(--color-paper)' : color }}
       />
       {children}

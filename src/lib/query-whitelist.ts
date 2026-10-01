@@ -4,7 +4,9 @@
  *
  * `filters`: árbol de campos permitidos. `true` = campo escalar; objeto = relación con sus subcampos.
  * `sort`: campos por los que se puede ordenar.
- * `populate`: relaciones/medios que se pueden poblar.
+ * `populate`: relaciones/medios que se pueden poblar. Un segundo nivel se escribe como ruta
+ *   ("representatives.photo") y solo se acepta si está en la lista: sin esto, una sola petición
+ *   pública encadenaba cuatro niveles y devolvía cientos de KB (amplificación de carga).
  */
 export type FieldTree = { [key: string]: true | FieldTree };
 
@@ -17,7 +19,7 @@ export const PUBLIC_QUERY_RULES: Record<string, ResourceRules> = {
   universities: {
     filters: { id: true, documentId: true, name: true, acronym: true, displayOrder: true },
     sort: ['displayOrder', 'name', 'acronym'],
-    populate: ['logo', 'representatives', 'academicPrograms'],
+    populate: ['logo', 'representatives', 'representatives.photo', 'academicPrograms'],
   },
   representatives: {
     filters: { id: true, documentId: true, fullName: true, university: UNIVERSITY_REF },
@@ -46,7 +48,13 @@ export const PUBLIC_QUERY_RULES: Record<string, ResourceRules> = {
       participatingUniversities: UNIVERSITY_REF,
     },
     sort: ['date', 'title'],
-    populate: ['coverImage', 'participatingUniversities', 'contributions', 'galleryItems'],
+    populate: [
+      'coverImage',
+      'participatingUniversities',
+      'contributions',
+      'galleryItems',
+      'galleryItems.file',
+    ],
   },
   contributions: {
     filters: {
@@ -158,15 +166,45 @@ export function validateSort(sort: unknown, allowed: string[]): WhitelistError |
   return null;
 }
 
-/** populate puede ser "*", "a,b", ["a","b"] o { a: {...}, b: true }. */
-export function validatePopulate(populate: unknown, allowed: string[]): WhitelistError | null {
-  if (populate === undefined || populate === '*') return null;
-  let keys: string[] = [];
-  if (typeof populate === 'string') keys = populate.split(',').map((s) => s.trim());
-  else if (Array.isArray(populate)) keys = populate.map(String);
-  else if (typeof populate === 'object' && populate !== null) keys = Object.keys(populate);
-  for (const key of keys) {
-    if (key && !allowed.includes(key)) return { field: key, allowed };
+/** Opciones que se aceptan dentro de una relación poblada: elegir campos o poblar un nivel más. */
+const NESTED_POPULATE_OPTIONS = new Set(['populate', 'fields']);
+
+/**
+ * populate puede ser "*", "a,b", "a.b", ["a","b"] o { a: { populate: { b: true } }, c: true }.
+ * Cada ruta poblada ("a", "a.b") tiene que estar en la lista. Dentro de una relación solo se
+ * admiten `fields` y `populate`: un `filters` o `sort` anidado esquivaría la lista blanca de
+ * filtros, y un "*" anidado expandiría todas las relaciones del nivel siguiente.
+ */
+export function validatePopulate(
+  populate: unknown,
+  allowed: string[],
+  prefix = ''
+): WhitelistError | null {
+  if (populate === undefined || populate === null) return null;
+  if (populate === '*') return prefix ? { field: `${prefix}*`, allowed } : null;
+  if (populate === true || populate === 'true' || populate === false || populate === 'false')
+    return null;
+
+  let entries: [string, unknown][];
+  if (typeof populate === 'string') entries = populate.split(',').map((s) => [s.trim(), true]);
+  else if (Array.isArray(populate)) entries = populate.map((p) => [String(p).trim(), true]);
+  else if (typeof populate === 'object') entries = Object.entries(populate);
+  else return { field: `${prefix}${String(populate)}`, allowed };
+
+  for (const [key, value] of entries) {
+    if (!key) continue;
+    const path = `${prefix}${key}`;
+    if (!allowed.includes(path)) return { field: path, allowed };
+    if (value === '*') return { field: `${path}.*`, allowed };
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      for (const [option, sub] of Object.entries(value as Record<string, unknown>)) {
+        if (!NESTED_POPULATE_OPTIONS.has(option)) return { field: `${path}.${option}`, allowed };
+        if (option === 'populate') {
+          const err = validatePopulate(sub, allowed, `${path}.`);
+          if (err) return err;
+        }
+      }
+    }
   }
   return null;
 }

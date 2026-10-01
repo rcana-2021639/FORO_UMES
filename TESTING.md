@@ -15,13 +15,13 @@ npm run test:coverage    # toda la suite con informe de cobertura en coverage/
 
 Las pruebas de integración/API arrancan Strapi **dentro del proceso de Jest** contra la base `foro_posgrado_test`, aislada de la de desarrollo (nunca tocan `foro_posgrado_dev`). Cada archivo arranca su propia instancia, limpia el contenido al inicio y al final, y se ejecutan en serie (`maxWorkers: 1`) porque Strapi solo admite una instancia por proceso. Variables forzadas en `tests/helpers/env.ts`: `NODE_ENV=test`, `DATABASE_NAME=foro_posgrado_test`, `LOG_LEVEL=error`, `TRUST_PROXY=true` (para simular IPs distintas con `X-Forwarded-For`), sin SMTP, Sentry ni S3. Los secretos de Strapi se leen del `.env` normal.
 
-Duración de referencia: unitarias 3 s; suite completa ~45 s en local (154 pruebas del backend + 34 del frontend).
+Duración de referencia: unitarias 3 s; suite completa ~45 s en local (160 pruebas del backend + 35 del frontend).
 
 `sanitize-html` ≥ 2.17.6 depende de `htmlparser2` 12 y su familia, publicados solo como ESM: `jest.config.ts` los transpila a CommonJS (y solo a ellos). En producción Node 24 los carga directamente con `require(esm)`.
 
 ## Qué cubre cada suite
 
-### `tests/unit` — funciones puras y middlewares con contexto simulado (99 pruebas)
+### `tests/unit` — funciones puras y middlewares con contexto simulado (105 pruebas)
 
 | Archivo                      | Cubre                                                                                                                                                                                                                                                        |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -70,7 +70,7 @@ Tres editores (UA, UB, UC) intentan todo lo que un usuario malintencionado o des
 
 `security.test.ts`: contacto válido (201), inválido (400 con campos), honeypot (201 sin guardar), **6.º envío → 429** con `Retry-After` y otra IP no afectada; panel sin token/token inválido → 401; contraseña débil → 400; **6.º login fallido → 429**; uploads: ejecutable renombrado `.png` → 400 `INVALID_IMAGE`, SVG y extensión incorrecta → 400, **>5 MB → 413**, PNG válido → 201 con hash; richtext guardado sin `script`/`onclick`; transferencia remota de datos apagada; `X-Frontend-Token` válido → cupo de 1500/min y uno falso → 120/min; borrado de mensajes de contacto vencidos (el reciente se conserva) y tarea diaria programada.
 
-## Frontend — `frontend/tests` (Vitest, 34 pruebas)
+## Frontend — `frontend/tests` (Vitest, 35 pruebas)
 
 ```bash
 cd frontend

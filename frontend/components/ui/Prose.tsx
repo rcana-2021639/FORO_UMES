@@ -6,6 +6,9 @@ import remarkGfm from 'remark-gfm';
  * Cada bloque entra al llegar a él (data-reveal): la lectura se va armando mientras se baja.
  */
 export function Prose({ markdown }: { markdown: string }) {
+  // Contenido guardado antes de corregir el sanitizador del backend (src/security/
+  // richtext-sanitizer.ts): «&gt; cita» al inicio de línea vuelve a ser la sintaxis de una cita
+  const source = markdown.replace(/^([ \t]*)&gt;/gm, '$1>');
   return (
     <div className="prose-acta max-w-[68ch] text-[1.08rem] leading-[1.7] text-fg">
       <ReactMarkdown
@@ -29,7 +32,7 @@ export function Prose({ markdown }: { markdown: string }) {
           ),
         }}
       >
-        {markdown}
+        {source}
       </ReactMarkdown>
     </div>
   );

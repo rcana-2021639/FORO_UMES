@@ -6,7 +6,6 @@ import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Button } from '@/components/ui/Button';
 import { PulseStar } from '@/components/ui/PulseStar';
-import { SeatMark } from '@/components/ui/Section';
 import { DepthText } from '@/components/fx/DepthText';
 import { FoldText } from '@/components/fx/FoldText';
 import { Tilt } from '@/components/fx/Tilt';
@@ -89,6 +88,13 @@ export function UniversityProfile({
               className="ui-label flex items-center gap-2 opacity-80"
             >
               <Link
+                href="/"
+                className="underline decoration-current/30 underline-offset-4 hover:decoration-current"
+              >
+                Inicio
+              </Link>
+              <span aria-hidden>/</span>
+              <Link
                 href="/universidades"
                 className="underline decoration-current/30 underline-offset-4 hover:decoration-current"
               >
@@ -97,9 +103,12 @@ export function UniversityProfile({
               <span aria-hidden>/</span>
               <span aria-current="page">{u.acronym ?? u.name}</span>
             </nav>
-            <div data-reveal="left" className="mt-6 flex items-start gap-3">
-              <SeatMark className="text-[var(--u-accent)]" />
-              <p className="eyebrow opacity-75">Universidad miembro del Foro</p>
+            <div data-reveal="left" className="mt-6 flex items-center gap-4">
+              <p className="eyebrow opacity-80">Universidad miembro del Foro</p>
+              <span
+                aria-hidden
+                className="h-px w-16 bg-[var(--u-accent,currentColor)] opacity-70"
+              />
             </div>
             <h1 id="u-title" className="mt-5 max-w-[16ch] text-[clamp(2.4rem,6vw,5.4rem)]">
               <FoldText

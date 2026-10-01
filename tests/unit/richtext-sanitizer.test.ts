@@ -18,8 +18,26 @@ describe('sanitizeRichText', () => {
     expect(clean).toContain('href="https://foro.org"');
     expect(clean).toContain('href="mailto:a@b.c"');
   });
-  it('no altera texto plano ni comparaciones con < y >', () => {
-    expect(sanitizeRichText('2 &lt; 3 y 5 > 4')).toBe('2 &lt; 3 y 5 &gt; 4');
+  it('no altera texto plano: > y & quedan como caracteres, < como entidad', () => {
+    expect(sanitizeRichText('2 &lt; 3 y 5 > 4')).toBe('2 &lt; 3 y 5 > 4');
+    expect(sanitizeRichText('I+D & innovación')).toBe('I+D & innovación');
+  });
+
+  it('respeta la sintaxis Markdown de citas y código', () => {
+    const md = ['Texto.', '', '> «Queremos que un estudiante…»', '', '`a && b`'].join('\n');
+    expect(sanitizeRichText(md)).toBe(md);
+  });
+
+  it('es idempotente: guardar dos veces no cambia el contenido', () => {
+    for (const md of ['A & B > C', '> cita con & y <b>negrita</b>', 'x &amp; y', '2 < 3']) {
+      const once = sanitizeRichText(md);
+      expect(sanitizeRichText(once)).toBe(once);
+    }
+  });
+
+  it('devolver > y & no reabre etiquetas', () => {
+    const clean = sanitizeRichText('&lt;script&gt;alert(1)&lt;/script&gt; <script>x</script>');
+    expect(clean).not.toMatch(/<script/i);
   });
 
   // Regresión de los avisos GHSA-vccv-cmxp-4j9h, GHSA-g8qq-57p8-ggw5 y GHSA-jxwj-j7wr-gfrw

@@ -93,7 +93,7 @@ Registra: usuario (id y correo), acción (`create`, `update`, `delete`, `publish
 - Noticias: solo las publicadas (Draft & Publish nativo; la API pública nunca sirve borradores).
 - Mensajes de contacto, perfiles de editor y bitácora: sin acceso público.
 - Escrituras por API: las rutas `POST/PUT/DELETE /api/*` **no existen** (routers con `only: ['find','findOne']`), salvo `POST /api/contact`. Respuesta 404/405.
-- Filtros, orden y populate limitados a una lista blanca por recurso; el resto responde `400 QUERY_NOT_ALLOWED`. Paginación máxima 50.
+- Filtros, orden y populate limitados a una lista blanca por recurso; el resto responde `400 QUERY_NOT_ALLOWED`. Paginación máxima 50. En `populate`, cada ruta de segundo nivel se declara explícitamente (`representatives.photo`, `galleryItems.file`) y dentro de una relación solo se admiten `fields` y `populate`: sin esto, una petición encadenaba cuatro niveles (~580 KB por solicitud) o escondía filtros en el populate.
 - El render en servidor de Next.js lee la API **sin credenciales** (no se crean API Tokens de Strapi: uno _Read-only_ no aportaría nada, porque los controladores ya sirven solo lo publicado, y sería una credencial sin vencimiento más). Solo se identifica con `X-Frontend-Token` = `FRONTEND_API_TOKEN` (mín. 32 caracteres, comparación en tiempo constante) para tener **su propio cupo** en el límite de tasa: todas sus consultas salen de una misma IP y, con el cupo de un visitante (120/min), cualquiera podía agotarlo pidiendo URLs inventadas y dejar el sitio sin datos. La cabecera no da acceso a nada más.
 
 ## 8. Secretos y entornos

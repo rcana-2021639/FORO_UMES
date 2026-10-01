@@ -56,13 +56,14 @@ export function GalleryMasonry({ items, opener }: Props) {
               return (
                 <figure
                   key={g.documentId}
-                  className="group relative overflow-hidden rounded-[4px] bg-[color-mix(in_oklab,var(--fg)_5%,var(--bg))]"
+                  className="group relative overflow-hidden rounded-[8px] bg-white shadow-[0_0_0_1px_var(--rule)]"
                 >
                   {isVideo ? (
                     <a
                       href={g.videoUrl!}
                       target="_blank"
                       rel="noopener noreferrer"
+                      aria-label={`Ver el video${g.title ? ` «${g.title}»` : ''} (se abre en otra pestaña)`}
 
                       className="relative block aspect-video"
                     >
@@ -97,9 +98,11 @@ export function GalleryMasonry({ items, opener }: Props) {
                     </div>
                   ) : null}
                   {(g.title || g.date) && (
-                    <figcaption className="flex items-baseline justify-between gap-3 px-3 py-2.5">
-                      <span className="ui-label truncate text-fg">{g.title}</span>
-                      <span className="mono-label text-fg-muted">{formatDateShort(g.date)}</span>
+                    <figcaption className="gallery-cap">
+                      {g.date && (
+                        <span className="gallery-cap__date">{formatDateShort(g.date)}</span>
+                      )}
+                      {g.title && <span className="gallery-cap__title">{g.title}</span>}
                     </figcaption>
                   )}
                 </figure>

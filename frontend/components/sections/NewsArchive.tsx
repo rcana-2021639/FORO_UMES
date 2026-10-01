@@ -115,7 +115,7 @@ function Featured({ item, elastic }: { item: NewsItem; elastic: boolean }) {
   return (
     <article data-reveal="tilt" className="group [perspective:1600px]">
       <div className="mb-4 flex items-center justify-between">
-        <span className="ui-label inline-flex items-center gap-2 rounded-full bg-fg px-3 py-1 text-bg">
+        <span className="inline-flex items-center gap-2 rounded-[4px] bg-fg px-2.5 py-1 text-[0.68rem] font-semibold tracking-[0.08em] text-bg uppercase">
           <span aria-hidden className="h-1.5 w-1.5 animate-pulse rounded-full bg-clay" />
           La más reciente
         </span>
@@ -123,10 +123,10 @@ function Featured({ item, elastic }: { item: NewsItem; elastic: boolean }) {
           {folio(1)} · {formatDate(item.publishedAt)}
         </span>
       </div>
-      <Tilt max={4} scale={1.005} glare={false} className="rounded-[18px]">
+      <Tilt max={4} scale={1.005} glare={false} className="rounded-[12px]">
         <Link
           href={`/noticias/${item.documentId}`}
-          className="relative block aspect-[16/8] overflow-hidden rounded-[18px] border border-line bg-surface-2 shadow-[0_50px_90px_-45px_rgb(var(--shadow-ink)/0.55)] md:aspect-[21/9]"
+          className="relative block aspect-[4/5] overflow-hidden rounded-[12px] border border-line bg-surface-2 shadow-[0_50px_90px_-45px_rgb(var(--shadow-ink)/0.55)] sm:aspect-[16/9] md:aspect-[21/9]"
         >
           {elastic ? (
             <div className="absolute inset-0">
@@ -186,7 +186,7 @@ function Featured({ item, elastic }: { item: NewsItem; elastic: boolean }) {
                 {excerpt(item.summary, 200)}
               </span>
             )}
-            <span className="ui-label mt-5 inline-flex w-fit items-center gap-2 rounded-full border border-paper/40 px-4 py-2 text-paper transition-[background-color,color,border-color] duration-300 group-hover:border-clay group-hover:bg-clay group-hover:text-ink">
+            <span className="ui-label mt-5 inline-flex w-fit items-center gap-2 rounded-[6px] border border-paper/40 px-4 py-2 font-semibold text-paper transition-[background-color,color,border-color] duration-300 group-hover:border-clay group-hover:bg-clay group-hover:text-ink">
               Leer la nota <span aria-hidden>→</span>
             </span>
           </span>
@@ -200,10 +200,10 @@ function Card({ item, n }: { item: NewsItem; n: number }) {
   const cover = mediaUrl(item.coverImage?.formats?.medium?.url ?? item.coverImage?.url);
   return (
     <li className="[transform-style:preserve-3d]">
-      <Tilt max={9} scale={1.03} className="h-full rounded-[14px]">
+      <Tilt max={9} scale={1.03} className="h-full rounded-[10px]">
         <Link
           href={`/noticias/${item.documentId}`}
-          className="group relative flex h-full flex-col overflow-hidden rounded-[14px] border border-line bg-surface-1 [transform-style:preserve-3d]"
+          className="group relative flex h-full flex-col overflow-hidden rounded-[10px] border border-[var(--rule)] bg-white [transform-style:preserve-3d]"
         >
           <div className="relative aspect-[4/3] overflow-hidden bg-surface-2">
             {cover ? (
@@ -227,7 +227,7 @@ function Card({ item, n }: { item: NewsItem; n: number }) {
               aria-hidden
               className="absolute inset-0 origin-bottom bg-[color-mix(in_oklab,var(--color-lilac)_22%,transparent)] transition-transform duration-700 ease-(--ease-cinematic) group-hover:scale-y-0"
             />
-            <span className="mono-label absolute top-3 left-3 rounded-full bg-bg/85 px-2 py-0.5 text-fg">
+            <span className="mono-label absolute top-3 left-3 rounded-[4px] bg-bg/90 px-2 py-0.5 font-semibold text-fg">
               {folio(n)}
             </span>
           </div>
@@ -236,7 +236,9 @@ function Card({ item, n }: { item: NewsItem; n: number }) {
             data-depth
             style={{ '--z': 22 } as React.CSSProperties}
           >
-            <p className="mono-label text-fg-muted">{formatDate(item.publishedAt)}</p>
+            <p className="text-[0.7rem] font-semibold tracking-[0.07em] text-fg-muted uppercase">
+              {formatDate(item.publishedAt)}
+            </p>
             <h2
               className="mt-2 text-[1.3rem] leading-[1.15] text-fg underline decoration-transparent underline-offset-[5px] transition-[text-decoration-color] duration-500 group-hover:decoration-[color:var(--accent-sage)]"
               style={{ fontVariationSettings: "'opsz' 32, 'SOFT' 30" }}

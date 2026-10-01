@@ -8,6 +8,14 @@ import { describeError } from '@/lib/api';
 
 import { SoftOrb } from '@/components/ui/SoftOrb';
 
+/** Lo que más se busca en el sitio: quien llega a un error no queda sin salida. */
+const SHORTCUTS = [
+  { label: 'Buscar un programa', href: '/programas#buscar' },
+  { label: 'Las nueve universidades', href: '/universidades' },
+  { label: 'Próximas actividades', href: '/actividades' },
+  { label: 'Escribir al Foro', href: '/contacto' },
+];
+
 interface Props {
   code: string;
   title: string;
@@ -39,7 +47,7 @@ export function ErrorScreen({ code, title, text, error, retry, bare }: Props) {
       <div
         aria-hidden
         data-reveal="scale"
-        className="pointer-events-none absolute -right-[10%] top-1/2 -z-10 w-[70vmin] -translate-y-1/2 opacity-70"
+        className="pointer-events-none absolute -right-[10%] top-1/2 -z-10 w-[70vmin] -translate-y-1/2 opacity-70 max-sm:top-auto max-sm:-right-[30%] max-sm:-bottom-[12%] max-sm:translate-y-0 max-sm:opacity-35"
       >
         <SoftOrb follow={false} />
       </div>
@@ -58,13 +66,23 @@ export function ErrorScreen({ code, title, text, error, retry, bare }: Props) {
           {text}
         </p>
         <div data-reveal="up" className="mt-12 flex flex-wrap gap-4">
-          <Button href="/">Volver a la portada</Button>
-          {retry && (
-            <Button variant="secondary" onClick={retry}>
-              Intentar de nuevo
-            </Button>
-          )}
+          {retry && <Button onClick={retry}>Intentar de nuevo</Button>}
+          <Button href="/" variant={retry ? 'secondary' : 'primary'}>
+            Volver a la portada
+          </Button>
         </div>
+        <nav aria-label="Atajos" data-reveal="fade" className="error-shortcuts">
+          <p className="eyebrow">O ve directo a</p>
+          <ul>
+            {SHORTCUTS.map((s) => (
+              <li key={s.href}>
+                <a href={s.href}>
+                  {s.label} <span aria-hidden>→</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
       </div>
     </div>
   );
