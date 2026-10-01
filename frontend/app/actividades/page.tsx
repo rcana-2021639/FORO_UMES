@@ -26,6 +26,7 @@ export default async function ActividadesPage() {
   return (
     <>
       <PageHeader
+        crumbs={[{ label: 'Actividades' }]}
         kicker="Lo que ya pasó y lo que viene"
         title="Actividades del Foro"
         intro="Encuentros, seminarios y proyectos de las nueve universidades. Filtra por tipo y pulsa un boleto para ver de qué se trata y quién participa."

@@ -102,7 +102,10 @@ export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
     <div>
       <LevelTabs value={level} onChange={setLevel} counts={counts} showSaved />
 
-      <div className="mt-6 grid gap-4 rounded-[10px] border border-line bg-surface-1 p-4 md:grid-cols-12 md:items-center md:p-5">
+      <div
+        id="buscar"
+        className="mt-6 grid scroll-mt-28 gap-4 rounded-[10px] border border-line bg-surface-1 p-4 md:grid-cols-12 md:items-center md:p-5"
+      >
         <label className="relative block md:col-span-4">
           <span className="sr-only">Buscar programa</span>
           <span

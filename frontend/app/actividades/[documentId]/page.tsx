@@ -49,6 +49,8 @@ export default async function ActividadPage({ params }: Params) {
         ]}
       />
       <PageHeader
+        crumbs={[{ label: 'Actividades', href: '/actividades' }]}
+        size="article"
         kicker={`${ACTIVITY_LABEL[a.type]}, ${formatDate(a.date)}`}
         title={a.title}
         aside={

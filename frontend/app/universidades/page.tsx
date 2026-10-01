@@ -18,6 +18,7 @@ export default async function UniversidadesPage() {
   return (
     <>
       <PageHeader
+        crumbs={[{ label: 'Universidades' }]}
         kicker="Quiénes forman el Foro"
         title="Las nueve universidades"
         intro="Las nueve universidades que forman el Foro. Abre el perfil de cada una para ver quién la representa y qué programas ofrece."

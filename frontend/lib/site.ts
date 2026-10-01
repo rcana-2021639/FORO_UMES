@@ -29,6 +29,9 @@ export const BRAND = {
   orchid: '#8e4fb8',
   violetLight: '#9a7bf0',
   violetDeep: '#261a4f',
+  /** Losa del emblema (--color-violet-800) */
+  emblem: '#3a2677',
+  violetText: '#4f339e',
   lilac: '#ece4ff',
   paper: '#fdfcff',
   ink: '#1e1830',

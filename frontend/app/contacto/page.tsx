@@ -22,7 +22,8 @@ export default function ContactoPage() {
         <span className="contact-bigword">Hola</span>
       </div>
       <PageHeader
-        kicker="Para universidades, prensa y quien busca un posgrado"
+        crumbs={[{ label: 'Contacto' }]}
+        kicker="Universidades, prensa y estudiantes"
         title="Escríbele al Foro"
       />
       <div className="container-x relative z-10 pb-[var(--section-y)]">

@@ -33,6 +33,7 @@ export default async function NoticiasPage({ searchParams }: Props) {
   return (
     <>
       <PageHeader
+        crumbs={[{ label: 'Noticias' }]}
         kicker="Lo último que se dijo"
         title="Archivo de noticias"
         intro="Comunicados, convocatorias y crónicas de las actividades del Foro, de la más reciente a la más antigua. La primera abre a lo grande; el resto, en fichas numeradas."

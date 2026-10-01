@@ -19,6 +19,7 @@ export default async function GaleriaPage() {
   return (
     <>
       <PageHeader
+        crumbs={[{ label: 'Galería' }]}
         kicker="Lo que quedó en fotos"
         title="Galería"
         intro="Fotografías y videos de encuentros, seminarios y proyectos de las nueve universidades. Arrastra el carrusel o haz click en la del centro para abrirla."

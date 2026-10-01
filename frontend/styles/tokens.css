@@ -1,4 +1,4 @@
-/* Tokens de diseño — ver DESIGN_NOTES.md §23 (v3.0, "Blanco y violeta") */
+/* Tokens de diseño — DESIGN_NOTES.md §23 (paleta "Blanco y violeta") y §27 (v5.0 "Anuario") */
 :root {
   /* Base blanca con un soplo de violeta: el blanco predomina, el morado está muy presente.
      Ninguna de las nueve universidades usa morado, así que sigue siendo neutral entre ellas. */
@@ -75,21 +75,29 @@
   --surface-3: color-mix(in oklab, var(--color-violet-500) 13%, var(--bg));
 
   /* Tipografía (variables inyectadas por next/font en <html>) */
-  --font-display: var(--font-fraunces), 'Iowan Old Style', Georgia, serif;
-  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, 'Cascadia Mono', monospace;
+  --font-display: var(--font-newsreader), 'Iowan Old Style', Georgia, serif;
+  --font-sans: var(--font-schibsted), system-ui, sans-serif;
+  /* v5: sin monoespaciada. Los datos (fechas, siglas, contadores) van en la sans con cifras
+     tabulares: el aire de "terminal" restaba seriedad institucional */
+  --font-mono: var(--font-schibsted), system-ui, sans-serif;
 
   /* Escala fluida */
-  --text-h1: clamp(2.9rem, 8.4vw, 8.5rem);
-  --text-h2: clamp(2.1rem, 5.2vw, 4.8rem);
-  --text-h3: clamp(1.5rem, 2.6vw, 2.25rem);
+  --text-h1: clamp(2.6rem, 6.2vw, 5.9rem);
+  --text-h2: clamp(2rem, 4.1vw, 3.75rem);
+  --text-h3: clamp(1.4rem, 2.2vw, 1.95rem);
   --text-body: 1.0625rem;
-  --text-mono: 0.78rem;
+  --text-mono: 0.8rem;
+  /* Etiquetas en versalitas (etiqueta ── filete) */
+  --text-label: 0.75rem;
+  --tracking-label: 0.09em;
 
   /* Ritmo: no todas las secciones respiran igual */
   --gutter: clamp(1rem, 4vw, 4.5rem);
-  --section-y: clamp(4.5rem, 10vw, 9rem);
-  --section-y-tight: clamp(3rem, 6vw, 5rem);
+  --section-y: clamp(3.75rem, 7vw, 6.5rem);
+  --section-y-tight: clamp(2.75rem, 5vw, 4.25rem);
+  /* Filete: la estructura visible del sitio (v5) */
+  --rule: color-mix(in oklab, var(--color-violet-900) 14%, transparent);
+  --rule-strong: color-mix(in oklab, var(--color-violet-900) 82%, transparent);
 
   /* Movimiento: tres curvas con nombre, nunca `ease` */
   --ease-out-premium: cubic-bezier(0.16, 1, 0.3, 1);

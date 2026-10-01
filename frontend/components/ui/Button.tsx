@@ -33,14 +33,14 @@ export interface ButtonProps {
 
 const BASE =
   'group relative isolate inline-flex select-none items-center justify-center overflow-visible ' +
-  'rounded-[3px] border font-sans text-[0.92rem] font-medium tracking-[-0.005em] ' +
+  'rounded-[6px] border font-sans text-[0.93rem] font-semibold tracking-[-0.003em] ' +
   'transition-[border-color,opacity] duration-300 disabled:cursor-not-allowed disabled:opacity-50';
 
 const VARIANT: Record<Variant, string> = {
   primary: 'h-12 gap-3 border-fg bg-bg px-6 text-fg',
-  secondary: 'h-12 gap-3 border-line bg-transparent px-6 text-fg hover:border-fg',
+  secondary: 'h-12 gap-3 border-fg/30 bg-transparent px-6 text-fg hover:border-fg',
   ghost: 'h-10 gap-2 border-transparent px-1 text-fg',
-  icon: 'h-11 w-11 border-line bg-transparent text-fg hover:border-fg',
+  icon: 'h-11 w-11 border-fg/30 bg-transparent text-fg hover:border-fg',
 };
 
 const LAYER: Record<Variant, string> = {
@@ -139,7 +139,7 @@ export function Button({
         <motion.span
           aria-hidden
           className={cn(
-            'absolute inset-0 z-20 inline-flex items-center justify-center gap-3 rounded-[1px] will-change-[clip-path]',
+            'absolute inset-0 z-20 inline-flex items-center justify-center gap-3 rounded-[5px] will-change-[clip-path]',
             LAYER[variant],
             loading && 'animate-tide'
           )}

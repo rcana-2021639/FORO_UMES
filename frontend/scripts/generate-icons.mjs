@@ -1,7 +1,7 @@
 /**
- * Genera los íconos del sitio a partir de la marca del Foro (la "F" blanca sobre el círculo
- * violeta del menú). Se versionan los archivos generados; este script solo hace falta si cambia
- * la marca:  node scripts/generate-icons.mjs
+ * Genera los íconos del sitio a partir del emblema del Foro (components/ui/Emblem.tsx: el 9 en
+ * numeración maya, una barra y cuatro puntos, en blanco sobre la losa violeta). Se versionan los
+ * archivos generados; este script solo hace falta si cambia la marca:  npm run icons
  *
  * - app/icon.svg         favicon vectorial (navegadores actuales)
  * - app/favicon.ico      16/32/48 px para navegadores viejos y quien pida /favicon.ico
@@ -15,28 +15,22 @@ import sharp from 'sharp';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-// Degradado de la marca (styles/tokens.css → --violet-glow)
-const GRADIENT = `
-  <linearGradient id="g" x1="0" y1="1" x2="1" y2="0">
-    <stop offset="0" stop-color="#6443c4"/>
-    <stop offset="0.55" stop-color="#8e4fb8"/>
-    <stop offset="1" stop-color="#9a7bf0"/>
-  </linearGradient>`;
+// Violeta de marca (styles/tokens.css → --color-violet-800), plano como en el sitio
+const VIOLET = '#3a2677';
 
-// La "F" en una cuadrícula de 512: asta, brazo superior y brazo medio (ópticamente centrada)
-const GLYPH = `
-  <path fill="#fff" d="M184 128h160v56H240v48h72v52h-72v100h-56z"/>`;
+// El emblema en una cuadrícula de 512 (el de Emblem.tsx, viewBox 40, por 12.8)
+const GLYPH = `<g fill="#fff">${[123.5, 211.8, 300.2, 388.5]
+  .map((cx) => `<circle cx="${cx}" cy="192" r="32.6"/>`)
+  .join('')}<rect x="90.9" y="276.5" width="330.2" height="66.6" rx="33.3"/></g>`;
 
-/** Círculo sobre transparente (favicon, manifiesto "any"). */
+/** Losa redondeada sobre transparente, como en la barra del sitio (favicon, manifiesto "any"). */
 const round = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <defs>${GRADIENT}</defs>
-  <circle cx="256" cy="256" r="256" fill="url(#g)"/>${GLYPH}
+  <rect width="512" height="512" rx="115" fill="${VIOLET}"/>${GLYPH}
 </svg>`;
 
-/** Cuadrado a sangre (Apple y "maskable": el sistema recorta la forma; la F queda en la zona segura). */
+/** Cuadrado a sangre (Apple y "maskable": el sistema recorta la forma; el emblema queda en la zona segura). */
 const square = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <defs>${GRADIENT}</defs>
-  <rect width="512" height="512" fill="url(#g)"/>${GLYPH}
+  <rect width="512" height="512" fill="${VIOLET}"/>${GLYPH}
 </svg>`;
 
 const png = (svg, size) => sharp(Buffer.from(svg)).resize(size, size).png().toBuffer();

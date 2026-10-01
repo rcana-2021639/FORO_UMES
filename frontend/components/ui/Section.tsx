@@ -2,11 +2,14 @@ import type { ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 import type { SectionTheme } from '@/components/providers/SectionThemeObserver';
 import { FoldText } from '@/components/fx/FoldText';
+import { MayaNumeral } from './MayaNumeral';
 
 interface Props {
   id: string;
-  /** Frase corta en itálica sobre el título (no una etiqueta en mayúsculas). */
+  /** Etiqueta corta del capítulo (va en versalitas, seguida de un filete). */
   kicker: string;
+  /** Número del capítulo en la portada: se marca con su numeral maya junto a la etiqueta. */
+  index?: number;
   title: ReactNode;
   intro?: ReactNode;
   theme?: SectionTheme;
@@ -22,13 +25,16 @@ interface Props {
 }
 
 /**
- * Capítulo de la portada. La marca de asiento (un arco) sustituye a la numeración. Al entrar en
- * pantalla el encabezado se arma en cascada: la marca llega de la izquierda, el título se
- * despliega palabra a palabra (FoldText), la introducción se enfoca y el botón sube.
+ * Capítulo de la portada (v5, DESIGN_NOTES §27). Arriba, la etiqueta en versalitas con el numeral
+ * maya del capítulo y un filete que cruza la retícula; debajo, el título a la izquierda y la
+ * explicación con su botón a la derecha, alineados por abajo. Al entrar en pantalla se arma en
+ * cascada: la etiqueta llega de la izquierda, el filete se dibuja, el título se despliega palabra a
+ * palabra (FoldText), la explicación se enfoca y el botón sube.
  */
 export function Section({
   id,
   kicker,
+  index,
   title,
   intro,
   theme = 'paper',
@@ -64,38 +70,38 @@ export function Section({
           {backdrop}
         </div>
       )}
-      <header className="container-x relative z-10 grid gap-5 md:grid-cols-12 md:gap-8">
-        <div data-reveal="left" className="flex items-start gap-3 md:col-span-3">
-          <SeatMark />
-          <p className="eyebrow max-w-[18ch] text-fg-muted">{kicker}</p>
+      <header className="container-x relative z-10">
+        <div className="sec-head__top">
+          <p data-reveal="left" className="sec-head__label eyebrow">
+            {index != null && <MayaNumeral n={index} className="sec-head__maya" />}
+            <span>{kicker}</span>
+          </p>
+          <span aria-hidden data-reveal="line" className="sec-head__rule" />
         </div>
-        <div className="md:col-span-6">
-          <h2 id={`${id}-title`}>
+        <div className="sec-head__body grid gap-6 md:grid-cols-12 md:gap-x-10">
+          <h2 id={`${id}-title`} className="md:col-span-7">
             {typeof title === 'string' ? (
               <FoldText text={title} splitBy="word" hinge="bottom" stagger={0.07} />
             ) : (
               title
             )}
           </h2>
-          {intro && (
-            <div
-              data-reveal="blur"
-              className="mt-6 max-w-[50ch] text-[1.05rem] leading-relaxed text-fg-muted"
-            >
-              {intro}
+          {(intro || aside) && (
+            <div className="flex flex-col items-start gap-6 md:col-span-5 md:self-end">
+              {intro && (
+                <div data-reveal="blur" className="sec-head__intro">
+                  {intro}
+                </div>
+              )}
+              {aside && <div data-reveal="up">{aside}</div>}
             </div>
           )}
         </div>
-        {aside && (
-          <div data-reveal="up" className="md:col-span-3 md:justify-self-end">
-            {aside}
-          </div>
-        )}
       </header>
       <div
         className={cn(
           'relative z-10',
-          rhythm === 'tight' ? 'mt-10 md:mt-14' : 'mt-14 md:mt-20',
+          rhythm === 'tight' ? 'mt-8 md:mt-10' : 'mt-10 md:mt-14',
           !bleed && 'container-x'
         )}
       >

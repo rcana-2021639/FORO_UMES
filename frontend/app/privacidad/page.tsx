@@ -23,6 +23,7 @@ export default function PrivacidadPage() {
   return (
     <article>
       <PageHeader
+        crumbs={[{ label: 'Aviso de privacidad' }]}
         kicker={`Actualizado el ${UPDATED}`}
         title="Aviso de privacidad"
         intro="En corto: solo pedimos tus datos cuando nos escribes, los usamos únicamente para responderte, no los vendemos ni los compartimos para publicidad y se borran solos al año."

@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from 'next';
-import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
+import { Newsreader, Schibsted_Grotesk } from 'next/font/google';
 import './globals.css';
 import '@/styles/v3.css';
 import '@/styles/v4.css';
+import '@/styles/v5.css';
 import { SmoothScroll } from '@/components/providers/SmoothScroll';
 import { ToasterMount } from '@/components/feedback/ToasterMount';
 import { GooeyDefs } from '@/components/ui/GooeyDefs';
@@ -15,18 +16,19 @@ import { QUALITY_SCRIPT } from '@/lib/quality-script';
 import { DEFAULT_OG_IMAGE } from '@/lib/seo';
 import { INDEXABLE, SITE_DESCRIPTION, SITE_NAME, SITE_SHORT_NAME, SITE_URL } from '@/lib/site';
 
-const fraunces = Fraunces({
-  variable: '--font-fraunces',
-  subsets: ['latin'],
-  axes: ['opsz', 'SOFT', 'WONK'],
+// Titulares: Newsreader (eje óptico 6–72: fina en grande, robusta en pequeño). Texto e interfaz:
+// Schibsted Grotesk. Elegidas tras comparar 8 parejas con texto real (DESIGN_NOTES §27.5).
+const newsreader = Newsreader({
+  variable: '--font-newsreader',
+  subsets: ['latin', 'latin-ext'],
+  axes: ['opsz'],
   style: ['normal', 'italic'],
   display: 'swap',
 });
 
-const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'], display: 'swap' });
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
+const schibsted = Schibsted_Grotesk({
+  variable: '--font-schibsted',
+  subsets: ['latin', 'latin-ext'],
   display: 'swap',
 });
 
@@ -70,7 +72,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="es"
-      className={`${fraunces.variable} ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${newsreader.variable} ${schibsted.variable} h-full antialiased`}
       data-quality="full"
       suppressHydrationWarning
     >

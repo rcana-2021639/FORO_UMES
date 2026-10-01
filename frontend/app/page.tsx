@@ -67,6 +67,7 @@ export default async function Home() {
 
       <Section
         id="universidades"
+        index={1}
         kicker="Quiénes forman el Foro"
         title="Las nueve universidades"
         intro="Todas participan en igualdad de condiciones. Pasa el cursor por una para verla con sus colores y entra a su perfil: oferta, representantes y contacto."
@@ -82,6 +83,7 @@ export default async function Home() {
 
       <Section
         id="programas"
+        index={2}
         kicker="Qué se puede estudiar"
         title="Programas de posgrado"
         intro="Elige un nivel, recorre las tarjetas y guarda con la estrella los que quieras comparar."
@@ -97,6 +99,7 @@ export default async function Home() {
 
       <Section
         id="hitos"
+        index={3}
         kicker="Lo que ya pasó y lo que viene"
         title="Hitos del Foro"
         intro="Ingresos de universidades, encuentros, seminarios y proyectos, en el orden en que ocurrieron. Sigue bajando y la línea avanza sola."
@@ -113,6 +116,7 @@ export default async function Home() {
 
       <Section
         id="noticias"
+        index={4}
         kicker="Lo último que se dijo"
         title="Noticias del Foro"
         aside={
@@ -126,6 +130,7 @@ export default async function Home() {
 
       <Section
         id="galeria"
+        index={5}
         kicker="Lo que quedó en fotos y videos"
         title="Galería"
         intro="Arrastra el carrusel, usa las flechas del teclado o haz click en la foto del centro para ampliarla; los videos se abren en un reproductor."
@@ -142,6 +147,7 @@ export default async function Home() {
 
       <Section
         id="como-trabaja"
+        index={6}
         kicker="Cómo se decide"
         title="Así trabaja el Foro"
         intro="Tres pasos, siempre los mismos. Pulsa cualquiera o deja que avance solo; debajo está lo que ya salió de ellos."
@@ -158,7 +164,8 @@ export default async function Home() {
 
       <Section
         id="contacto"
-        kicker="Para universidades, prensa y quien busca un posgrado"
+        index={7}
+        kicker="Universidades, prensa y estudiantes"
         title="Escríbele al Foro"
         theme="dusk"
         backdrop={

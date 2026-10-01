@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { motion, useMotionValueEvent, useScroll } from 'motion/react';
 import { getLenis } from '@/components/providers/SmoothScroll';
 import { MobileMenu } from './MobileMenu';
+import { Emblem } from '@/components/ui/Emblem';
 import { cn } from '@/lib/cn';
 import { NAV_ITEMS } from '@/lib/nav';
 
@@ -13,10 +14,10 @@ import { NAV_ITEMS } from '@/lib/nav';
 const SLIDE = { type: 'spring', stiffness: 520, damping: 42, mass: 0.7 } as const;
 
 /**
- * Navbar: barra de cristal flotante que no cambia de forma al hacer scroll (solo gana cuerpo y
- * sombra). Al pasar el cursor, una píldora lavanda se desliza de enlace en enlace; la página
- * actual se marca con texto violeta y una barrita en degradado que también se desliza al
- * cambiar de ruta. Sin filtros gooey, partículas ni efecto magnético.
+ * Navbar (v5, DESIGN_NOTES §27): barra institucional a todo lo ancho con el emblema (el 9 maya) y el
+ * nombre completo del Foro; al hacer scroll se compacta y gana un filete. Al pasar el cursor, una
+ * losa lila se desliza de enlace en enlace; la página actual se marca con texto violeta y un filete
+ * que también se desliza al cambiar de ruta. A la derecha, el atajo para buscar programas.
  */
 export function Navbar() {
   const pathname = usePathname();
@@ -55,17 +56,16 @@ export function Navbar() {
             href="/"
             onClick={(e) => goTop(e, '/')}
             className="nav-brand"
-            aria-label="Foro de Posgrado, inicio"
+            aria-label="Foro Interuniversitario de Estudios de Posgrado, inicio"
           >
-            <span className="nav-brand__mark" aria-hidden>
-              F
-            </span>
-            <span aria-hidden className="hidden lg:block">
-              Foro de Posgrado
+            <Emblem className="nav-brand__mark" />
+            <span aria-hidden className="nav-brand__name">
+              <span className="nav-brand__line1">Foro Interuniversitario</span>
+              <span className="nav-brand__line2">de Estudios de Posgrado</span>
             </span>
           </Link>
 
-          <nav aria-label="Principal" className="hidden md:block">
+          <nav aria-label="Principal" className="hidden lg:block">
             <ul className="flex items-center" onPointerLeave={() => setHover(null)}>
               {NAV_ITEMS.map((item, i) => {
                 const active = i === activeIndex;
@@ -104,9 +104,14 @@ export function Navbar() {
             </ul>
           </nav>
 
+          <Link href="/programas#buscar" className="nav-search" aria-label="Buscar un programa">
+            <SearchIcon />
+            <span>Buscar programa</span>
+          </Link>
+
           <button
             type="button"
-            className="nav-burger md:hidden"
+            className="nav-burger lg:hidden"
             aria-expanded={open}
             aria-controls="menu-movil"
             aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
@@ -120,6 +125,15 @@ export function Navbar() {
 
       <MobileMenu open={open} onClose={() => setOpen(false)} activeIndex={activeIndex} />
     </>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <svg aria-hidden viewBox="0 0 20 20" className="h-[1.05rem] w-[1.05rem]" fill="none">
+      <circle cx="8.5" cy="8.5" r="5.75" stroke="currentColor" strokeWidth="1.6" />
+      <path d="m13 13 4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
   );
 }
 

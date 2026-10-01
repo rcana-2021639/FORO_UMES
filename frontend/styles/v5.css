@@ -1,0 +1,474 @@
+/* v5.0 "Anuario" (DESIGN_NOTES §27). Se carga después de v4.css: cambia el vestido de las piezas
+   existentes sin tocar su mecánica ni sus animaciones. Solo clases propias. */
+
+:root {
+  --nav-h: 4.25rem;
+}
+@media (min-width: 1024px) {
+  :root {
+    --nav-h: 4.75rem;
+  }
+}
+
+/* ---------- Texto de énfasis: violeta sólido, nunca degradado ---------- */
+.text-violet-grad,
+.text-violet-grad *,
+.text-violet-grad .rolling__digit {
+  background: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  color: var(--color-violet-700);
+}
+/* En un titular, la palabra de énfasis va en la itálica de Newsreader */
+h1 .text-violet-grad,
+h2 .text-violet-grad {
+  font-style: italic;
+  font-weight: 420;
+  letter-spacing: -0.025em;
+}
+
+/* ---------- Encabezado de sección: etiqueta ── filete ---------- */
+.sec-head__top {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+}
+.sec-head__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+  max-width: min(100%, 34rem);
+  color: var(--label-color, var(--color-violet-700));
+}
+.section-dark .sec-head__label {
+  --label-color: var(--color-violet-300);
+}
+.sec-head__maya {
+  width: 1.3rem;
+  color: currentColor;
+}
+.sec-head__rule {
+  flex: 1 1 2rem;
+  min-width: 2rem;
+  height: 1px;
+  background: var(--rule);
+  transform-origin: left center;
+}
+.section-dark .sec-head__rule,
+.site-footer .sec-head__rule {
+  background: color-mix(in oklab, var(--fg) 20%, transparent);
+}
+.sec-head__body {
+  margin-top: clamp(1.1rem, 2.2vw, 1.85rem);
+}
+.sec-head__intro {
+  max-width: 46ch;
+  font-size: 1.06rem;
+  line-height: 1.62;
+  color: var(--fg-muted);
+}
+
+/* ---------- Cabecera de página interna ---------- */
+.page-head {
+  position: relative;
+  margin-bottom: clamp(2.25rem, 4.5vw, 3.75rem);
+  padding-top: calc(var(--nav-h) + clamp(1.5rem, 3.5vw, 2.75rem));
+  padding-bottom: clamp(2.25rem, 4.5vw, 3.75rem);
+  background: var(--color-violet-50);
+  border-bottom: 1px solid var(--rule);
+}
+.section-dark .page-head {
+  background: transparent;
+  border-color: color-mix(in oklab, var(--fg) 14%, transparent);
+}
+.page-head__title {
+  font-size: clamp(2.45rem, 5.4vw, 5.1rem);
+}
+.page-head__title--article {
+  font-size: clamp(2.05rem, 4vw, 3.75rem);
+  line-height: 1.04;
+}
+.crumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.86rem;
+  color: var(--fg-muted);
+}
+.crumbs li + li::before {
+  content: '/';
+  margin-right: 0.5rem;
+  opacity: 0.55;
+}
+.crumbs a {
+  color: var(--fg);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, var(--fg) 25%, transparent);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 0.25s;
+}
+.crumbs a:hover {
+  text-decoration-color: currentColor;
+}
+
+/* ---------- Barra de navegación institucional ---------- */
+.nav-shell {
+  top: 0;
+  left: 0;
+  width: 100%;
+  translate: none;
+}
+.nav-shell[data-scrolled='true'] {
+  top: 0;
+}
+.nav-bar,
+html[data-quality='lite'] .nav-bar,
+html[data-quality='still'] .nav-bar {
+  height: var(--nav-h);
+  gap: 1.25rem;
+  padding: 0 var(--gutter);
+  border-radius: 0;
+  background: #fff;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: inset 0 -1px 0 transparent;
+  transition:
+    height 0.45s var(--ease-out-premium),
+    box-shadow 0.45s var(--ease-snap);
+}
+.nav-shell[data-scrolled='true'] .nav-bar {
+  height: calc(var(--nav-h) - 0.7rem);
+  background: #fff;
+  box-shadow:
+    inset 0 -1px 0 var(--rule),
+    0 14px 30px -26px rgb(var(--shadow-ink) / 0.6);
+}
+.nav-brand {
+  gap: 0.75rem;
+  padding: 0;
+  color: var(--color-ink);
+}
+.nav-brand__mark {
+  width: 2.45rem;
+  height: 2.45rem;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+.nav-brand__name {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.05;
+}
+/* Entre 1024 y 1199 px los siete enlaces necesitan el espacio: queda solo el emblema */
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .nav-brand__name {
+    display: none;
+  }
+}
+.nav-brand__line1 {
+  font-family: var(--font-display);
+  font-size: 1.14rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  font-variation-settings: 'opsz' 24;
+  color: var(--color-violet-950);
+}
+.nav-brand__line2 {
+  margin-top: 0.22rem;
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--color-ink-3);
+}
+.nav-link {
+  padding: 0.55rem 0.78rem;
+  border-radius: 6px;
+  font-size: 0.93rem;
+  font-weight: 500;
+  color: var(--color-ink-2);
+}
+.nav-link.is-active {
+  color: var(--color-violet-700);
+  font-weight: 600;
+}
+.nav-hover {
+  border-radius: 6px;
+  background: var(--color-violet-50);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-violet-500) 14%, transparent);
+}
+.nav-active {
+  left: 0.78rem;
+  right: 0.78rem;
+  bottom: 0.12rem;
+  width: auto;
+  height: 2px;
+  margin-left: 0;
+  border-radius: 2px;
+  background: var(--color-violet-700);
+}
+.nav-search {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 2.6rem;
+  min-width: 2.6rem;
+  padding: 0 0.8rem;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--color-violet-800);
+  transition:
+    background-color 0.3s var(--ease-snap),
+    transform 0.3s var(--ease-out-premium);
+}
+.nav-search span {
+  display: none;
+}
+.nav-search:hover,
+.nav-search:focus-visible {
+  background: var(--color-violet-950);
+}
+.nav-search:active {
+  transform: scale(0.97);
+}
+@media (min-width: 1024px) {
+  .nav-search {
+    display: inline-flex;
+  }
+}
+@media (min-width: 1360px) {
+  .nav-search {
+    padding: 0 1.05rem;
+  }
+  .nav-search span {
+    display: inline;
+  }
+}
+.nav-burger {
+  border-radius: 6px;
+  background: var(--color-violet-50);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-violet-500) 18%, transparent);
+}
+@media (min-width: 768px) {
+  .nav-burger {
+    display: grid;
+  }
+}
+@media (min-width: 1024px) {
+  .nav-burger {
+    display: none;
+  }
+}
+
+/* ---------- Botones de la portada: forma contenida, color sólido ---------- */
+.cta-violet,
+.cta-ghost {
+  height: 3.05rem;
+  padding: 0 1.35rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.cta-violet {
+  background: var(--color-violet-800);
+  box-shadow: none;
+}
+.cta-violet:hover,
+.cta-violet:focus-visible {
+  background: var(--color-violet-950);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px -16px rgb(var(--shadow-ink) / 0.7);
+}
+.cta-ghost {
+  color: var(--color-ink);
+  border: 1px solid color-mix(in oklab, var(--color-ink) 28%, transparent);
+  background: transparent;
+}
+.cta-ghost:hover,
+.cta-ghost:focus-visible {
+  border-color: var(--color-ink);
+  background: var(--color-violet-50);
+  transform: translateY(-1px);
+}
+
+/* ---------- Pie institucional ---------- */
+.site-footer {
+  --fg: #fff;
+  --fg-muted: #bfb6da;
+  --line: #3a2e62;
+  --accent: var(--color-violet-300);
+  --emblem-bg: #fff;
+  --emblem-fg: var(--color-violet-900);
+  position: relative;
+  isolation: isolate;
+  padding-top: clamp(3.25rem, 6vw, 5.5rem);
+  padding-bottom: 1.75rem;
+  color: var(--fg);
+  background: var(--color-violet-950);
+}
+.site-footer :focus-visible {
+  outline-color: #fff;
+}
+.site-footer__lead {
+  display: grid;
+  gap: 1.5rem;
+  padding-bottom: 2.5rem;
+  border-bottom: 1px solid var(--line);
+}
+@media (min-width: 900px) {
+  .site-footer__lead {
+    grid-template-columns: auto 1fr;
+    align-items: end;
+    gap: 3rem;
+  }
+  .site-footer__claim {
+    justify-self: end;
+    text-align: right;
+  }
+}
+.site-footer__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+}
+.site-footer__name {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 2.4vw, 1.85rem);
+  font-weight: 500;
+  line-height: 1.05;
+  font-variation-settings: 'opsz' 36;
+}
+.site-footer__sub {
+  display: block;
+  margin-top: 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+.site-footer__claim {
+  max-width: 36ch;
+  font-family: var(--font-display);
+  font-size: clamp(1.15rem, 1.8vw, 1.45rem);
+  line-height: 1.35;
+  font-variation-settings: 'opsz' 24;
+  color: var(--fg);
+}
+.site-footer__grid {
+  display: grid;
+  gap: 2.5rem;
+  padding: 2.75rem 0;
+}
+@media (min-width: 768px) {
+  .site-footer__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .site-footer__members {
+    grid-column: span 2;
+    order: -1;
+  }
+}
+@media (min-width: 1100px) {
+  .site-footer__grid {
+    grid-template-columns: 0.8fr 2fr 1.2fr;
+    gap: 3rem;
+  }
+  .site-footer__members {
+    grid-column: auto;
+    order: 0;
+  }
+}
+.site-footer__head {
+  margin-bottom: 1.1rem;
+  font-size: var(--text-label);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.site-footer__list {
+  display: grid;
+  gap: 0.6rem;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+.site-footer__list--cols {
+  display: block;
+  columns: 1;
+  column-gap: 2.5rem;
+}
+.site-footer__list--cols li {
+  break-inside: avoid;
+  margin-bottom: 0.6rem;
+}
+@media (min-width: 560px) {
+  .site-footer__list--cols {
+    columns: 2;
+  }
+}
+.site-footer__list a {
+  color: var(--fg);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 4px;
+  transition:
+    text-decoration-color 0.3s var(--ease-snap),
+    color 0.3s var(--ease-snap);
+}
+.site-footer__list a:hover,
+.site-footer__list a:focus-visible {
+  color: #fff;
+  text-decoration-color: var(--accent);
+}
+.site-footer__list span {
+  color: var(--fg-muted);
+}
+.site-footer__emblem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+  color: var(--color-violet-300);
+}
+.site-footer__emblem p {
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--fg-muted);
+}
+.site-footer__base {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.85rem;
+  color: var(--fg-muted);
+}
+
+/* ---------- Portada (provisional hasta la fase 2): fondo limpio ---------- */
+.hero-field {
+  background: var(--color-paper);
+}
+.hero-pill {
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  font-size: var(--text-label);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-violet-700);
+}

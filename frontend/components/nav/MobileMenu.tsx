@@ -36,7 +36,7 @@ export function MobileMenu({ open, onClose, activeIndex }: Props) {
           role="dialog"
           aria-modal="true"
           aria-label="Menú"
-          className="fixed inset-0 z-[999] flex flex-col bg-[linear-gradient(160deg,var(--color-violet-950),var(--color-violet-800))] text-paper md:hidden"
+          className="fixed inset-0 z-[999] flex flex-col bg-[linear-gradient(160deg,var(--color-violet-950),var(--color-violet-800))] text-paper lg:hidden"
           initial={{ clipPath: 'circle(0% at 91% 5%)' }}
           animate={{ clipPath: 'circle(150% at 91% 5%)' }}
           exit={{ clipPath: 'circle(0% at 91% 5%)' }}

@@ -50,6 +50,8 @@ export default async function NoticiaPage({ params }: Params) {
         ]}
       />
       <PageHeader
+        crumbs={[{ label: 'Noticias', href: '/noticias' }]}
+        size="article"
         kicker={`Publicada el ${formatDate(n.publishedAt)}`}
         title={n.title}
         intro={n.summary ?? undefined}
