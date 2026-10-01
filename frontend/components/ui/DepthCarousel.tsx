@@ -109,6 +109,7 @@ export function DepthCarousel({
       ease,
       loop,
       cardWidth,
+      cardHeight,
     }),
     [
       count,
@@ -123,6 +124,7 @@ export function DepthCarousel({
       ease,
       loop,
       cardWidth,
+      cardHeight,
     ]
   );
   const cfgRef = useRef(cfg);
@@ -235,8 +237,12 @@ export function DepthCarousel({
     const ro = new ResizeObserver((entries) => {
       const w = entries[0].contentRect.width;
       const c = cfgRef.current;
-      const needed = c.cardWidth + Math.abs(c.spread) * 2 + 120;
+      // En el teléfono manda la tarjeta del frente (las laterales asoman por los bordes); en
+      // pantallas anchas cabe el abanico completo
+      const needed = w < 640 ? c.cardWidth + 72 : c.cardWidth + Math.abs(c.spread) * 2 + 120;
       scaleRef.current = clamp(w / needed, 0.5, 1);
+      // El alto acompaña a la escala: sin esto, la tarjeta encogida quedaba en un hueco enorme
+      root.style.height = `${Math.round(c.cardHeight * scaleRef.current + 96)}px`;
       layout(posRef.current);
     });
     ro.observe(root);

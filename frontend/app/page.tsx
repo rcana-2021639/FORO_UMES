@@ -15,6 +15,7 @@ import { JsonLd } from '@/components/seo/JsonLd';
 import { api, critical } from '@/lib/api';
 import { organizationJsonLd, websiteJsonLd } from '@/lib/json-ld';
 import { pageMetadata } from '@/lib/seo';
+import { countByUniversity } from '@/lib/format';
 import { SITE_DESCRIPTION } from '@/lib/site';
 
 export const metadata = pageMetadata({ path: '/', description: SITE_DESCRIPTION });
@@ -78,7 +79,10 @@ export default async function Home() {
           </Button>
         }
       >
-        <UniversitiesBento universities={universities.data} />
+        <UniversitiesBento
+          universities={universities.data}
+          programCounts={countByUniversity(programs.data)}
+        />
       </Section>
 
       <Section

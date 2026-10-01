@@ -18,7 +18,7 @@ const STEPS = [
     text: 'Las nueve universidades, representadas por sus direcciones de posgrado, se reúnen de forma periódica. Ninguna preside: cada universidad tiene el mismo voto.',
     facts: ['Reuniones periódicas', 'Un voto por universidad', 'Sin presidencia fija'],
     color: 'var(--color-violet-300)',
-    ink: 'linear-gradient(150deg, #1f1545 0%, #3a2677 58%, #261a4f 100%)',
+    ink: '#261a4f',
   },
   {
     title: 'Acuerdan iniciativas',
@@ -26,7 +26,7 @@ const STEPS = [
     text: 'Criterios compartidos, actividades conjuntas, proyectos interinstitucionales y mecanismos de movilidad académica entre programas.',
     facts: ['Criterios comunes', 'Actividades conjuntas', 'Movilidad académica'],
     color: 'var(--color-orchid-2)',
-    ink: 'linear-gradient(150deg, #2f1c5c 0%, #5b3aa8 58%, #3a2677 100%)',
+    ink: '#3a2677',
   },
   {
     title: 'Publican resultados',
@@ -34,7 +34,7 @@ const STEPS = [
     text: 'Resultados medibles, iniciativas en marcha y beneficios concretos para estudiantes y programas, en la sección de aportes y en las noticias del Foro.',
     facts: ['Resultados', 'Iniciativas en marcha', 'Beneficios'],
     color: 'var(--color-violet-200)',
-    ink: 'linear-gradient(150deg, #4f339e 0%, #7c5ae0 58%, #5b3aa8 100%)',
+    ink: '#4f339e',
   },
 ] as const;
 
@@ -163,21 +163,12 @@ export function ProcessSteps() {
                     background: s.ink,
                   }}
                   className={cn(
-                    'absolute inset-x-0 inset-y-4 mx-auto w-[min(100%,30rem)] overflow-hidden rounded-[18px] text-left text-paper shadow-[0_50px_90px_-40px_rgb(0_0_0/0.65)] outline-none',
+                    'absolute inset-x-0 inset-y-4 mx-auto w-[min(100%,30rem)] overflow-hidden rounded-[12px] text-left text-paper shadow-[0_40px_80px_-44px_rgb(0_0_0/0.6)] outline-none',
                     !active && 'cursor-pointer'
                   )}
                 >
-                  {/* Grano y luz */}
+                  {/* Grano sobre color plano (v5: sin luces ni manchas difusas) */}
                   <span aria-hidden className="acc-panel__grain" />
-                  <span
-                    aria-hidden
-                    className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgb(255_255_255/0.22),transparent_55%)]"
-                  />
-                  <span
-                    aria-hidden
-                    className="pointer-events-none absolute -right-20 -bottom-24 h-72 w-72 rounded-full opacity-40 blur-3xl"
-                    style={{ background: s.color }}
-                  />
 
                   <div className="relative flex h-full flex-col p-7 md:p-9">
                     <div className="flex items-start justify-between">
@@ -192,8 +183,8 @@ export function ProcessSteps() {
                         pointerTracking={active}
                         orbitSpeed={0.2}
                       />
-                      <span className="mono-label rounded-full border border-paper/30 px-2.5 py-0.5 text-paper/80">
-                        paso {i + 1} / {STEPS.length}
+                      <span className="text-[0.72rem] font-semibold tracking-[0.08em] text-paper/75 uppercase">
+                        Paso {i + 1} de {STEPS.length}
                       </span>
                     </div>
 
@@ -230,7 +221,7 @@ export function ProcessSteps() {
                               {s.facts.map((f) => (
                                 <li
                                   key={f}
-                                  className="ui-label rounded-full border border-paper/30 bg-paper/10 px-3 py-1 text-paper"
+                                  className="ui-label rounded-[4px] border border-paper/30 bg-paper/10 px-2.5 py-1 text-paper"
                                 >
                                   {f}
                                 </li>

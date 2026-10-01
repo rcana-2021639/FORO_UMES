@@ -66,6 +66,16 @@ export const folio = (n: number) => String(n).padStart(2, '0');
 
 export const acronymOf = (u?: UniversityRef | null) => u?.acronym ?? u?.name ?? '';
 
+/** Cuántos programas publica cada universidad (documentId de la universidad → cantidad). */
+export function countByUniversity(programs: { university?: UniversityRef | null }[]) {
+  const counts: Record<string, number> = {};
+  for (const p of programs) {
+    const id = p.university?.documentId;
+    if (id) counts[id] = (counts[id] ?? 0) + 1;
+  }
+  return counts;
+}
+
 /**
  * Texto plano a partir del Markdown del backend, recortado en el último espacio antes de `max`.
  * Las imágenes se quitan, los enlaces dejan solo su texto y el HTML embebido desaparece.

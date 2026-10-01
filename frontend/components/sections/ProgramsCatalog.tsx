@@ -32,6 +32,10 @@ const readUrlLevel = (): LevelFilter | null => {
   return n && (LEVELS as string[]).includes(n) ? (n as LevelFilter) : null;
 };
 
+/** `?q=` llega del buscador de la portada; se recorta para no aceptar textos enormes. */
+const readUrlQuery = (): string =>
+  (new URLSearchParams(window.location.search).get('q') ?? '').slice(0, 80);
+
 /**
  * Catálogo completo. Arriba, el selector de nivel a lo grande (el mismo de la portada); debajo,
  * búsqueda y filtros por modalidad y universidad como píldoras. Los resultados van agrupados
@@ -46,7 +50,10 @@ export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
   const level: LevelFilter = picked ?? urlLevel ?? 'all';
   const [modality, setModality] = useState<ProgramModality | ''>('');
   const [uni, setUni] = useState('');
-  const [q, setQ] = useState('');
+  // `/programas?q=…` (buscador de la portada) abre con la búsqueda hecha; escribir la reemplaza
+  const [typed, setQ] = useState<string | null>(null);
+  const urlQuery = useClientValue(readUrlQuery, '');
+  const q = typed ?? urlQuery;
   const { saved, has, toggle } = useSavedPrograms();
   const reduced = useReducedMotion();
 

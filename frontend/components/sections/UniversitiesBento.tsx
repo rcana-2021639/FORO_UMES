@@ -12,20 +12,28 @@ import { brandOf } from '@/lib/universities';
 import type { University } from '@/lib/types';
 
 /**
- * Las nueve universidades en una retícula de losas iguales: ninguna silla es más grande que
- * otra (el Foro es neutral). En reposo las losas son de piedra; al pasar el cursor o el foco se
- * dan la vuelta por píxeles (React Bits `PixelSwap`) y muestran el reverso con el color
+ * Las nueve universidades en una retícula de losas iguales: ninguna es más grande que otra (el
+ * Foro es neutral). En reposo, cada losa es una ficha (v5): sello y sigla, nombre completo y una
+ * línea con cuántos programas ofrece y desde cuándo está en el Foro. Al pasar el cursor o el foco
+ * se da la vuelta por píxeles (React Bits `PixelSwap`) y muestra el reverso con el color
  * institucional de esa universidad: un adelanto de su perfil. En modo liviano el reverso entra
  * con un barrido de máscara en CSS en vez de los píxeles.
  */
-export function UniversitiesBento({ universities }: { universities: University[] }) {
+export function UniversitiesBento({
+  universities,
+  programCounts = {},
+}: {
+  universities: University[];
+  /** Programas publicados por universidad (documentId → cantidad). */
+  programCounts?: Record<string, number>;
+}) {
   const reduced = useReducedMotion();
   const lite = useQuality() !== 'full';
 
   return (
     <ul
       data-reveal-stagger="tilt"
-      className="grid auto-rows-[10.5rem] grid-cols-2 gap-2.5 [perspective:1600px] sm:auto-rows-[13.5rem] sm:gap-3 lg:grid-cols-3"
+      className="grid auto-rows-[11.5rem] grid-cols-2 gap-2.5 [perspective:1600px] sm:auto-rows-[13rem] sm:gap-3 lg:grid-cols-3"
     >
       {universities.length === 0 && (
         <li className="col-span-full max-w-[44ch] text-fg-muted">
@@ -33,7 +41,14 @@ export function UniversitiesBento({ universities }: { universities: University[]
         </li>
       )}
       {universities.map((u, i) => (
-        <Cell key={u.documentId} u={u} i={i} reduced={reduced} lite={lite} />
+        <Cell
+          key={u.documentId}
+          u={u}
+          i={i}
+          reduced={reduced}
+          lite={lite}
+          programs={programCounts[u.documentId]}
+        />
       ))}
     </ul>
   );
@@ -44,11 +59,13 @@ function Cell({
   i,
   reduced,
   lite,
+  programs,
 }: {
   u: University;
   i: number;
   reduced: boolean;
   lite: boolean;
+  programs?: number;
 }) {
   const [on, setOn] = useState(false);
   // Si el archivo del logo no carga (seed incompleto, CDN caído), la sigla ocupa su lugar
@@ -70,17 +87,11 @@ function Cell({
     setOn(false);
   };
 
+  const count = programs ? `${programs} ${programs === 1 ? 'programa' : 'programas'}` : null;
+
   const front = (
-    <div className="flex h-full flex-col justify-between bg-[color-mix(in_oklab,var(--fg)_4%,var(--bg))] p-4 sm:p-6">
-      <div className="flex items-center justify-between gap-3">
-        <span className="mono-label flex items-center gap-2 text-fg-muted">
-          {/* Una sola marca de su color: identifica sin teñir la losa */}
-          <span aria-hidden className="h-2 w-2 rounded-full" style={{ background: b.primary }} />
-          {domain || 'Guatemala'}
-        </span>
-        {joined && <span className="ui-label hidden text-fg-muted sm:inline">desde {joined}</span>}
-      </div>
-      <div>
+    <div className="uni-face">
+      <div className="flex items-start justify-between gap-3">
         {logo ? (
           <Image
             src={logo}
@@ -88,18 +99,26 @@ function Cell({
             width={144}
             height={144}
             onError={() => setLogoBroken(true)}
-            className="h-12 w-auto object-contain transition-transform duration-700 ease-(--ease-out-premium) group-hover:scale-105 sm:h-[4.5rem]"
+            className="uni-face__seal"
           />
         ) : (
-          <span
-            className="block font-display text-[2rem] leading-none font-light tracking-[-0.03em] text-fg sm:text-[2.6rem]"
-            style={{ fontVariationSettings: "'opsz' 96, 'SOFT' 50" }}
-          >
-            {u.acronym ?? u.name.slice(0, 3)}
+          <span aria-hidden className="uni-face__seal uni-face__seal--text">
+            {(u.acronym ?? u.name).slice(0, 3)}
           </span>
         )}
-        <p className="mt-2 line-clamp-2 max-w-[30ch] text-[0.82rem] leading-snug text-fg sm:text-[0.98rem]">
-          {u.name}
+        <span className="uni-face__acronym">{u.acronym ?? ''}</span>
+      </div>
+      <div>
+        <p className="uni-face__name">{u.name}</p>
+        <p className="uni-face__meta">
+          <span>
+            {count ?? (joined ? `En el Foro desde ${joined}` : domain || 'Guatemala')}
+            {/* En el teléfono cabe una sola línea: el año queda para pantallas anchas */}
+            {count && joined && <span className="hidden sm:inline"> · desde {joined}</span>}
+          </span>
+          <span aria-hidden className="uni-face__arrow">
+            →
+          </span>
         </p>
       </div>
     </div>
@@ -147,7 +166,7 @@ function Cell({
       <Link
         href={`/universidades/${u.documentId}`}
         aria-label={`${u.name}: abrir perfil`}
-        className="uni-tile relative block h-full overflow-hidden rounded-[14px] border border-line/70"
+        className="uni-tile relative block h-full overflow-hidden rounded-[10px]"
         style={{ '--u-ring': b.primary } as React.CSSProperties}
       >
         {lite || reduced ? (

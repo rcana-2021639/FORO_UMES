@@ -7,6 +7,7 @@ import { RollingNumber } from '@/components/ui/RollingNumber';
 import { Word, Words } from '@/components/ui/Words';
 import { gsap } from '@/lib/gsap';
 import { getQuality } from '@/lib/quality';
+import { LEVELS, LEVEL_META } from '@/lib/levels';
 
 export interface HeroUniversity {
   acronym: string;
@@ -28,29 +29,31 @@ interface Props {
 /** Los tres motivos por los que alguien llega al sitio. Es lo primero que hay que poder elegir. */
 const PATHS = [
   {
-    n: '01',
-    title: 'Busco un posgrado',
-    text: 'Maestrías, doctorados, especializaciones y diplomados de las nueve.',
+    label: 'Si buscas un posgrado',
+    title: 'Busca y compara programas',
+    text: 'Maestrías, doctorados, especializaciones y diplomados de las nueve, en una sola lista.',
     href: '/programas',
   },
   {
-    n: '02',
-    title: 'Quiero conocer una universidad',
-    text: 'Su perfil, quién la representa y qué ofrece.',
+    label: 'Si quieres conocer una universidad',
+    title: 'Abre su perfil',
+    text: 'Qué ofrece, quién la representa y cómo escribirle.',
     href: '#universidades',
   },
   {
-    n: '03',
-    title: 'Quiero escribirle al Foro',
-    text: 'Universidades, prensa o estudiantes: la secretaría responde.',
+    label: 'Si quieres escribirle al Foro',
+    title: 'Envía un mensaje',
+    text: 'Universidades, prensa o estudiantes: responde la secretaría técnica.',
     href: '#contacto',
   },
 ] as const;
 
 /**
- * Portada. Campo de luz violeta propio (orbes que derivan, retícula de puntos), el nombre del
- * Foro con "Posgrado" en degradado, y a la derecha una guía del posgrado en cartas que se
- * barajan solas. Debajo: tres caminos, cuatro cifras y una cinta con las nueve universidades.
+ * Portada (v5, DESIGN_NOTES §27). El nombre del Foro, una frase que dice qué es con enlaces a lo
+ * que nombra, y el buscador de programas como acción principal (con atajos por nivel); a la
+ * derecha, la guía del posgrado en cartas que se barajan solas. Debajo: tres caminos como índice,
+ * cuatro cifras y la cinta con las nueve universidades. Al fondo, círculos planos que derivan
+ * despacio (los "puntos" del emblema), sin manchas de luz.
  *
  * La entrada la hace el script de arranque (data-reveal): empieza en el primer pintado, antes de
  * que React hidrate, así que nada aparece, desaparece y vuelve a entrar.
@@ -111,48 +114,91 @@ export function Hero({ year, counts, universities }: Props) {
             <Words text="Foro Interuniversitario de Estudios de" />{' '}
             <Word className="text-violet-grad">Posgrado</Word>
           </h1>
-          <p
-            data-reveal="blur"
-            className="mt-6 max-w-[46ch] text-[1.14rem] leading-relaxed text-fg-muted"
-          >
-            Las direcciones de posgrado de nueve universidades de Guatemala coordinan aquí su
-            oferta, sus actividades y sus proyectos.
+          <p data-reveal="blur" className="hero-lead">
+            Las direcciones de posgrado de{' '}
+            <Link href="#universidades" className="hero-link">
+              nueve universidades de Guatemala
+            </Link>{' '}
+            coordinan aquí su oferta{' '}
+            {counts.academicPrograms > 0 ? (
+              <>
+                —
+                <Link href="/programas" className="hero-link">
+                  {counts.academicPrograms} programas
+                </Link>{' '}
+                de posgrado—
+              </>
+            ) : (
+              'de posgrado'
+            )}
+            , sus actividades y sus proyectos.
           </p>
-          <div data-reveal="up" className="mt-8 flex flex-wrap items-center gap-3">
-            <Link href="/programas" className="cta-violet">
-              Explorar programas <span aria-hidden>→</span>
-            </Link>
-            <Link href="#universidades" className="cta-ghost">
-              Conocer las universidades
-            </Link>
-          </div>
+
+          <form
+            action="/programas"
+            method="get"
+            role="search"
+            data-reveal="up"
+            className="hero-search"
+          >
+            <label htmlFor="hero-q" className="hero-search__label">
+              ¿Qué quieres estudiar?
+            </label>
+            <div className="hero-search__field">
+              <svg aria-hidden viewBox="0 0 20 20" className="hero-search__icon" fill="none">
+                <circle cx="8.5" cy="8.5" r="5.75" stroke="currentColor" strokeWidth="1.6" />
+                <path
+                  d="m13 13 4 4"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <input
+                id="hero-q"
+                name="q"
+                type="search"
+                autoComplete="off"
+                enterKeyHint="search"
+                placeholder="Ej.: administración, docencia, salud pública"
+                className="hero-search__input"
+              />
+              <button type="submit" className="cta-violet hero-search__btn">
+                Buscar <span aria-hidden>→</span>
+              </button>
+            </div>
+            <p className="hero-search__quick">
+              <span>O por nivel:</span>
+              {LEVELS.map((l) => (
+                <Link key={l} href={`/programas?nivel=${l}`}>
+                  {LEVEL_META[l].plural}
+                </Link>
+              ))}
+            </p>
+          </form>
         </div>
 
         <div data-reveal="deck" className="lg:col-span-5">
           <GuideDeck />
         </div>
 
-        {/* Tres caminos: la decisión principal de la portada */}
+        {/* Tres caminos: la decisión principal de la portada, como índice */}
         <ol
           data-reveal-stagger="tilt"
-          className="grid gap-3 md:grid-cols-3 lg:col-span-12"
+          className="hero-paths grid md:grid-cols-3 lg:col-span-12"
           aria-label="Por dónde empezar"
         >
           {PATHS.map((p) => (
-            <li key={p.n}>
+            <li key={p.href}>
               <Link href={p.href} className="path-card group">
-                <span className="path-card__n" aria-hidden>
-                  {p.n}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block font-display text-[1.3rem] leading-tight text-fg [font-variation-settings:'opsz'_36,'SOFT'_40]">
-                    {p.title}
+                <span className="path-card__label">{p.label}</span>
+                <span className="path-card__title">
+                  {p.title}
+                  <span className="path-card__arrow" aria-hidden>
+                    →
                   </span>
-                  <span className="ui-label mt-1.5 block text-fg-muted">{p.text}</span>
                 </span>
-                <span className="path-card__arrow" aria-hidden>
-                  →
-                </span>
+                <span className="path-card__text">{p.text}</span>
               </Link>
             </li>
           ))}

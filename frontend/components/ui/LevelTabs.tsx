@@ -44,7 +44,7 @@ export function LevelTabs({ value, onChange, counts, showSaved, className, compa
       key: 'all',
       label: 'Todos',
       hint: 'Toda la oferta de las nueve universidades.',
-      color: 'var(--color-ink-2)',
+      color: 'var(--color-violet-900)',
       glyph: '∗',
     },
     ...LEVELS.map((l) => ({
@@ -70,7 +70,7 @@ export function LevelTabs({ value, onChange, counts, showSaved, className, compa
       role="tablist"
       aria-label="Nivel de posgrado"
       className={cn(
-        'grid gap-3 sm:grid-cols-3 [perspective:1200px]',
+        'level-tabs grid gap-3 sm:grid-cols-3 [perspective:1200px]',
         tabs.length === 6 ? 'lg:grid-cols-6' : 'lg:grid-cols-5',
         className
       )}
@@ -103,7 +103,7 @@ export function LevelTabs({ value, onChange, counts, showSaved, className, compa
                   compact ? 'min-h-[7rem]' : 'min-h-[9.5rem]',
                   active
                     ? 'border-transparent text-paper'
-                    : 'border-line bg-surface-1 text-fg hover:border-fg/40'
+                    : 'border-[var(--rule)] bg-white text-fg hover:border-fg/40'
                 )}
                 style={{ '--lv': t.color } as React.CSSProperties}
               >
@@ -112,10 +112,7 @@ export function LevelTabs({ value, onChange, counts, showSaved, className, compa
                     layoutId="level-tab-bg"
                     aria-hidden
                     className="absolute inset-0 -z-10 rounded-[10px]"
-                    style={{
-                      background:
-                        'linear-gradient(140deg, var(--lv), color-mix(in oklab, var(--lv) 60%, var(--color-ink)))',
-                    }}
+                    style={{ background: 'var(--lv)' }}
                     transition={{ type: 'spring', stiffness: 300, damping: 32 }}
                   />
                 )}
@@ -125,12 +122,13 @@ export function LevelTabs({ value, onChange, counts, showSaved, className, compa
                   className="pointer-events-none absolute inset-0 -z-[5] bg-[radial-gradient(circle_at_15%_0%,rgb(255_255_255/0.28),transparent_55%)] opacity-0 transition-opacity duration-500 group-hover:opacity-100"
                   style={{ opacity: active ? 1 : undefined }}
                 />
-                {/* Inicial enorme como marca de agua, también con profundidad */}
+                {/* Monograma del nivel con profundidad: entero dentro de la losa (v5; antes se
+                    recortaba en el borde y parecía un error) */}
                 <span
                   aria-hidden
                   className={cn(
-                    'pointer-events-none absolute -right-3 -bottom-7 select-none transition-opacity duration-500',
-                    active ? 'opacity-30' : 'opacity-[0.08] group-hover:opacity-[0.18]'
+                    'pointer-events-none absolute top-10 right-3 select-none transition-opacity duration-500',
+                    active ? 'opacity-25' : 'opacity-[0.1] group-hover:opacity-[0.2]'
                   )}
                 >
                   <DepthText
@@ -139,7 +137,7 @@ export function LevelTabs({ value, onChange, counts, showSaved, className, compa
                     depth={1.2}
                     faceColor={active ? 'var(--color-paper)' : 'var(--fg)'}
                     depthColor={active ? 'var(--color-ink)' : 'var(--lv)'}
-                    fontSize="6rem"
+                    fontSize="2.6rem"
                     tilt={4}
                     shadow={false}
                     pointerTracking={false}

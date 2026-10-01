@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { UniversitiesBento } from '@/components/sections/UniversitiesBento';
-import { api, critical } from '@/lib/api';
+import { api, critical, safe } from '@/lib/api';
+import { countByUniversity } from '@/lib/format';
 import { pageMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = pageMetadata({
@@ -14,7 +15,10 @@ export const metadata: Metadata = pageMetadata({
 const EMPTY = { data: [], meta: { pagination: { page: 1, pageSize: 0, pageCount: 0, total: 0 } } };
 
 export default async function UniversidadesPage() {
-  const universities = await critical(api.universities(), EMPTY);
+  const [universities, programs] = await Promise.all([
+    critical(api.universities(), EMPTY),
+    safe(api.allPrograms(), EMPTY),
+  ]);
   return (
     <>
       <PageHeader
@@ -24,7 +28,10 @@ export default async function UniversidadesPage() {
         intro="Las nueve universidades que forman el Foro. Abre el perfil de cada una para ver quién la representa y qué programas ofrece."
       />
       <div className="container-x pb-[var(--section-y)]">
-        <UniversitiesBento universities={universities.data} />
+        <UniversitiesBento
+          universities={universities.data}
+          programCounts={countByUniversity(programs.data)}
+        />
       </div>
     </>
   );

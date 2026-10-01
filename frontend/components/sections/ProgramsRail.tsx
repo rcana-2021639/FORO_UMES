@@ -11,7 +11,6 @@ import { LevelTabs, countByLevel, type LevelFilter } from '@/components/ui/Level
 import { useSavedPrograms } from '@/hooks/useSavedPrograms';
 import { LEVEL_LABEL, MODALITY_LABEL, acronymOf } from '@/lib/format';
 import { LEVEL_META } from '@/lib/levels';
-import { cn } from '@/lib/cn';
 import type { AcademicProgram } from '@/lib/types';
 
 /**
@@ -128,33 +127,13 @@ function ProgramCard({
 }) {
   const meta = LEVEL_META[p.level];
   return (
-    <article
-      className="relative flex h-full flex-col justify-between overflow-hidden p-7 text-paper md:p-8"
-      style={{
-        background: `linear-gradient(160deg, ${meta.color}, color-mix(in oklab, ${meta.color} 55%, var(--color-ink)))`,
-      }}
-    >
-      {/* Grano y luz para que la losa no sea un color plano */}
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(255,255,255,0.22),transparent_55%)]"
-      />
-      {/* Marca de agua: la inicial del nivel al fondo */}
-      <span
-        aria-hidden
-        className="pointer-events-none absolute -right-4 -bottom-10 font-display text-[11rem] leading-none font-light tracking-[-0.06em] text-paper/10 select-none"
-        style={{ fontVariationSettings: "'opsz' 144, 'SOFT' 80" }}
-      >
-        {meta.glyph}
-      </span>
-
+    <article className="program-card" style={{ '--lv': meta.color } as React.CSSProperties}>
       <div className="relative flex items-start justify-between gap-3">
-        <div>
-          <span className="ui-label inline-block rounded-full bg-paper/20 px-2.5 py-0.5">
-            {LEVEL_LABEL[p.level]}
-          </span>
-          <span className="mono-label mt-2 block text-paper/70">{acronymOf(p.university)}</span>
-        </div>
+        <p className="program-card__kicker">
+          <span>{LEVEL_LABEL[p.level]}</span>
+          <span aria-hidden>·</span>
+          <span>{acronymOf(p.university)}</span>
+        </p>
         <PulseStar
           active={saved}
           onToggle={onToggleSave}
@@ -164,33 +143,24 @@ function ProgramCard({
         />
       </div>
 
-      <h3
-        className="relative mt-8 text-[1.85rem] leading-[1.06] text-paper"
-        style={{ fontVariationSettings: "'opsz' 48, 'SOFT' 30" }}
-      >
-        {p.name}
-      </h3>
+      <h3 className="program-card__title">{p.name}</h3>
 
       <div className="relative mt-auto">
-        <dl className="ui-label flex flex-wrap gap-x-4 gap-y-1 text-paper/80">
+        <dl className="program-card__facts">
           <div>
-            <dt className="sr-only">Modalidad</dt>
+            <dt>Modalidad</dt>
             <dd>{MODALITY_LABEL[p.modality]}</dd>
           </div>
           {p.duration && (
             <div>
-              <dt className="sr-only">Duración</dt>
+              <dt>Duración</dt>
               <dd>{p.duration}</dd>
             </div>
           )}
         </dl>
-        <span
-          className={cn('mt-5 flex items-center justify-between border-t border-paper/25 pt-4')}
-        >
-          <span className="ui-label">{p.infoUrl ? 'Ficha oficial' : 'Ir a la universidad'}</span>
-          <span className="font-display text-[1.3rem] leading-none" aria-hidden>
-            {p.infoUrl ? '↗' : '→'}
-          </span>
+        <span className="program-card__go">
+          <span>{p.infoUrl ? 'Ver la ficha oficial' : 'Ir a la universidad'}</span>
+          <span aria-hidden>{p.infoUrl ? '↗' : '→'}</span>
         </span>
       </div>
     </article>
