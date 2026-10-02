@@ -13,6 +13,7 @@ import { useQuality } from '@/lib/quality';
 import { EASE } from '@/lib/motion';
 import { cn } from '@/lib/cn';
 import type { NewsItem } from '@/lib/types';
+import { Arrow } from '@/components/ui/Arrow';
 
 const ElasticMesh = dynamic(
   () => import('@/components/fx/ElasticMesh').then((m) => m.ElasticMesh),
@@ -162,7 +163,7 @@ export function NewsMorph({ news }: { news: NewsItem[] }) {
             <Link href={`/noticias/${item.documentId}`} className="news-copy__cta">
               Leer la nota
               <span aria-hidden className="news-copy__arrow">
-                →
+                <Arrow />
               </span>
             </Link>
           </motion.div>
@@ -232,7 +233,7 @@ export function NewsMorph({ news }: { news: NewsItem[] }) {
           })}
         </ol>
         <Link href="/noticias" data-reveal="up" className="news-index__all">
-          Ver todas las noticias <span aria-hidden>→</span>
+          Ver todas las noticias <Arrow />
         </Link>
       </div>
     </div>

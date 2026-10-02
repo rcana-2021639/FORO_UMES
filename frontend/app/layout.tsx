@@ -4,6 +4,7 @@ import './globals.css';
 import '@/styles/v3.css';
 import '@/styles/v4.css';
 import '@/styles/v5.css';
+import '@/styles/v6.css';
 import { SmoothScroll } from '@/components/providers/SmoothScroll';
 import { ToasterMount } from '@/components/feedback/ToasterMount';
 import { GooeyDefs } from '@/components/ui/GooeyDefs';

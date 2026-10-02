@@ -7,6 +7,7 @@ import { Words } from '@/components/ui/Words';
 import { describeError } from '@/lib/api';
 
 import { SoftOrb } from '@/components/ui/SoftOrb';
+import { Arrow } from '@/components/ui/Arrow';
 
 /** Lo que más se busca en el sitio: quien llega a un error no queda sin salida. */
 const SHORTCUTS = [
@@ -77,7 +78,7 @@ export function ErrorScreen({ code, title, text, error, retry, bare }: Props) {
             {SHORTCUTS.map((s) => (
               <li key={s.href}>
                 <a href={s.href}>
-                  {s.label} <span aria-hidden>→</span>
+                  {s.label} <Arrow />
                 </a>
               </li>
             ))}

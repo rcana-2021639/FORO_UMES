@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { UniversityProfile } from '@/components/sections/UniversityProfile';
 import { JsonLd } from '@/components/seo/JsonLd';
-import { api, findOne, safe } from '@/lib/api';
+import { api, findOne, safe, staticIds } from '@/lib/api';
 import { excerpt } from '@/lib/format';
 import { breadcrumbJsonLd, universityJsonLd } from '@/lib/json-ld';
 import { pageMetadata } from '@/lib/seo';
@@ -11,6 +11,11 @@ import type { University } from '@/lib/types';
 type Params = { params: Promise<{ documentId: string }> };
 
 const load = (id: string) => findOne<University>(id, api.university);
+
+/** Generadas por adelantado y renovadas solas: abren al instante (ver staticIds en lib/api.ts). */
+export function generateStaticParams() {
+  return staticIds(api.universities());
+}
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { documentId } = await params;

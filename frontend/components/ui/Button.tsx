@@ -5,6 +5,7 @@ import { useCallback, useRef, type ReactNode } from 'react';
 import { motion, useMotionTemplate, useMotionValue, useSpring } from 'motion/react';
 import { useMagnetic } from '@/hooks/useMagnetic';
 import { cn } from '@/lib/cn';
+import { Arrow } from './Arrow';
 
 /**
  * Sistema de botones "sello líquido" (DESIGN_NOTES §9):
@@ -29,12 +30,18 @@ export interface ButtonProps {
   className?: string;
   onClick?: (e: React.MouseEvent<HTMLElement>) => void;
   'aria-label'?: string;
+  /**
+   * Flecha al final (DESIGN_NOTES §28.3): los botones que llevan a otra página la tienen sola
+   * (`right`, o `up-right` si salen del sitio). `false` la quita; en `ghost` va dentro del texto.
+   */
+  arrow?: 'right' | 'up-right' | 'left' | 'down' | false;
 }
 
 const BASE =
   'group relative isolate inline-flex select-none items-center justify-center overflow-visible ' +
   'rounded-[6px] border font-sans text-[0.93rem] font-semibold tracking-[-0.003em] ' +
-  'transition-[border-color,opacity] duration-300 disabled:cursor-not-allowed disabled:opacity-50';
+  'transition-[border-color,opacity,scale] duration-300 active:scale-[0.97] ' +
+  'disabled:cursor-not-allowed disabled:opacity-50';
 
 const VARIANT: Record<Variant, string> = {
   primary: 'h-12 gap-3 border-fg bg-bg px-6 text-fg',
@@ -61,6 +68,7 @@ export function Button({
   disabled,
   className,
   onClick,
+  arrow,
   ...rest
 }: ButtonProps) {
   const { ref: magnetRef } = useMagnetic<HTMLAnchorElement & HTMLButtonElement>({
@@ -118,6 +126,14 @@ export function Button({
 
   const isLiquid = variant !== 'ghost';
   const classes = cn(BASE, VARIANT[variant], className);
+  const isExternal = !!href && (external ?? /^https?:/.test(href));
+  const trailing =
+    arrow ??
+    (href && variant !== 'ghost' && variant !== 'icon'
+      ? isExternal
+        ? 'up-right'
+        : 'right'
+      : false);
 
   const label = loading ? (
     <span className="inline-flex items-baseline">
@@ -128,6 +144,11 @@ export function Button({
         <span className="animate-dot [animation-delay:320ms]">.</span>
       </span>
     </span>
+  ) : trailing ? (
+    <>
+      {children}
+      <Arrow dir={trailing} />
+    </>
   ) : (
     children
   );
@@ -168,7 +189,6 @@ export function Button({
   };
 
   if (href) {
-    const isExternal = external ?? /^https?:/.test(href);
     if (isExternal) {
       return (
         <a ref={magnetRef} href={href} target="_blank" rel="noopener noreferrer" {...shared}>

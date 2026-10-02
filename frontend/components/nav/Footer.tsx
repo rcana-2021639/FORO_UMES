@@ -49,7 +49,7 @@ export async function Footer() {
             className="site-footer__brand"
             aria-label="Foro Interuniversitario, inicio"
           >
-            <Emblem className="h-12 w-12" />
+            <Emblem className="h-12 w-12" motion="scroll" />
             <span>
               <span className="site-footer__name">Foro Interuniversitario</span>
               <span className="site-footer__sub">de Estudios de Posgrado · Guatemala</span>

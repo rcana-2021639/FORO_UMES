@@ -13,6 +13,7 @@ import { EASE, stagger } from '@/lib/motion';
 import { cn } from '@/lib/cn';
 import type { Activity, ActivityType } from '@/lib/types';
 import { DEEP, PALETTE } from '@/lib/palette';
+import { Arrow } from '@/components/ui/Arrow';
 
 const TYPES: ActivityType[] = ['Encuentro', 'Conferencia', 'Seminario', 'Reunion', 'Proyecto'];
 
@@ -220,7 +221,7 @@ function Ticket({ a, i }: { a: Activity; i: number }) {
               aria-hidden
               className="transition-transform duration-500 group-hover:translate-x-1"
             >
-              →
+              <Arrow />
             </span>
           </span>
         </Link>

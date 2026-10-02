@@ -12,6 +12,7 @@ import { EASE } from '@/lib/motion';
 import { cn } from '@/lib/cn';
 import { brandOf } from '@/lib/universities';
 import type { Milestone } from '@/lib/milestones';
+import { Arrow } from '@/components/ui/Arrow';
 
 /** Color de cada tipo de hito, siempre dentro de la familia violeta. */
 const TONE: Record<string, string> = {
@@ -279,7 +280,7 @@ function Card({
             <Image src={m.image} alt="" fill sizes="360px" className="ms-card__img object-cover" />
             <span className="ms-card__shade" aria-hidden />
             <span className="ms-card__peek" aria-hidden>
-              Ver actividad <span>→</span>
+              Ver actividad <Arrow />
             </span>
           </>
         ) : (

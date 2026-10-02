@@ -8,6 +8,8 @@ import { Word, Words } from '@/components/ui/Words';
 import { gsap } from '@/lib/gsap';
 import { getQuality } from '@/lib/quality';
 import { LEVELS, LEVEL_META } from '@/lib/levels';
+import { Arrow } from '@/components/ui/Arrow';
+import { MagnifyingGlassIcon } from '@phosphor-icons/react/dist/ssr';
 
 export interface HeroUniversity {
   acronym: string;
@@ -145,15 +147,7 @@ export function Hero({ year, counts, universities }: Props) {
               ¿Qué quieres estudiar?
             </label>
             <div className="hero-search__field">
-              <svg aria-hidden viewBox="0 0 20 20" className="hero-search__icon" fill="none">
-                <circle cx="8.5" cy="8.5" r="5.75" stroke="currentColor" strokeWidth="1.6" />
-                <path
-                  d="m13 13 4 4"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                />
-              </svg>
+              <MagnifyingGlassIcon aria-hidden className="hero-search__icon" />
               <input
                 id="hero-q"
                 name="q"
@@ -164,7 +158,7 @@ export function Hero({ year, counts, universities }: Props) {
                 className="hero-search__input"
               />
               <button type="submit" className="cta-violet hero-search__btn">
-                Buscar <span aria-hidden>→</span>
+                Buscar <Arrow />
               </button>
             </div>
             <p className="hero-search__quick">
@@ -195,7 +189,7 @@ export function Hero({ year, counts, universities }: Props) {
                 <span className="path-card__title">
                   {p.title}
                   <span className="path-card__arrow" aria-hidden>
-                    →
+                    <Arrow />
                   </span>
                 </span>
                 <span className="path-card__text">{p.text}</span>

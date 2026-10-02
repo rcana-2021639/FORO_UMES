@@ -4,16 +4,22 @@ import { notFound } from 'next/navigation';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Prose } from '@/components/ui/Prose';
 import { Button } from '@/components/ui/Button';
-import { api, findOne, mediaUrl } from '@/lib/api';
+import { api, findOne, mediaUrl, staticIds } from '@/lib/api';
 import { excerpt, formatDate } from '@/lib/format';
 import { breadcrumbJsonLd, newsArticleJsonLd } from '@/lib/json-ld';
 import { pageMetadata } from '@/lib/seo';
 import { JsonLd } from '@/components/seo/JsonLd';
 import type { NewsItem } from '@/lib/types';
+import { Arrow } from '@/components/ui/Arrow';
 
 type Params = { params: Promise<{ documentId: string }> };
 
 const load = (id: string) => findOne<NewsItem>(id, api.newsItem);
+
+/** Generadas por adelantado y renovadas solas: abren al instante (ver staticIds en lib/api.ts). */
+export function generateStaticParams() {
+  return staticIds(api.news({ 'pagination[pageSize]': 50 }));
+}
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { documentId } = await params;
@@ -76,7 +82,7 @@ export default async function NoticiaPage({ params }: Params) {
           <Prose markdown={n.content} />
           <div data-reveal="up" className="mt-16 border-t border-line pt-8">
             <Button variant="ghost" href="/noticias">
-              ← Archivo de noticias
+              <Arrow dir="left" /> Archivo de noticias
             </Button>
           </div>
         </div>

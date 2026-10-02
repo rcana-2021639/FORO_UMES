@@ -81,6 +81,8 @@ const nextConfig: NextConfig = {
   turbopack: { root: path.resolve(__dirname) },
   // Sin X-Powered-By: no anunciar la tecnología del servidor
   poweredByHeader: false,
+  // Iconos (DESIGN_NOTES §28.3): importar un icono carga solo ese archivo, no los 1 500 de la librería
+  experimental: { optimizePackageImports: ['@phosphor-icons/react'] },
   images: {
     dangerouslyAllowLocalIP: localApi,
     // Lista cerrada: el optimizador de imágenes solo procesa estos orígenes. Un comodín como

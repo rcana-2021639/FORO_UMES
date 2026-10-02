@@ -5,6 +5,7 @@ import { useId, useRef, useState, type FormEvent } from 'react';
 import { sileo } from 'sileo';
 import { api, ApiError, describeError } from '@/lib/api';
 import { cn } from '@/lib/cn';
+import { Arrow } from '@/components/ui/Arrow';
 
 const AUDIENCES = [
   {
@@ -153,7 +154,7 @@ export function ContactForm() {
                 </span>
                 <span className="contact__who-word">{a.who}</span>
                 <span className="contact__who-arrow" aria-hidden>
-                  →
+                  <Arrow />
                 </span>
               </button>
               <span className="contact__who-what" aria-hidden>
@@ -289,7 +290,7 @@ export function ContactForm() {
             <span>{sending ? 'Enviando…' : sent ? 'Enviar otro mensaje' : 'Enviar mensaje'}</span>
             <span className="contact__send-line" aria-hidden />
             <span className="contact__send-arrow" aria-hidden>
-              →
+              <Arrow />
             </span>
           </button>
           {sent && !sending && (

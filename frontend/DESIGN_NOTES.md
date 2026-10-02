@@ -1,7 +1,7 @@
 # DESIGN_NOTES — Frontend del Foro Interuniversitario de Estudios de Posgrado
 
 > Documento de dirección de diseño. Se escribe **antes** de codear y se actualiza si la dirección cambia.
-> Estado: **v3.0 "Blanco y violeta"** (ver §23; §19–§22 describen v2.0 y siguen vigentes en lo que no contradiga a §23). Las notas marcadas con ▸ registran desvíos respecto a la propuesta inicial y su motivo.
+> Estado: **v6.0 "Nueve en uno"** (§28) sobre v5 "Anuario" (§27) y v3.0 "Blanco y violeta" (§23; §19–§22 describen v2.0 y siguen vigentes en lo que no contradiga a §23). Las notas marcadas con ▸ registran desvíos respecto a la propuesta inicial y su motivo.
 
 ---
 
@@ -561,3 +561,77 @@ Mejorar **lo visual** sin tocar las animaciones existentes (se conservan todas; 
 | Galería                         | Pie de foto apilado (fecha en versalitas, título en dos líneas); enlaces de video con nombre accesible.                                                                                                                                                                                                               |
 | Errores                         | Atajos a lo más buscado; el orbe baja en el teléfono para no cruzar el texto.                                                                                                                                                                                                                                         |
 | Marca                           | Emblema (9 maya) en barra, pie, favicon, íconos de Android/iOS e imagen para compartir; el pie explica qué significa.                                                                                                                                                                                                 |
+
+## 28. v6.0 — "Nueve en uno": movimiento con sentido, vistas con personalidad
+
+### 28.1 Encargo
+
+Que todo se vea profesional, moderno, interactivo y **único** (no genérico), con entradas animadas,
+botones vivos y transiciones; rehacer una vista solo si de verdad hace falta; **conservar todas las
+animaciones existentes** (se pueden mejorar o sumar, nunca quitar). Trabajo por fases, minucioso,
+verificado en escritorio y teléfono.
+
+### 28.2 Auditoría de la v5 (capturas 1440 y 390, 12 vistas)
+
+| Qué delata plantilla o estorba                                                                  | Dónde                      |
+| ----------------------------------------------------------------------------------------------- | -------------------------- |
+| La misma cabecera lila (migas, etiqueta, título, párrafo) en las ocho páginas internas          | Todas las páginas internas |
+| El mismo encabezado en los siete capítulos de la portada                                        | Portada                    |
+| Cambiar de página es un corte seco: la foto o el sello que pulsaste desaparece y "vuelve"       | Navegación                 |
+| Fichas planas con poca información (universidades, aportes); huérfana en 2 columnas (9 = 4+4+1) | Portada, /universidades    |
+| Vacíos de 150–250 px entre bloques                                                              | Portada                    |
+| La portada de la nota destacada queda en un marco con franjas                                   | /noticias                  |
+| 24 actividades pasadas en boletos de 280 px sin agrupar: 15 000 px                              | /actividades               |
+| Iconos dibujados a mano, cada uno con su trazo                                                  | Todo el sitio              |
+
+### 28.3 Dirección
+
+**Firma, en una frase:** nueve puntos —las nueve universidades— que se juntan en el 9 maya (cinco se
+funden en la barra, cuatro quedan como puntos). Es el emblema, y ahora se mueve: se arma al abrir
+el sitio, mientras carga una página y al pasar el cursor por la marca. Las cifras del Foro se
+escriben también en numeración maya (posicional, base 20, con su concha para el cero): solo tiene
+sentido aquí.
+
+**Movimiento:** tono editorial-institucional: calmado y preciso, nada rebota sin motivo. Lo nuevo
+es la **continuidad**: al cambiar de página, lo que pulsaste viaja a su sitio (sello → cabecera del
+perfil, foto → portada de la nota) con `<ViewTransition>` de React; el resto se funde rápido y la
+barra queda quieta. Los filtros reacomodan las fichas en su lugar (GSAP Flip) en vez de repartirlas
+de nuevo.
+
+**Iconos:** Phosphor (`@phosphor-icons/react`), peso `regular` en interfaz y `duotone` en piezas
+destacadas, en violeta: un solo sistema de trazo para todo el sitio.
+
+### 28.4 Fases
+
+1. **Sistema:** iconos, emblema que se arma (marca, carga, errores), numeral maya posicional,
+   botones (flecha que atraviesa, presión), transiciones entre páginas con elementos compartidos.
+2. **Portada:** frase con vistas previas al pasar por sus enlaces, cifras con su numeral maya,
+   universidades con el espectro de su oferta (y en filas en el teléfono), aportes, ritmo.
+3. **Universidades y perfil:** cabecera propia, vista "Comparar" (tabla ordenable), perfil con
+   índice fijo y filtros que reacomodan.
+4. **Programas:** cabecera con buscador y conteo vivo, filtros con Flip, comparador de guardados.
+5. **Actividades, noticias y galería:** cabeceras propias (cuenta regresiva a la próxima actividad,
+   cabecera de periódico, mosaico), actividades por año, artículos con tiempo de lectura y nota
+   siguiente, visor de fotos.
+6. **Buscador global** (Ctrl/⌘ K), contacto, pie y pantallas de error.
+7. **Revisión final:** 360–1920 px, menos movimiento, modo liviano, rendimiento, pruebas, build.
+
+### 28.5 Registro por fase
+
+**Fase 1 — Sistema.**
+
+- `Emblem` con `motion`: `assemble` (barra de navegación: los nueve asientos se encienden, viajan y
+  cinco se funden en la barra; al pasar el cursor, los cuatro puntos saltan en orden), `loop`
+  (pantalla de carga) y `scroll` (pie: se arma con el scroll, `animation-timeline: view()`). CSS
+  puro: corre antes de hidratar y con menos movimiento aparece armado.
+- `MayaNumber`: numeración maya posicional (base 20, cifra mayor arriba, concha para el cero) y
+  `mayaReading()` para su lectura en palabras. Pruebas en `tests/maya.test.ts`.
+- Transiciones entre páginas: `<ViewTransition>` en `app/template.tsx`; la barra y el progreso de
+  lectura quedan anclados; la losa de una universidad crece hasta ser la cabecera de su perfil
+  (`share="uni-morph"`). Para que el par se forme, la página de destino tiene que estar lista en el
+  mismo instante: las páginas de detalle (universidades, noticias, actividades) ahora se generan
+  por adelantado con `generateStaticParams` + ISR (`staticIds` en `lib/api.ts`) y abren al instante.
+  En desarrollo (sin precarga) se ve la transición general, no el viaje de la losa.
+- Iconos Phosphor y `Arrow` (flecha que sale por su lado y entra por el opuesto) en lugar de los
+  caracteres → ↗ ← ↓ ✉; `Button` la pone sola en los botones que llevan a otra página y se hunde al
+  presionar (`scale`, que no choca con el `transform` del efecto magnético).

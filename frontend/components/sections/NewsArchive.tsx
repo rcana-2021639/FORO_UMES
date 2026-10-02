@@ -11,6 +11,7 @@ import { excerpt, formatDate, folio } from '@/lib/format';
 import { useFinePointer, useReducedMotion } from '@/hooks/useReducedMotion';
 import { useQuality } from '@/lib/quality';
 import type { NewsItem } from '@/lib/types';
+import { Arrow } from '@/components/ui/Arrow';
 
 const ElasticMesh = dynamic(
   () => import('@/components/fx/ElasticMesh').then((m) => m.ElasticMesh),
@@ -187,7 +188,7 @@ function Featured({ item, elastic }: { item: NewsItem; elastic: boolean }) {
               </span>
             )}
             <span className="ui-label mt-5 inline-flex w-fit items-center gap-2 rounded-[6px] border border-paper/40 px-4 py-2 font-semibold text-paper transition-[background-color,color,border-color] duration-300 group-hover:border-clay group-hover:bg-clay group-hover:text-ink">
-              Leer la nota <span aria-hidden>→</span>
+              Leer la nota <Arrow />
             </span>
           </span>
         </Link>
@@ -256,7 +257,7 @@ function Card({ item, n }: { item: NewsItem; n: number }) {
                 aria-hidden
                 className="transition-transform duration-300 group-hover:translate-x-1"
               >
-                →
+                <Arrow />
               </span>
             </span>
           </div>

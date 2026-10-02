@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { CONTRIBUTION_LABEL, excerpt, formatDate } from '@/lib/format';
 import type { Contribution, ContributionType } from '@/lib/types';
+import { Arrow } from '@/components/ui/Arrow';
 
 const TONE: Record<ContributionType, { rule: string; hint: string }> = {
   Resultado: { rule: 'var(--color-sage)', hint: 'Ya ocurrió y se puede medir' },
@@ -49,8 +50,7 @@ export function ContributionsStrip({ contributions }: { contributions: Contribut
             </span>
             {c.relatedActivity && (
               <span className="ui-label mt-4 inline-flex items-center gap-2 text-fg">
-                Salió de: {c.relatedActivity.title ?? 'una actividad del Foro'}{' '}
-                <span aria-hidden>→</span>
+                Salió de: {c.relatedActivity.title ?? 'una actividad del Foro'} <Arrow />
               </span>
             )}
           </>

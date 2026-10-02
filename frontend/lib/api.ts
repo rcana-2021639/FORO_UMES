@@ -345,3 +345,16 @@ export function parsePage(raw: string | string[] | undefined): number {
   const n = Number(Array.isArray(raw) ? raw[0] : raw);
   return Number.isSafeInteger(n) && n >= 1 ? Math.min(n, MAX_PAGE) : 1;
 }
+
+/**
+ * Los `documentId` de un listado para `generateStaticParams`: esas páginas de detalle se generan
+ * por adelantado y se renuevan solas (ISR), así que abren al instante y la transición entre
+ * páginas puede llevar el elemento pulsado a su sitio (DESIGN_NOTES §28.3). Si la API no responde
+ * durante el build se devuelve una lista vacía: las páginas se generan al pedirse, como antes.
+ */
+export async function staticIds(
+  list: Promise<ListResponse<{ documentId: string }>>
+): Promise<{ documentId: string }[]> {
+  const r = await safe(list, null);
+  return (r?.data ?? []).map((x) => ({ documentId: x.documentId }));
+}

@@ -9,6 +9,7 @@ import { MobileMenu } from './MobileMenu';
 import { Emblem } from '@/components/ui/Emblem';
 import { cn } from '@/lib/cn';
 import { NAV_ITEMS } from '@/lib/nav';
+import { MagnifyingGlassIcon } from '@phosphor-icons/react/dist/ssr';
 
 /** Muelle firme y sin rebote: el indicador llega rápido y se asienta sin temblar. */
 const SLIDE = { type: 'spring', stiffness: 520, damping: 42, mass: 0.7 } as const;
@@ -58,7 +59,7 @@ export function Navbar() {
             className="nav-brand"
             aria-label="Foro Interuniversitario de Estudios de Posgrado, inicio"
           >
-            <Emblem className="nav-brand__mark" />
+            <Emblem className="nav-brand__mark" motion="assemble" />
             <span aria-hidden className="nav-brand__name">
               <span className="nav-brand__line1">Foro Interuniversitario</span>
               <span className="nav-brand__line2">de Estudios de Posgrado</span>
@@ -105,7 +106,7 @@ export function Navbar() {
           </nav>
 
           <Link href="/programas#buscar" className="nav-search" aria-label="Buscar un programa">
-            <SearchIcon />
+            <MagnifyingGlassIcon aria-hidden weight="bold" className="h-[1.05rem] w-[1.05rem]" />
             <span>Buscar programa</span>
           </Link>
 
@@ -125,15 +126,6 @@ export function Navbar() {
 
       <MobileMenu open={open} onClose={() => setOpen(false)} activeIndex={activeIndex} />
     </>
-  );
-}
-
-function SearchIcon() {
-  return (
-    <svg aria-hidden viewBox="0 0 20 20" className="h-[1.05rem] w-[1.05rem]" fill="none">
-      <circle cx="8.5" cy="8.5" r="5.75" stroke="currentColor" strokeWidth="1.6" />
-      <path d="m13 13 4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
   );
 }
 

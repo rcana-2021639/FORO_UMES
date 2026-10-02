@@ -12,6 +12,7 @@ import { useSavedPrograms } from '@/hooks/useSavedPrograms';
 import { LEVEL_LABEL, MODALITY_LABEL, acronymOf } from '@/lib/format';
 import { LEVEL_META } from '@/lib/levels';
 import type { AcademicProgram } from '@/lib/types';
+import { Arrow } from '@/components/ui/Arrow';
 
 /**
  * Capítulo 03 · Programas. Arriba, el selector de nivel a lo grande (una losa por nivel con
@@ -160,7 +161,7 @@ function ProgramCard({
         </dl>
         <span className="program-card__go">
           <span>{p.infoUrl ? 'Ver la ficha oficial' : 'Ir a la universidad'}</span>
-          <span aria-hidden>{p.infoUrl ? '↗' : '→'}</span>
+          <Arrow dir={p.infoUrl ? 'up-right' : 'right'} />
         </span>
       </div>
     </article>

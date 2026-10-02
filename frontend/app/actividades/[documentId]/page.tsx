@@ -5,16 +5,22 @@ import { notFound } from 'next/navigation';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Prose } from '@/components/ui/Prose';
 import { Button } from '@/components/ui/Button';
-import { api, findOne, mediaUrl } from '@/lib/api';
+import { api, findOne, mediaUrl, staticIds } from '@/lib/api';
 import { ACTIVITY_LABEL, CONTRIBUTION_LABEL, acronymOf, excerpt, formatDate } from '@/lib/format';
 import { breadcrumbJsonLd, eventJsonLd } from '@/lib/json-ld';
 import { pageMetadata } from '@/lib/seo';
 import { JsonLd } from '@/components/seo/JsonLd';
 import type { Activity } from '@/lib/types';
+import { Arrow } from '@/components/ui/Arrow';
 
 type Params = { params: Promise<{ documentId: string }> };
 
 const load = (id: string) => findOne<Activity>(id, api.activity);
+
+/** Generadas por adelantado y renovadas solas: abren al instante (ver staticIds en lib/api.ts). */
+export function generateStaticParams() {
+  return staticIds(api.activities({ 'pagination[pageSize]': 50 }));
+}
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { documentId } = await params;
@@ -139,7 +145,7 @@ export default async function ActividadPage({ params }: Params) {
           )}
           <div className="mt-12">
             <Button variant="ghost" href="/actividades">
-              ← Todas las actividades
+              <Arrow dir="left" /> Todas las actividades
             </Button>
           </div>
         </aside>

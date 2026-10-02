@@ -1,0 +1,384 @@
+/* v6.0 "Nueve en uno" (DESIGN_NOTES §28). Se carga después de v5.css. Suma movimiento con sentido
+   (el emblema que se arma, transiciones entre páginas, botones vivos) y da a cada vista su propia
+   cara, sin quitar ninguna animación anterior: donde una pieza ya se movía, aquí solo se viste. */
+
+:root {
+  /* Curvas con nombre que se suman a las de tokens.css (nunca `ease`) */
+  --ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-swift: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* ============================================================================================
+   Emblema que se arma (components/ui/Emblem.tsx, prop `motion`)
+   Nueve asientos en círculo se encienden uno a uno, viajan a su sitio y cinco se funden en la
+   barra. Solo transform/opacity sobre un SVG de 40 unidades: cuesta lo mismo que un fundido.
+   ============================================================================================ */
+.emblem-fx {
+  --em-delay: 0.25s;
+  overflow: visible;
+}
+.emblem-fx__dot,
+.emblem-fx__fuse,
+.emblem-fx__bar {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+/* En reposo (y con menos movimiento) el 9 ya está armado: los puntos de la barra no se ven */
+.emblem-fx__fuse {
+  opacity: 0;
+}
+
+.emblem-fx--assemble .emblem-fx__dot,
+.emblem-fx--assemble .emblem-fx__fuse {
+  animation:
+    em-pop 0.42s var(--ease-pop) calc(var(--em-delay) + var(--s) * 55ms) both,
+    em-travel 0.78s var(--ease-cinematic) calc(var(--em-delay) + 0.66s) both;
+}
+.emblem-fx--assemble .emblem-fx__fuse {
+  animation:
+    em-pop 0.42s var(--ease-pop) calc(var(--em-delay) + var(--s) * 55ms) both,
+    em-travel 0.78s var(--ease-cinematic) calc(var(--em-delay) + 0.66s) both,
+    em-fuse 0.3s var(--ease-snap) calc(var(--em-delay) + 1.32s) both;
+}
+.emblem-fx--assemble .emblem-fx__bar {
+  animation: em-bar 0.42s var(--ease-out-premium) calc(var(--em-delay) + 1.22s) both;
+}
+@keyframes em-pop {
+  from {
+    scale: 0;
+  }
+}
+@keyframes em-travel {
+  from {
+    translate: var(--x) var(--y);
+  }
+}
+@keyframes em-fuse {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes em-bar {
+  from {
+    opacity: 0;
+    scale: 0.92 0.6;
+  }
+}
+
+/* Carga: se arma, se sostiene y se desarma sin parar (2.8 s por vuelta) */
+.emblem-fx--loop .emblem-fx__dot,
+.emblem-fx--loop .emblem-fx__fuse {
+  animation: em-loop-dot 2.8s var(--ease-cinematic) calc(var(--s) * 45ms) infinite both;
+}
+.emblem-fx--loop .emblem-fx__fuse {
+  animation-name: em-loop-dot, em-loop-fuse;
+}
+.emblem-fx--loop .emblem-fx__bar {
+  animation: em-loop-bar 2.8s var(--ease-snap) infinite both;
+}
+@keyframes em-loop-dot {
+  0% {
+    scale: 0;
+    translate: var(--x) var(--y);
+  }
+  14%,
+  28% {
+    scale: 1;
+    translate: var(--x) var(--y);
+  }
+  50%,
+  80% {
+    scale: 1;
+    translate: 0 0;
+  }
+  94% {
+    scale: 1;
+    translate: var(--x) var(--y);
+  }
+  100% {
+    scale: 0;
+    translate: var(--x) var(--y);
+  }
+}
+@keyframes em-loop-fuse {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  58%,
+  76% {
+    opacity: 0;
+  }
+  84%,
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes em-loop-bar {
+  0%,
+  48% {
+    opacity: 0;
+  }
+  56%,
+  76% {
+    opacity: 1;
+  }
+  84%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Al pasar el cursor por la marca, los cuatro puntos saltan en orden: "seis, siete, ocho, nueve" */
+:hover > .emblem-fx .emblem-fx__hop,
+:focus-visible > .emblem-fx .emblem-fx__hop {
+  animation: em-hop 0.56s var(--ease-pop) calc(var(--i) * 70ms) both;
+}
+@keyframes em-hop {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  42% {
+    translate: 0 -3.2px;
+  }
+}
+
+html[data-quality='still'] .emblem-fx *,
+html[data-quality='still'] .emblem-fx {
+  animation: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .emblem-fx * {
+    animation: none !important;
+  }
+}
+
+/* Pantalla de carga entre rutas */
+.page-loading {
+  display: flex;
+  min-height: 62vh;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: calc(var(--nav-h) + 2rem);
+}
+.page-loading__mark {
+  --emblem-bg: var(--color-violet-800);
+  width: 3.4rem;
+  height: 3.4rem;
+  margin-bottom: 1.4rem;
+}
+
+/* ============================================================================================
+   Transiciones entre páginas (app/template.tsx + <ViewTransition> de React)
+   La que se va se aparta rápido; la nueva sube a su sitio un instante después. La barra, el
+   progreso de lectura y los controles fijos no se mueven: son el ancla que dice "sigues aquí".
+   ============================================================================================ */
+/* Con View Transitions, la transición reemplaza al fundido de .page-enter (si no, serían dos) */
+@supports (view-transition-name: none) {
+  .page-enter {
+    animation: none;
+  }
+}
+.nav-shell {
+  view-transition-name: site-header;
+}
+.scroll-progress {
+  view-transition-name: scroll-progress;
+}
+::view-transition-group(site-header),
+::view-transition-group(scroll-progress) {
+  animation: none;
+  z-index: 100;
+}
+::view-transition-old(site-header),
+::view-transition-old(scroll-progress) {
+  display: none;
+}
+::view-transition-new(site-header),
+::view-transition-new(scroll-progress) {
+  animation: none;
+}
+/* Los clicks durante la transición llegan a la página nueva, no a la capa de la animación */
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-old(.page-out) {
+  animation: vt-page-out 0.22s var(--ease-swift) both;
+}
+::view-transition-new(.page-in) {
+  animation: vt-page-in 0.62s var(--ease-out-premium) 0.12s both;
+}
+@keyframes vt-page-out {
+  to {
+    opacity: 0;
+    translate: 0 -18px;
+    scale: 0.985;
+  }
+}
+@keyframes vt-page-in {
+  from {
+    opacity: 0;
+    translate: 0 34px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}
+
+/* Losa de universidad → cabecera de su perfil: la losa (ya con su color, por el volteo) crece
+   hasta ocupar la cabecera. Ambas capturas llenan el grupo para que el color no se deforme. */
+::view-transition-group(.uni-morph) {
+  animation-duration: 0.72s;
+  animation-timing-function: var(--ease-cinematic);
+  z-index: 50;
+}
+::view-transition-old(.uni-morph),
+::view-transition-new(.uni-morph) {
+  height: 100%;
+  object-fit: cover;
+  overflow: clip;
+}
+/* La nueva entra encima mientras la vieja sigue opaca debajo: nunca se ven las dos a medias */
+::view-transition-old(.uni-morph) {
+  animation: vt-fade-out 0.3s var(--ease-snap) 0.16s both;
+}
+::view-transition-new(.uni-morph) {
+  animation: vt-fade-in 0.3s var(--ease-out-premium) both;
+}
+@keyframes vt-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ============================================================================================
+   Flecha que atraviesa (components/ui/Arrow.tsx): sale por su lado y entra por el opuesto
+   ============================================================================================ */
+.arrow-fx {
+  --ax: 1;
+  --ay: 0;
+  position: relative;
+  display: inline-grid;
+  width: 1.05em;
+  height: 1.05em;
+  flex-shrink: 0;
+  overflow: hidden;
+  vertical-align: -0.16em;
+}
+.arrow-fx--left {
+  --ax: -1;
+}
+.arrow-fx--down {
+  --ax: 0;
+  --ay: 1;
+}
+.arrow-fx--up-right {
+  --ay: -1;
+}
+.arrow-fx > svg {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+  transition: translate 0.5s var(--ease-swift);
+}
+.arrow-fx__b {
+  translate: calc(var(--ax) * -110%) calc(var(--ay) * -110%);
+}
+:is(a, button, [role='button'], .group):is(:hover, :focus-visible) .arrow-fx__a {
+  translate: calc(var(--ax) * 110%) calc(var(--ay) * 110%);
+}
+:is(a, button, [role='button'], .group):is(:hover, :focus-visible) .arrow-fx__b {
+  translate: 0 0;
+}
+html[data-quality='still'] .arrow-fx > svg {
+  transition: none;
+}
+
+/* Pie de página: el 9 se arma con el scroll, a medida que el emblema entra en pantalla. Donde el
+   navegador no tiene animaciones ligadas al scroll, queda armado y quieto. */
+@supports (animation-timeline: view()) {
+  .emblem-fx--scroll {
+    view-timeline-name: --emblem;
+  }
+  .emblem-fx--scroll .emblem-fx__dot,
+  .emblem-fx--scroll .emblem-fx__fuse,
+  .emblem-fx--scroll .emblem-fx__bar {
+    animation-timeline: --emblem;
+    animation-range: entry 0% cover 42%;
+    animation-fill-mode: both;
+    animation-timing-function: linear;
+    animation-duration: auto;
+  }
+  .emblem-fx--scroll .emblem-fx__dot {
+    animation-name: em-scroll-dot;
+  }
+  .emblem-fx--scroll .emblem-fx__fuse {
+    animation-name: em-scroll-dot, em-scroll-fuse;
+  }
+  .emblem-fx--scroll .emblem-fx__bar {
+    animation-name: em-scroll-bar;
+  }
+}
+@keyframes em-scroll-dot {
+  0% {
+    scale: 0;
+    translate: var(--x) var(--y);
+    animation-timing-function: var(--ease-pop);
+  }
+  32% {
+    scale: 1;
+    translate: var(--x) var(--y);
+    animation-timing-function: var(--ease-cinematic);
+  }
+  78%,
+  100% {
+    scale: 1;
+    translate: 0 0;
+  }
+}
+@keyframes em-scroll-fuse {
+  0%,
+  80% {
+    opacity: 1;
+  }
+  94%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes em-scroll-bar {
+  0%,
+  76% {
+    opacity: 0;
+    scale: 0.92 0.6;
+  }
+  92%,
+  100% {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+/* Sin movimiento: tampoco hay transición entre páginas */
+html[data-quality='still']::view-transition-group(*),
+html[data-quality='still']::view-transition-old(*),
+html[data-quality='still']::view-transition-new(*) {
+  animation: none !important;
+}

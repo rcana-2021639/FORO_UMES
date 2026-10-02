@@ -13,6 +13,7 @@ import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { EASE } from '@/lib/motion';
 import { cn } from '@/lib/cn';
 import type { AcademicProgram, ProgramModality } from '@/lib/types';
+import { Arrow } from '@/components/ui/Arrow';
 
 const MODALITIES: ProgramModality[] = ['Presencial', 'Virtual', 'Hibrida'];
 
@@ -361,11 +362,11 @@ function Card({
             className="catalog-card__go"
             aria-label={`Ficha oficial de ${p.name} (se abre en otra pestaña)`}
           >
-            Ficha oficial <span aria-hidden>↗</span>
+            Ficha oficial <Arrow dir="up-right" />
           </a>
         ) : p.university ? (
           <Link href={`/universidades/${p.university.documentId}`} className="catalog-card__go">
-            Universidad <span aria-hidden>→</span>
+            Universidad <Arrow />
           </Link>
         ) : null}
       </div>

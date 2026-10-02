@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, ViewTransition } from 'react';
 import { PixelSwap } from '@/components/ui/PixelSwap';
 import { mediaUrl } from '@/lib/api';
 import { excerpt, yearOf } from '@/lib/format';
@@ -10,6 +10,7 @@ import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useQuality } from '@/lib/quality';
 import { brandOf } from '@/lib/universities';
 import type { University } from '@/lib/types';
+import { Arrow } from '@/components/ui/Arrow';
 
 /**
  * Las nueve universidades en una retícula de losas iguales: ninguna es más grande que otra (el
@@ -117,7 +118,7 @@ function Cell({
             {count && joined && <span className="hidden sm:inline"> · desde {joined}</span>}
           </span>
           <span aria-hidden className="uni-face__arrow">
-            →
+            <Arrow />
           </span>
         </p>
       </div>
@@ -149,7 +150,7 @@ function Cell({
           className="ui-label mt-4 inline-flex items-center gap-2 border-b pb-0.5"
           style={{ borderColor: b.accent }}
         >
-          Abrir perfil <span aria-hidden>→</span>
+          Abrir perfil <Arrow />
         </span>
       </div>
     </div>
@@ -163,30 +164,33 @@ function Cell({
       onFocusCapture={() => setOn(true)}
       onBlurCapture={() => setOn(false)}
     >
-      <Link
-        href={`/universidades/${u.documentId}`}
-        aria-label={`${u.name}: abrir perfil`}
-        className="uni-tile relative block h-full overflow-hidden rounded-[10px]"
-        style={{ '--u-ring': b.primary } as React.CSSProperties}
-      >
-        {lite || reduced ? (
-          <div className="relative h-full">
-            {front}
-            <div className="uni-tile__back absolute inset-0" data-on={on}>
-              {back}
+      {/* Al abrir el perfil, la losa (ya con su color) crece hasta ser la cabecera (§28.3) */}
+      <ViewTransition name={`uni-${u.documentId}`} share="uni-morph" default="none">
+        <Link
+          href={`/universidades/${u.documentId}`}
+          aria-label={`${u.name}: abrir perfil`}
+          className="uni-tile relative block h-full overflow-hidden rounded-[10px]"
+          style={{ '--u-ring': b.primary } as React.CSSProperties}
+        >
+          {lite || reduced ? (
+            <div className="relative h-full">
+              {front}
+              <div className="uni-tile__back absolute inset-0" data-on={on}>
+                {back}
+              </div>
             </div>
-          </div>
-        ) : (
-          <PixelSwap
-            active={on}
-            pixelSize={42}
-            pattern={i % 2 ? 'diagonal' : 'spiral'}
-            duration={760}
-            firstContent={front}
-            secondContent={back}
-          />
-        )}
-      </Link>
+          ) : (
+            <PixelSwap
+              active={on}
+              pixelSize={42}
+              pattern={i % 2 ? 'diagonal' : 'spiral'}
+              duration={760}
+              firstContent={front}
+              secondContent={back}
+            />
+          )}
+        </Link>
+      </ViewTransition>
     </li>
   );
 }

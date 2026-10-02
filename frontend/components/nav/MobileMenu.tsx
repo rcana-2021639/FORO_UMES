@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { NAV_ITEMS } from '@/lib/nav';
 import { cn } from '@/lib/cn';
+import { Arrow } from '@/components/ui/Arrow';
 
 interface Props {
   open: boolean;
@@ -77,7 +78,7 @@ export function MobileMenu({ open, onClose, activeIndex }: Props) {
                 onClick={onClose}
                 className="inline-flex h-12 items-center gap-2 rounded-[6px] bg-paper px-5 text-[0.98rem] font-semibold text-violet-950"
               >
-                Buscar un programa <span aria-hidden>→</span>
+                Buscar un programa <Arrow />
               </Link>
             </motion.div>
             <motion.p

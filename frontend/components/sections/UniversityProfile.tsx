@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, ViewTransition } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Button } from '@/components/ui/Button';
 import { PulseStar } from '@/components/ui/PulseStar';
@@ -19,6 +19,8 @@ import { cn } from '@/lib/cn';
 import { CopyEmail } from '@/components/ui/CopyEmail';
 import { brandOf, brandRootCss, brandVars } from '@/lib/universities';
 import type { ProgramLevel, University } from '@/lib/types';
+import { Arrow } from '@/components/ui/Arrow';
+import { EnvelopeSimpleIcon } from '@phosphor-icons/react/dist/ssr';
 
 export interface SeatLink {
   href: string;
@@ -72,167 +74,172 @@ export function UniversityProfile({
       {/* Los colores de la universidad también para lo que vive fuera del perfil (barra de
           navegación, progreso de lectura, selección de texto): se quitan al salir de la página */}
       <style>{brandRootCss(u.acronym)}</style>
-      {/* Cabecera en el color de la universidad */}
-      <section
-        className="u-hero relative isolate overflow-hidden"
-        style={{ color: brand.onSurface }}
-        aria-labelledby="u-title"
-      >
-        <span aria-hidden className="u-hero__light" />
-        <SeatsRing />
-        <div className="container-x relative grid gap-10 pt-32 pb-16 md:grid-cols-12 md:items-end md:pt-40 md:pb-20">
-          <div className="md:col-span-8">
-            <nav
-              aria-label="Ruta"
-              data-reveal="down"
-              className="ui-label flex items-center gap-2 opacity-80"
+      {/* Cabecera en el color de la universidad. Viniendo de su losa, la losa crece hasta ser ella */}
+      <ViewTransition name={`uni-${u.documentId}`} share="uni-morph" default="none">
+        <section
+          className="u-hero relative isolate overflow-hidden"
+          style={{ color: brand.onSurface }}
+          aria-labelledby="u-title"
+        >
+          <span aria-hidden className="u-hero__light" />
+          <SeatsRing />
+          <div className="container-x relative grid gap-10 pt-32 pb-16 md:grid-cols-12 md:items-end md:pt-40 md:pb-20">
+            <div className="md:col-span-8">
+              <nav
+                aria-label="Ruta"
+                data-reveal="down"
+                className="ui-label flex items-center gap-2 opacity-80"
+              >
+                <Link
+                  href="/"
+                  className="underline decoration-current/30 underline-offset-4 hover:decoration-current"
+                >
+                  Inicio
+                </Link>
+                <span aria-hidden>/</span>
+                <Link
+                  href="/universidades"
+                  className="underline decoration-current/30 underline-offset-4 hover:decoration-current"
+                >
+                  Universidades
+                </Link>
+                <span aria-hidden>/</span>
+                <span aria-current="page">{u.acronym ?? u.name}</span>
+              </nav>
+              <div data-reveal="left" className="mt-6 flex items-center gap-4">
+                <p className="eyebrow opacity-80">Universidad miembro del Foro</p>
+                <span
+                  aria-hidden
+                  className="h-px w-16 bg-[var(--u-accent,currentColor)] opacity-70"
+                />
+              </div>
+              <h1 id="u-title" className="mt-5 max-w-[16ch] text-[clamp(2.4rem,6vw,5.4rem)]">
+                <FoldText
+                  text={u.name}
+                  splitBy="word"
+                  hinge="bottom"
+                  trigger="mount"
+                  stagger={0.08}
+                  delay={0.15}
+                />
+              </h1>
+              {u.shortDescription && (
+                <p
+                  data-reveal="blur"
+                  className="mt-6 max-w-[56ch] text-[1.05rem] leading-relaxed opacity-80"
+                >
+                  {u.shortDescription}
+                </p>
+              )}
+              <div data-reveal="up" className="mt-8 flex flex-wrap items-center gap-3">
+                {programs.length > 0 && (
+                  <a href="#programas-u" className="u-cta u-cta--solid">
+                    Ver sus {programs.length} programas <Arrow dir="down" />
+                  </a>
+                )}
+                {firstRep && (
+                  <a href={`mailto:${firstRep.institutionalEmail}`} className="u-cta">
+                    Escribir a su representante{' '}
+                    <EnvelopeSimpleIcon aria-hidden className="h-[1.05em] w-[1.05em]" />
+                  </a>
+                )}
+                {u.website && (
+                  <a href={u.website} target="_blank" rel="noopener noreferrer" className="u-cta">
+                    Sitio oficial <Arrow dir="up-right" />
+                  </a>
+                )}
+              </div>
+            </div>
+
+            <div
+              data-reveal="swing"
+              className="relative md:col-span-4 md:justify-self-end [perspective:1200px]"
             >
-              <Link
-                href="/"
-                className="underline decoration-current/30 underline-offset-4 hover:decoration-current"
-              >
-                Inicio
-              </Link>
-              <span aria-hidden>/</span>
-              <Link
-                href="/universidades"
-                className="underline decoration-current/30 underline-offset-4 hover:decoration-current"
-              >
-                Universidades
-              </Link>
-              <span aria-hidden>/</span>
-              <span aria-current="page">{u.acronym ?? u.name}</span>
-            </nav>
-            <div data-reveal="left" className="mt-6 flex items-center gap-4">
-              <p className="eyebrow opacity-80">Universidad miembro del Foro</p>
+              {/* Anillos que giran detrás de la losa del logo */}
               <span
                 aria-hidden
-                className="h-px w-16 bg-[var(--u-accent,currentColor)] opacity-70"
+                className="spin-slow pointer-events-none absolute -inset-6 rounded-full border border-dashed border-[var(--u-accent)] opacity-60"
+                style={{ '--spin-dur': '50s' } as React.CSSProperties}
               />
-            </div>
-            <h1 id="u-title" className="mt-5 max-w-[16ch] text-[clamp(2.4rem,6vw,5.4rem)]">
-              <FoldText
-                text={u.name}
-                splitBy="word"
-                hinge="bottom"
-                trigger="mount"
-                stagger={0.08}
-                delay={0.15}
+              <span
+                aria-hidden
+                className="spin-slow pointer-events-none absolute -inset-12 rounded-full border border-current opacity-15"
+                style={
+                  { '--spin-dur': '80s', animationDirection: 'reverse' } as React.CSSProperties
+                }
               />
-            </h1>
-            {u.shortDescription && (
-              <p
-                data-reveal="blur"
-                className="mt-6 max-w-[56ch] text-[1.05rem] leading-relaxed opacity-80"
+              <div
+                className="float-y"
+                style={{ '--float-amp': '9px', '--float-dur': '7s' } as React.CSSProperties}
               >
-                {u.shortDescription}
-              </p>
-            )}
-            <div data-reveal="up" className="mt-8 flex flex-wrap items-center gap-3">
-              {programs.length > 0 && (
-                <a href="#programas-u" className="u-cta u-cta--solid">
-                  Ver sus {programs.length} programas <span aria-hidden>↓</span>
-                </a>
-              )}
-              {firstRep && (
-                <a href={`mailto:${firstRep.institutionalEmail}`} className="u-cta">
-                  Escribir a su representante <span aria-hidden>✉</span>
-                </a>
-              )}
-              {u.website && (
-                <a href={u.website} target="_blank" rel="noopener noreferrer" className="u-cta">
-                  Sitio oficial <span aria-hidden>↗</span>
-                </a>
-              )}
-            </div>
-          </div>
-
-          <div
-            data-reveal="swing"
-            className="relative md:col-span-4 md:justify-self-end [perspective:1200px]"
-          >
-            {/* Anillos que giran detrás de la losa del logo */}
-            <span
-              aria-hidden
-              className="spin-slow pointer-events-none absolute -inset-6 rounded-full border border-dashed border-[var(--u-accent)] opacity-60"
-              style={{ '--spin-dur': '50s' } as React.CSSProperties}
-            />
-            <span
-              aria-hidden
-              className="spin-slow pointer-events-none absolute -inset-12 rounded-full border border-current opacity-15"
-              style={{ '--spin-dur': '80s', animationDirection: 'reverse' } as React.CSSProperties}
-            />
-            <div
-              className="float-y"
-              style={{ '--float-amp': '9px', '--float-dur': '7s' } as React.CSSProperties}
-            >
-              <Tilt max={12} scale={1.04} className="rounded-[18px]">
-                <div className="relative grid aspect-square w-full max-w-[18rem] place-items-center rounded-[18px] bg-paper p-8 shadow-[0_40px_80px_-40px_rgb(0_0_0/0.6)] [transform-style:preserve-3d]">
-                  <span
-                    data-depth
-                    style={{ '--z': 40 } as React.CSSProperties}
-                    className="grid place-items-center"
-                  >
-                    {logo ? (
-                      <Image
-                        src={logo}
-                        alt={`Logotipo de ${u.name}`}
-                        width={260}
-                        height={260}
-                        className="h-auto max-h-[12rem] w-full object-contain"
-                        priority
-                      />
-                    ) : (
+                <Tilt max={12} scale={1.04} className="rounded-[18px]">
+                  <div className="relative grid aspect-square w-full max-w-[18rem] place-items-center rounded-[18px] bg-paper p-8 shadow-[0_40px_80px_-40px_rgb(0_0_0/0.6)] [transform-style:preserve-3d]">
+                    <span
+                      data-depth
+                      style={{ '--z': 40 } as React.CSSProperties}
+                      className="grid place-items-center"
+                    >
+                      {logo ? (
+                        <Image
+                          src={logo}
+                          alt={`Logotipo de ${u.name}`}
+                          width={260}
+                          height={260}
+                          className="h-auto max-h-[12rem] w-full object-contain"
+                          priority
+                        />
+                      ) : (
+                        <span
+                          className="font-display text-[clamp(3rem,8vw,5rem)] leading-none text-[var(--u-text)]"
+                          style={{ fontVariationSettings: "'opsz' 96, 'WONK' 1" }}
+                        >
+                          {u.acronym ?? u.name.slice(0, 3)}
+                        </span>
+                      )}
+                    </span>
+                    {u.acronym && (
                       <span
-                        className="font-display text-[clamp(3rem,8vw,5rem)] leading-none text-[var(--u-text)]"
-                        style={{ fontVariationSettings: "'opsz' 96, 'WONK' 1" }}
+                        className="mono-label absolute right-4 bottom-3 text-[var(--u-text)]"
+                        data-depth
+                        style={{ '--z': 20 } as React.CSSProperties}
                       >
-                        {u.acronym ?? u.name.slice(0, 3)}
+                        {u.acronym}
                       </span>
                     )}
-                  </span>
-                  {u.acronym && (
-                    <span
-                      className="mono-label absolute right-4 bottom-3 text-[var(--u-text)]"
-                      data-depth
-                      style={{ '--z': 20 } as React.CSSProperties}
-                    >
-                      {u.acronym}
-                    </span>
-                  )}
-                </div>
-              </Tilt>
+                  </div>
+                </Tilt>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Franja de cifras */}
-        <div className="container-x relative border-t border-current/15">
-          <dl
-            data-reveal-stagger="up"
-            className="grid grid-cols-2 divide-current/15 md:grid-cols-4 md:divide-x"
-          >
-            {stats.map((s, i) => (
-              <div key={s.label} className="py-6 md:px-6 md:first:pl-0">
-                <dd className="m-0">
-                  <DepthText
-                    text={s.n}
-                    layers={14}
-                    depth={1.2}
-                    faceColor={brand.onSurface}
-                    depthColor={i % 2 ? brand.primary : brand.accent}
-                    fontSize="2.6rem"
-                    tilt={8}
-                    orbitSpeed={0.2}
-                    fontVariationSettings="'opsz' 96, 'SOFT' 40"
-                  />
-                </dd>
-                <dt className="ui-label mt-1 opacity-70">{s.label}</dt>
-              </div>
-            ))}
-          </dl>
-        </div>
-      </section>
+          {/* Franja de cifras */}
+          <div className="container-x relative border-t border-current/15">
+            <dl
+              data-reveal-stagger="up"
+              className="grid grid-cols-2 divide-current/15 md:grid-cols-4 md:divide-x"
+            >
+              {stats.map((s, i) => (
+                <div key={s.label} className="py-6 md:px-6 md:first:pl-0">
+                  <dd className="m-0">
+                    <DepthText
+                      text={s.n}
+                      layers={14}
+                      depth={1.2}
+                      faceColor={brand.onSurface}
+                      depthColor={i % 2 ? brand.primary : brand.accent}
+                      fontSize="2.6rem"
+                      tilt={8}
+                      orbitSpeed={0.2}
+                      fontVariationSettings="'opsz' 96, 'SOFT' 40"
+                    />
+                  </dd>
+                  <dt className="ui-label mt-1 opacity-70">{s.label}</dt>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </section>
+      </ViewTransition>
 
       <div className="u-body container-x pb-[var(--section-y)]">
         {/* Representantes */}
@@ -341,7 +348,15 @@ function SeatNav({ link, dir }: { link: SeatLink; dir: 'prev' | 'next' }) {
       style={{ '--c': b.primary } as React.CSSProperties}
     >
       <span className="ui-label block text-fg-muted">
-        {dir === 'prev' ? '← Universidad anterior' : 'Siguiente universidad →'}
+        {dir === 'prev' ? (
+          <>
+            <Arrow dir="left" /> Universidad anterior
+          </>
+        ) : (
+          <>
+            Siguiente universidad <Arrow />
+          </>
+        )}
       </span>
       <span
         className={cn(
@@ -504,7 +519,7 @@ function Programs({
                             rel="noopener noreferrer"
                             className="u-program__cta"
                           >
-                            Ver ficha oficial en {name} <span aria-hidden>↗</span>
+                            Ver ficha oficial en {name} <Arrow dir="up-right" />
                           </Link>
                         ) : (
                           <span className="u-program__cta u-program__cta--muted">

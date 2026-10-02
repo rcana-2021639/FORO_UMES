@@ -1,7 +1,13 @@
-/** Estado de carga entre rutas: una línea que respira, no un spinner. */
+import { Emblem } from '@/components/ui/Emblem';
+
+/**
+ * Estado de carga entre rutas: el emblema se arma y se desarma (nueve puntos que se vuelven el 9
+ * maya) sobre la línea que respira. Sin spinner.
+ */
 export default function Loading() {
   return (
-    <div className="container-x pt-44" role="status" aria-live="polite">
+    <div className="container-x page-loading" role="status" aria-live="polite">
+      <Emblem motion="loop" className="page-loading__mark" />
       <span data-reveal="fade" className="eyebrow text-fg-muted">
         Un momento
       </span>
