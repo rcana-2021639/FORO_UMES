@@ -651,3 +651,23 @@ destacadas, en violeta: un solo sistema de trazo para todo el sitio.
   (`view-timeline` del encabezado). Menos vacío entre capítulos (`--section-y` hasta 5.25 rem).
 - Aportes: icono Phosphor de su tipo con su gesto al pasar el cursor (el sello se estampa, el cohete
   despega, la mano late) y el filete de color que baja y tiñe la ficha.
+
+**Fase 3 — Universidades y perfil.**
+
+- `PageHeader` acepta `visual`: una pieza propia a la derecha; la banda gana una retícula de puntos
+  (los "unos" mayas) que se desvanece hacia el texto.
+- `/universidades`: **anillo de sellos** (`SealRing`, CSS puro con `@property --ring-r`): salen del
+  centro a su asiento, el anillo gira muy despacio con los sellos derechos, y al señalar uno se
+  detiene, ese sello crece con los colores de su universidad y el centro dice quién es y cuántos
+  programas tiene. En modo liviano no gira.
+- Vista **Comparar** (`UniversitiesCompare`, conmutador "Fichas / Comparar", `?vista=comparar`):
+  tabla con programas por nivel, modalidades y año de ingreso; cada encabezado ordena (los empates
+  respetan el orden oficial) y las filas se deslizan a su nuevo lugar; barras proporcionales por
+  columna; primera columna fija y desvanecido que anuncia el desplazamiento en el teléfono. El botón
+  "Comparar con las otras ocho" del perfil abre esta vista.
+- Transiciones con **tipo**: la losa crece hasta la cabecera solo si se pulsó esa losa
+  (`transitionTypes={['uni-tile']}`); desde el anillo, el **sello vuela hasta el logo** del perfil
+  (`uni-seal`); desde otros enlaces, transición normal.
+- Iconos de modalidad (`ModalityIcon`: aula, portátil, flechas) en lugar de ◉ ◎ ◐.
+- Backend: `watchIgnoreFiles: ['**/frontend/**']` en `config/admin.ts`. `npm run develop`
+  reiniciaba Strapi con cada cambio del frontend (y `next build` salía sin datos).

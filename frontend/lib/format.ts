@@ -193,3 +193,18 @@ export function videoEmbed(url?: string | null): string | null {
     ? `https://www.youtube-nocookie.com/embed/${v.id}?autoplay=1&rel=0`
     : `https://player.vimeo.com/video/${v.id}?autoplay=1`;
 }
+
+/** Cuántos programas presenciales, virtuales e híbridos tiene cada universidad. */
+export type ModalityCounts = Record<ProgramModality, number>;
+
+export function modalitiesByUniversity(
+  programs: { modality: ProgramModality; university?: UniversityRef | null }[]
+): Record<string, ModalityCounts> {
+  const out: Record<string, ModalityCounts> = {};
+  for (const p of programs) {
+    const id = p.university?.documentId;
+    if (!id || !(p.modality in MODALITY_LABEL)) continue;
+    (out[id] ??= { Presencial: 0, Virtual: 0, Hibrida: 0 })[p.modality] += 1;
+  }
+  return out;
+}

@@ -4,6 +4,7 @@ import {
   excerpt,
   formatDate,
   levelsByUniversity,
+  modalitiesByUniversity,
   parseVideo,
   videoEmbed,
   videoThumbnail,
@@ -97,5 +98,19 @@ describe('conteos por nivel', () => {
       a: { Maestria: 1, Doctorado: 1, Especializacion: 0, Diplomado: 0 },
       b: { Maestria: 1, Doctorado: 0, Especializacion: 0, Diplomado: 0 },
     });
+  });
+});
+
+describe('modalidades por universidad', () => {
+  it('cuenta presencial, virtual e híbrida de cada una', () => {
+    const u = { id: 1, documentId: 'a', name: 'A' };
+    expect(
+      modalitiesByUniversity([
+        { modality: 'Virtual', university: u },
+        { modality: 'Virtual', university: u },
+        { modality: 'Hibrida', university: u },
+        { modality: 'Presencial', university: null },
+      ])
+    ).toEqual({ a: { Presencial: 0, Virtual: 2, Hibrida: 1 } });
   });
 });

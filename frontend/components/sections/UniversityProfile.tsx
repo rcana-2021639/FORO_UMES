@@ -20,6 +20,7 @@ import { CopyEmail } from '@/components/ui/CopyEmail';
 import { brandOf, brandRootCss, brandVars } from '@/lib/universities';
 import type { ProgramLevel, University } from '@/lib/types';
 import { Arrow } from '@/components/ui/Arrow';
+import { ModalityIcon } from '@/components/ui/ModalityIcon';
 import { EnvelopeSimpleIcon } from '@phosphor-icons/react/dist/ssr';
 
 export interface SeatLink {
@@ -75,7 +76,12 @@ export function UniversityProfile({
           navegación, progreso de lectura, selección de texto): se quitan al salir de la página */}
       <style>{brandRootCss(u.acronym)}</style>
       {/* Cabecera en el color de la universidad. Viniendo de su losa, la losa crece hasta ser ella */}
-      <ViewTransition name={`uni-${u.documentId}`} share="uni-morph" default="none">
+      {/* Solo si se llegó pulsando su losa (tipo `uni-tile`); desde otro enlace, transición normal */}
+      <ViewTransition
+        name={`uni-${u.documentId}`}
+        share={{ 'uni-tile': 'uni-morph', default: 'none' }}
+        default="none"
+      >
         <section
           className="u-hero relative isolate overflow-hidden"
           style={{ color: brand.onSurface }}
@@ -180,14 +186,21 @@ export function UniversityProfile({
                       className="grid place-items-center"
                     >
                       {logo ? (
-                        <Image
-                          src={logo}
-                          alt={`Logotipo de ${u.name}`}
-                          width={260}
-                          height={260}
-                          className="h-auto max-h-[12rem] w-full object-contain"
-                          priority
-                        />
+                        // Viniendo del anillo de /universidades, el sello pulsado vuela hasta aquí
+                        <ViewTransition
+                          name={`seal-${u.documentId}`}
+                          share={{ 'uni-seal': 'seal-morph', default: 'none' }}
+                          default="none"
+                        >
+                          <Image
+                            src={logo}
+                            alt={`Logotipo de ${u.name}`}
+                            width={260}
+                            height={260}
+                            className="h-auto max-h-[12rem] w-full object-contain"
+                            priority
+                          />
+                        </ViewTransition>
                       ) : (
                         <span
                           className="font-display text-[clamp(3rem,8vw,5rem)] leading-none text-[var(--u-text)]"
@@ -308,7 +321,7 @@ export function UniversityProfile({
                 Programas de posgrado
               </h2>
             </div>
-            <Button variant="secondary" href="/programas">
+            <Button variant="secondary" href="/universidades?vista=comparar">
               Comparar con las otras ocho
             </Button>
           </div>
@@ -406,8 +419,6 @@ function SeatsRing() {
   );
 }
 
-const MODALITY_ICON: Record<string, string> = { Presencial: '◉', Virtual: '◎', Hibrida: '◐' };
-
 /**
  * Oferta de la universidad, en su color. Los niveles se distinguen por nombre y explicación, no
  * por colores ajenos a la universidad: arriba, un resumen que filtra ("Todos · 2", "Maestrías · 1");
@@ -501,9 +512,10 @@ function Programs({
                           <div>
                             <dt>Modalidad</dt>
                             <dd>
-                              <span aria-hidden className="text-[var(--u-text)]">
-                                {MODALITY_ICON[p.modality] ?? '◉'}
-                              </span>{' '}
+                              <ModalityIcon
+                                modality={p.modality}
+                                className="mr-1 inline-block h-[1.1em] w-[1.1em] align-[-0.18em] text-[var(--u-text)]"
+                              />
                               {MODALITY_LABEL[p.modality]}
                             </dd>
                           </div>

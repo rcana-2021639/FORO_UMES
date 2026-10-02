@@ -29,6 +29,10 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Admin => 
   secrets: {
     encryptionKey: env('ENCRYPTION_KEY')!,
   },
+  // `npm run develop` reinicia Strapi al cambiar cualquier archivo del proyecto. El frontend vive
+  // en el mismo repositorio: cada `next build` o guardado allí tumbaba la API durante el reinicio
+  // (y el build de Next salía sin datos). Solo afecta al modo desarrollo.
+  watchIgnoreFiles: ['**/frontend/**'],
   flags: {
     nps: env.bool('FLAG_NPS', true),
     promoteEE: env.bool('FLAG_PROMOTE_EE', true),

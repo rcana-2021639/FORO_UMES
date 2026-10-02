@@ -173,9 +173,14 @@ function Cell({
       onBlurCapture={() => setOn(false)}
     >
       {/* Al abrir el perfil, la losa (ya con su color) crece hasta ser la cabecera (§28.3) */}
-      <ViewTransition name={`uni-${u.documentId}`} share="uni-morph" default="none">
+      <ViewTransition
+        name={`uni-${u.documentId}`}
+        share={{ 'uni-tile': 'uni-morph', default: 'none' }}
+        default="none"
+      >
         <Link
           href={`/universidades/${u.documentId}`}
+          transitionTypes={['uni-tile']}
           aria-label={`${u.name}: abrir perfil`}
           className="uni-tile relative block h-full overflow-hidden rounded-[10px]"
           style={{ '--u-ring': b.primary } as React.CSSProperties}

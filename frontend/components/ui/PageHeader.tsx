@@ -18,6 +18,11 @@ interface Props {
   /** `article`: título largo de una nota o actividad, a menor tamaño. */
   size?: 'page' | 'article';
   className?: string;
+  /**
+   * Pieza propia de la página, a la derecha (DESIGN_NOTES §28.4): el anillo de sellos, la cuenta
+   * regresiva, el buscador… Con ella, la explicación y el botón pasan bajo el título.
+   */
+  visual?: ReactNode;
 }
 
 /**
@@ -34,22 +39,52 @@ export function PageHeader({
   crumbs = [],
   size = 'page',
   className,
+  visual,
 }: Props) {
+  if (visual) {
+    return (
+      <header className={cn('page-head page-head--visual', className)}>
+        <div className="container-x">
+          <Crumbs crumbs={crumbs} />
+          <div className="page-head__grid">
+            <div className="page-head__text">
+              <div className="sec-head__top mt-8 md:mt-10">
+                <p data-reveal="left" className="sec-head__label eyebrow">
+                  <span>{kicker}</span>
+                </p>
+                <span aria-hidden data-reveal="line" className="sec-head__rule" />
+              </div>
+              <h1
+                data-reveal-group
+                data-reveal={typeof title === 'string' ? undefined : 'blur'}
+                className={cn(
+                  'mt-5 text-fg md:mt-7',
+                  size === 'article' ? 'page-head__title--article' : 'page-head__title'
+                )}
+              >
+                {typeof title === 'string' ? <Words text={title} /> : title}
+              </h1>
+              {intro && (
+                <p data-reveal="blur" className="sec-head__intro mt-6">
+                  {intro}
+                </p>
+              )}
+              {aside && (
+                <div data-reveal="up" className="mt-7">
+                  {aside}
+                </div>
+              )}
+            </div>
+            <div className="page-head__visual">{visual}</div>
+          </div>
+        </div>
+      </header>
+    );
+  }
   return (
     <header className={cn('page-head', className)}>
       <div className="container-x">
-        <nav aria-label="Ruta de navegación" data-reveal="fade" className="crumbs">
-          <ol>
-            <li>
-              <Link href="/">Inicio</Link>
-            </li>
-            {crumbs.map((c) => (
-              <li key={c.label}>
-                {c.href ? <Link href={c.href}>{c.label}</Link> : <span>{c.label}</span>}
-              </li>
-            ))}
-          </ol>
-        </nav>
+        <Crumbs crumbs={crumbs} />
 
         <div className="sec-head__top mt-8 md:mt-10">
           <p data-reveal="left" className="sec-head__label eyebrow">
@@ -86,5 +121,23 @@ export function PageHeader({
         </div>
       </div>
     </header>
+  );
+}
+
+/** Migas de pan: "dónde estoy". Inicio siempre va primero. */
+function Crumbs({ crumbs }: { crumbs: Crumb[] }) {
+  return (
+    <nav aria-label="Ruta de navegación" data-reveal="fade" className="crumbs">
+      <ol>
+        <li>
+          <Link href="/">Inicio</Link>
+        </li>
+        {crumbs.map((c) => (
+          <li key={c.label}>
+            {c.href ? <Link href={c.href}>{c.label}</Link> : <span>{c.label}</span>}
+          </li>
+        ))}
+      </ol>
+    </nav>
   );
 }
