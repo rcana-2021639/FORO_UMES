@@ -707,3 +707,17 @@ destacadas, en violeta: un solo sistema de trazo para todo el sitio.
   volvía a montar.
 - Pendiente detectado (ya existía): tres videos de la galería piden miniaturas `maxresdefault` y
   `hq720` que YouTube no tiene (404 en la consola); el carrusel cae a otra miniatura, se ve bien.
+
+**Fase 6 — Buscador global, contacto y errores (parcial).**
+
+- **Buscador global** (`components/nav/CommandSearch.tsx`, `lib/search.ts` con pruebas): Ctrl/⌘ K,
+  "/" o el botón "Buscar" de la barra y del menú móvil. Índice en `app/indice-de-busqueda/route.ts`
+  (184 entradas, se renueva cada 5 min, `noindex`). Sin tildes ni mayúsculas, todas las palabras,
+  prefijos, siglas primero, resaltado, grupos con conteo, ↑ ↓ Enter, Esc; diálogo accesible.
+- El catálogo sigue a la dirección (`UrlSync` con `useSearchParams` en su propio Suspense): buscar
+  desde el buscador global estando ya en /programas actualiza la lista.
+- Contacto: al enviarse, el formulario da paso a un **acuse con el sello** que se arma ("Gracias,
+  Ana") y el correo donde llegará la respuesta; "Escribir otro mensaje" devuelve el foco al nombre.
+- Errores: el **número del error en numeración maya** (404 = un punto de 400, la concha del cero y
+  cuatro puntos) cae pieza a pieza; atajo al buscador global.
+- Pendiente: pie de página (fase 6) y la fase 7 completa.

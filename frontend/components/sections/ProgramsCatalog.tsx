@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { AnimatePresence, motion } from 'motion/react';
 import { PulseStar } from '@/components/ui/PulseStar';
 import { LevelTabs, countByLevel, type LevelFilter } from '@/components/ui/LevelTabs';
@@ -131,6 +132,16 @@ export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
 
   return (
     <div>
+      {/* Una navegación nueva a /programas?q=… o ?nivel=… (buscador global, enlaces de la portada)
+          manda sobre lo que se había escrito o elegido en esta página */}
+      <Suspense fallback={null}>
+        <UrlSync
+          onChange={(nextQ, nextLevel) => {
+            setQ(nextQ);
+            if (nextLevel) setLevel(nextLevel);
+          }}
+        />
+      </Suspense>
       <LevelTabs value={level} onChange={setLevel} counts={counts} showSaved />
 
       <div
@@ -439,4 +450,30 @@ function Pill({
       {children}
     </button>
   );
+}
+
+/**
+ * Avisa cuando cambian `?q=` o `?nivel=` en la dirección sin salir de la página (la primera lectura
+ * la hace useClientValue). Lee la dirección con useSearchParams, que en una página generada por
+ * adelantado solo se resuelve en el navegador: por eso vive aparte, en su propio Suspense, y no
+ * pinta nada; el catálogo sigue saliendo completo desde el servidor.
+ */
+function UrlSync({ onChange }: { onChange: (q: string, level: LevelFilter | null) => void }) {
+  const params = useSearchParams();
+  const q = (params.get('q') ?? '').slice(0, 80);
+  const n = params.get('nivel');
+  const level = n && (LEVELS as string[]).includes(n) ? (n as LevelFilter) : null;
+  const first = useRef(true);
+  const cb = useRef(onChange);
+  useEffect(() => {
+    cb.current = onChange;
+  });
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    cb.current(q, level);
+  }, [q, level]);
+  return null;
 }

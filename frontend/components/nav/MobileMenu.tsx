@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { NAV_ITEMS } from '@/lib/nav';
 import { cn } from '@/lib/cn';
 import { Arrow } from '@/components/ui/Arrow';
+import { openSearch } from './CommandSearch';
 
 interface Props {
   open: boolean;
@@ -75,10 +76,15 @@ export function MobileMenu({ open, onClose, activeIndex }: Props) {
             >
               <Link
                 href="/programas#buscar"
-                onClick={onClose}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onClose();
+                  openSearch();
+                }}
+                aria-haspopup="dialog"
                 className="inline-flex h-12 items-center gap-2 rounded-[6px] bg-paper px-5 text-[0.98rem] font-semibold text-violet-950"
               >
-                Buscar un programa <Arrow />
+                Buscar en el sitio <Arrow />
               </Link>
             </motion.div>
             <motion.p

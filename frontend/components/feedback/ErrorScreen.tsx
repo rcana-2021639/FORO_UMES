@@ -8,6 +8,9 @@ import { describeError } from '@/lib/api';
 
 import { SoftOrb } from '@/components/ui/SoftOrb';
 import { Arrow } from '@/components/ui/Arrow';
+import { MayaNumber, mayaReading } from '@/components/ui/MayaNumber';
+import { openSearch } from '@/components/nav/CommandSearch';
+import { MagnifyingGlassIcon } from '@phosphor-icons/react/dist/ssr';
 
 /** Lo que más se busca en el sitio: quien llega a un error no queda sin salida. */
 const SHORTCUTS = [
@@ -39,6 +42,7 @@ export function ErrorScreen({ code, title, text, error, retry, bare }: Props) {
   }, [error]);
 
   const folio = error?.digest ?? (error as { requestId?: string } | undefined)?.requestId;
+  const n = Number(code);
 
   return (
     <div
@@ -52,38 +56,57 @@ export function ErrorScreen({ code, title, text, error, retry, bare }: Props) {
       >
         <SoftOrb follow={false} />
       </div>
-      <div className="container-x py-32">
-        <p data-reveal="left" className="eyebrow text-fg-muted">
-          Error <span className="text-accent">{code}</span>
-          {folio ? `, referencia ${String(folio).slice(0, 8)}` : ''}
-        </p>
-        <h1 data-reveal-group className="mt-6 max-w-[14ch]">
-          <Words text={title} />
-        </h1>
-        <p
-          data-reveal="blur"
-          className="mt-8 max-w-[46ch] text-[1.05rem] leading-relaxed text-fg-muted"
-        >
-          {text}
-        </p>
-        <div data-reveal="up" className="mt-12 flex flex-wrap gap-4">
-          {retry && <Button onClick={retry}>Intentar de nuevo</Button>}
-          <Button href="/" variant={retry ? 'secondary' : 'primary'}>
-            Volver a la portada
-          </Button>
+      <div className="container-x grid items-center gap-12 py-32 lg:grid-cols-12">
+        <div className="lg:col-span-8">
+          <p data-reveal="left" className="eyebrow text-fg-muted">
+            Error <span className="text-accent">{code}</span>
+            {folio ? `, referencia ${String(folio).slice(0, 8)}` : ''}
+          </p>
+          <h1 data-reveal-group className="mt-6 max-w-[14ch]">
+            <Words text={title} />
+          </h1>
+          <p
+            data-reveal="blur"
+            className="mt-8 max-w-[46ch] text-[1.05rem] leading-relaxed text-fg-muted"
+          >
+            {text}
+          </p>
+          <div data-reveal="up" className="mt-12 flex flex-wrap gap-4">
+            {retry && <Button onClick={retry}>Intentar de nuevo</Button>}
+            <Button href="/" variant={retry ? 'secondary' : 'primary'}>
+              Volver a la portada
+            </Button>
+          </div>
+          <nav aria-label="Atajos" data-reveal="fade" className="error-shortcuts">
+            <p className="eyebrow">O ve directo a</p>
+            <ul>
+              {/* Con el sitio completo (no en global-error), el buscador global */}
+              {!bare && (
+                <li>
+                  <button type="button" onClick={openSearch} className="error-search">
+                    <MagnifyingGlassIcon aria-hidden weight="bold" /> Buscar en el sitio
+                  </button>
+                </li>
+              )}
+              {SHORTCUTS.map((s) => (
+                <li key={s.href}>
+                  <a href={s.href}>
+                    {s.label} <Arrow />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
         </div>
-        <nav aria-label="Atajos" data-reveal="fade" className="error-shortcuts">
-          <p className="eyebrow">O ve directo a</p>
-          <ul>
-            {SHORTCUTS.map((s) => (
-              <li key={s.href}>
-                <a href={s.href}>
-                  {s.label} <Arrow />
-                </a>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        {/* El número del error en numeración maya: cae pieza a pieza (styles/v6.css, .error-maya) */}
+        {Number.isInteger(n) && n > 0 && (
+          <figure className="error-maya lg:col-span-4" aria-label={mayaReading(n)}>
+            <MayaNumber value={n} />
+            <figcaption>
+              {code}, a la maya: {mayaReading(n).split(': ')[1]}
+            </figcaption>
+          </figure>
+        )}
       </div>
     </div>
   );

@@ -2,6 +2,9 @@
 
 import Link from 'next/link';
 import { useId, useRef, useState, type FormEvent } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
+import { Emblem } from '@/components/ui/Emblem';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { sileo } from 'sileo';
 import { api, ApiError, describeError } from '@/lib/api';
 import { cn } from '@/lib/cn';
@@ -59,6 +62,11 @@ export function ContactForm() {
   const [errors, setErrors] = useState<Errors>({});
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  /** A quién se le confirmó el envío (los campos ya se vaciaron). */
+  const [receipt, setReceipt] = useState<{ name: string; email: string } | null>(null);
+  const reduced = useReducedMotion();
+  /** Tras "Escribir otro mensaje", el cursor vuelve al nombre cuando el formulario termina de entrar. */
+  const refocus = useRef(false);
   const [audience, setAudience] = useState<number | null>(null);
   const nameRef = useRef<HTMLInputElement>(null);
 
@@ -110,6 +118,7 @@ export function ContactForm() {
         }
       );
       setSent(true);
+      setReceipt({ name: values.name.trim().split(/\s+/)[0], email: values.email.trim() });
       setAudience(null);
       setValues({ name: '', email: '', subject: '', message: '' });
     } catch {
@@ -180,134 +189,176 @@ export function ContactForm() {
         </dl>
       </div>
 
-      {/* Formulario sin recuadros */}
-      <form
-        data-reveal="up"
-        onSubmit={onSubmit}
-        noValidate
-        className="lg:col-span-7"
-        aria-describedby={`${id}-help`}
-      >
-        <p id={`${id}-help`} className="sr-only">
-          Todos los campos son obligatorios salvo el asunto.
-        </p>
-        <div className="grid gap-x-10 gap-y-5 sm:grid-cols-2 sm:gap-y-9">
-          <FloatField id={`${id}-name`} n="01" label="Nombre" error={errors.name}>
-            <input
-              ref={nameRef}
-              id={`${id}-name`}
-              name="name"
-              autoComplete="name"
-              placeholder=" "
-              required
-              value={values.name}
-              onChange={set('name')}
-              aria-invalid={!!errors.name}
-              className="contact__input"
-            />
-          </FloatField>
-          <FloatField id={`${id}-email`} n="02" label="Correo" error={errors.email}>
-            <input
-              id={`${id}-email`}
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder=" "
-              required
-              value={values.email}
-              onChange={set('email')}
-              aria-invalid={!!errors.email}
-              className="contact__input"
-            />
-          </FloatField>
-          <FloatField
-            id={`${id}-subject`}
-            n="03"
-            label="Asunto (opcional)"
-            error={errors.subject}
-            className="sm:col-span-2"
-          >
-            <input
-              id={`${id}-subject`}
-              name="subject"
-              placeholder=" "
-              value={values.subject}
-              onChange={set('subject')}
-              aria-invalid={!!errors.subject}
-              className="contact__input"
-            />
-          </FloatField>
-          <FloatField
-            id={`${id}-message`}
-            n="04"
-            label="Mensaje"
-            error={errors.message}
-            hint={`${values.message.length}/2000`}
-            className="sm:col-span-2"
-          >
-            <textarea
-              id={`${id}-message`}
-              name="message"
-              rows={4}
-              placeholder=" "
-              required
-              value={values.message}
-              onChange={set('message')}
-              aria-invalid={!!errors.message}
-              className="contact__input resize-y"
-            />
-          </FloatField>
-          {/* Honeypot: los humanos no lo ven ni lo llenan */}
-          <div className="absolute -left-[9999px] h-0 w-0 overflow-hidden" aria-hidden>
-            <label htmlFor={`${id}-website`}>Sitio web</label>
-            <input
-              id={`${id}-website`}
-              name="website"
-              tabIndex={-1}
-              autoComplete="off"
-              defaultValue=""
-            />
-          </div>
-        </div>
+      {/* Formulario sin recuadros; al enviarse, da paso al acuse con el sello del Foro */}
+      <div data-reveal="up" className="relative lg:col-span-7">
+        <AnimatePresence mode="wait" initial={false}>
+          {receipt ? (
+            <motion.div
+              key="receipt"
+              className="contact-receipt"
+              role="status"
+              initial={reduced ? false : { opacity: 0, y: 24, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={reduced ? undefined : { opacity: 0, y: -12 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 28 }}
+            >
+              <Emblem motion="assemble" className="contact-receipt__seal" />
+              <p className="contact-receipt__kicker">Mensaje recibido</p>
+              <p className="contact-receipt__title">Gracias, {receipt.name}.</p>
+              <p className="contact-receipt__text">
+                La secretaría técnica del Foro lo leerá y te responderá a <b>{receipt.email}</b>.
+                Revisa también la carpeta de correo no deseado.
+              </p>
+              <button
+                type="button"
+                className="contact-receipt__again"
+                onClick={() => {
+                  setReceipt(null);
+                  refocus.current = true;
+                }}
+              >
+                Escribir otro mensaje <Arrow />
+              </button>
+            </motion.div>
+          ) : (
+            <motion.form
+              key="form"
+              onAnimationComplete={() => {
+                if (!refocus.current) return;
+                refocus.current = false;
+                nameRef.current?.focus({ preventScroll: true });
+              }}
+              onSubmit={onSubmit}
+              noValidate
+              aria-describedby={`${id}-help`}
+              initial={reduced ? false : { opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduced ? undefined : { opacity: 0, y: 16, filter: 'blur(4px)' }}
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <p id={`${id}-help`} className="sr-only">
+                Todos los campos son obligatorios salvo el asunto.
+              </p>
+              <div className="grid gap-x-10 gap-y-5 sm:grid-cols-2 sm:gap-y-9">
+                <FloatField id={`${id}-name`} n="01" label="Nombre" error={errors.name}>
+                  <input
+                    ref={nameRef}
+                    id={`${id}-name`}
+                    name="name"
+                    autoComplete="name"
+                    placeholder=" "
+                    required
+                    value={values.name}
+                    onChange={set('name')}
+                    aria-invalid={!!errors.name}
+                    className="contact__input"
+                  />
+                </FloatField>
+                <FloatField id={`${id}-email`} n="02" label="Correo" error={errors.email}>
+                  <input
+                    id={`${id}-email`}
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder=" "
+                    required
+                    value={values.email}
+                    onChange={set('email')}
+                    aria-invalid={!!errors.email}
+                    className="contact__input"
+                  />
+                </FloatField>
+                <FloatField
+                  id={`${id}-subject`}
+                  n="03"
+                  label="Asunto (opcional)"
+                  error={errors.subject}
+                  className="sm:col-span-2"
+                >
+                  <input
+                    id={`${id}-subject`}
+                    name="subject"
+                    placeholder=" "
+                    value={values.subject}
+                    onChange={set('subject')}
+                    aria-invalid={!!errors.subject}
+                    className="contact__input"
+                  />
+                </FloatField>
+                <FloatField
+                  id={`${id}-message`}
+                  n="04"
+                  label="Mensaje"
+                  error={errors.message}
+                  hint={`${values.message.length}/2000`}
+                  className="sm:col-span-2"
+                >
+                  <textarea
+                    id={`${id}-message`}
+                    name="message"
+                    rows={4}
+                    placeholder=" "
+                    required
+                    value={values.message}
+                    onChange={set('message')}
+                    aria-invalid={!!errors.message}
+                    className="contact__input resize-y"
+                  />
+                </FloatField>
+                {/* Honeypot: los humanos no lo ven ni lo llenan */}
+                <div className="absolute -left-[9999px] h-0 w-0 overflow-hidden" aria-hidden>
+                  <label htmlFor={`${id}-website`}>Sitio web</label>
+                  <input
+                    id={`${id}-website`}
+                    name="website"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    defaultValue=""
+                  />
+                </div>
+              </div>
 
-        <div className="contact__progress mt-10" aria-live="polite">
-          <span className="contact__progress-track" aria-hidden>
-            <span className="contact__progress-fill" style={{ transform: `scaleX(${done / 3})` }} />
-          </span>
-          <span className="mono-label">
-            {ready ? 'Listo para enviar' : `${done} de 3 campos obligatorios`}
-          </span>
-        </div>
+              <div className="contact__progress mt-10" aria-live="polite">
+                <span className="contact__progress-track" aria-hidden>
+                  <span
+                    className="contact__progress-fill"
+                    style={{ transform: `scaleX(${done / 3})` }}
+                  />
+                </span>
+                <span className="mono-label">
+                  {ready ? 'Listo para enviar' : `${done} de 3 campos obligatorios`}
+                </span>
+              </div>
 
-        <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4">
-          <button
-            type="submit"
-            className="contact__send"
-            data-ready={ready}
-            disabled={sending}
-            aria-busy={sending}
-          >
-            <span>{sending ? 'Enviando…' : sent ? 'Enviar otro mensaje' : 'Enviar mensaje'}</span>
-            <span className="contact__send-line" aria-hidden />
-            <span className="contact__send-arrow" aria-hidden>
-              <Arrow />
-            </span>
-          </button>
-          {sent && !sending && (
-            <span className="ui-label text-[var(--color-violet-200)]">
-              Mensaje enviado. Te responderemos pronto.
-            </span>
+              <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4">
+                <button
+                  type="submit"
+                  className="contact__send"
+                  data-ready={ready}
+                  disabled={sending}
+                  aria-busy={sending}
+                >
+                  <span>
+                    {sending ? 'Enviando…' : sent ? 'Enviar otro mensaje' : 'Enviar mensaje'}
+                  </span>
+                  <span className="contact__send-line" aria-hidden />
+                  <span className="contact__send-arrow" aria-hidden>
+                    <Arrow />
+                  </span>
+                </button>
+              </div>
+              <p className="mt-6 max-w-[56ch] text-[0.85rem] leading-relaxed text-fg-muted">
+                Usamos tu nombre y tu correo solo para responderte; el mensaje se borra solo al año.
+                Más detalles en el{' '}
+                <Link href="/privacidad" className="underline underline-offset-4 hover:text-fg">
+                  aviso de privacidad
+                </Link>
+                .
+              </p>
+            </motion.form>
           )}
-        </div>
-        <p className="mt-6 max-w-[56ch] text-[0.85rem] leading-relaxed text-fg-muted">
-          Usamos tu nombre y tu correo solo para responderte; el mensaje se borra solo al año. Más
-          detalles en el{' '}
-          <Link href="/privacidad" className="underline underline-offset-4 hover:text-fg">
-            aviso de privacidad
-          </Link>
-          .
-        </p>
-      </form>
+        </AnimatePresence>
+      </div>
     </div>
   );
 }

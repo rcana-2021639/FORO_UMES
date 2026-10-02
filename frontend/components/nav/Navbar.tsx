@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { motion, useMotionValueEvent, useScroll } from 'motion/react';
 import { getLenis } from '@/components/providers/SmoothScroll';
 import { MobileMenu } from './MobileMenu';
+import { openSearch } from './CommandSearch';
 import { Emblem } from '@/components/ui/Emblem';
 import { cn } from '@/lib/cn';
 import { NAV_ITEMS } from '@/lib/nav';
@@ -105,9 +106,22 @@ export function Navbar() {
             </ul>
           </nav>
 
-          <Link href="/programas#buscar" className="nav-search" aria-label="Buscar un programa">
+          {/* Abre el buscador global (Ctrl/⌘ K); sin JavaScript, lleva al buscador del catálogo */}
+          <Link
+            href="/programas#buscar"
+            className="nav-search"
+            aria-label="Buscar en el sitio (Ctrl K)"
+            aria-haspopup="dialog"
+            onClick={(e) => {
+              e.preventDefault();
+              openSearch();
+            }}
+          >
             <MagnifyingGlassIcon aria-hidden weight="bold" className="h-[1.05rem] w-[1.05rem]" />
-            <span>Buscar programa</span>
+            <span>Buscar</span>
+            <kbd aria-hidden className="nav-search__kbd">
+              Ctrl K
+            </kbd>
           </Link>
 
           <button

@@ -12,6 +12,7 @@ import { SectionThemeObserver } from '@/components/providers/SectionThemeObserve
 import { Navbar } from '@/components/nav/Navbar';
 import { Footer } from '@/components/nav/Footer';
 import { ClickSparkLayer } from '@/components/fx/ClickSparkLayer';
+import { CommandSearch } from '@/components/nav/CommandSearch';
 import { QualityProbe } from '@/components/providers/QualityProbe';
 import { QUALITY_SCRIPT } from '@/lib/quality-script';
 import { DEFAULT_OG_IMAGE } from '@/lib/seo';
@@ -95,6 +96,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </SmoothScroll>
         <SectionThemeObserver />
         <ClickSparkLayer />
+        <CommandSearch />
         <ToasterMount />
         <QualityProbe />
       </body>
