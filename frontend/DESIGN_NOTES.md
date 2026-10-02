@@ -684,3 +684,26 @@ destacadas, en violeta: un solo sistema de trazo para todo el sitio.
 - Búsqueda sin tildes ni mayúsculas ("gestion" encuentra "Gestión") y lo encontrado se **resalta**
   en el nombre. La animación de reparto de tarjetas al filtrar se conserva.
 - Iconos de modalidad en los filtros; la barra de filtros se reparte mejor entre 768 y 1280 px.
+
+**Fase 5 — Actividades, noticias y galería.**
+
+- `/actividades`: la cabecera es el **talón de la próxima actividad** (`ActivityStub`): tinta de su
+  tipo, día enorme, "Faltan N días" con odómetro y numeral maya (calculado en el navegador: la
+  página es estática) y **Agregar al calendario** (`.ics` de día completo generado en el navegador,
+  `lib/ics.ts`, con pruebas). Las actividades anteriores van **por año**; los dos más recientes
+  abiertos y los demás plegados con sus títulos (la página medía 15 000 px).
+- Detalle de actividad: el **talón del boleto vuela a la cabecera** (tipo `act-ticket`), cuenta
+  "Faltan / Hace", universidades participantes como siglas y su galería en el visor.
+- `/noticias`: cabecera con el **archivo en puntos por año** (`NewsCalendar`, CSS puro, globo con el
+  título); la destacada llena su recuadro (la tela elástica gana `fit`).
+- Artículo: la **foto viaja desde la ficha** a la portada de la cabecera (tipo `news-card`), tiempo
+  de lectura (`readingMinutes`, con pruebas), **Compartir** (menú del sistema en el teléfono, copiar
+  enlace en la computadora) y **nota anterior / siguiente** con su foto.
+- `/galeria`: cabecera con un **abanico de fotos** y el conteo; el mosaico abre el **visor**
+  (`Lightbox`): la foto crece desde su lugar, flechas, teclado, deslizar, contador y enlace a su
+  actividad; los videos se reproducen ahí (YouTube sin cookies, solo al pulsar).
+- Transiciones: la clave de `<ViewTransition>` es la ruta (`PageTransition`); antes, de /noticias a
+  una nota o de una universidad a la siguiente no había animación porque la plantilla no se
+  volvía a montar.
+- Pendiente detectado (ya existía): tres videos de la galería piden miniaturas `maxresdefault` y
+  `hq720` que YouTube no tiene (404 en la consola); el carrusel cae a otra miniatura, se ve bien.

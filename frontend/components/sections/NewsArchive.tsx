@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
+import { ViewTransition } from 'react';
 import { FoldText } from '@/components/fx/FoldText';
 import { Tilt } from '@/components/fx/Tilt';
 import { DepthText } from '@/components/fx/DepthText';
@@ -125,73 +126,82 @@ function Featured({ item, elastic }: { item: NewsItem; elastic: boolean }) {
         </span>
       </div>
       <Tilt max={4} scale={1.005} glare={false} className="rounded-[12px]">
-        <Link
-          href={`/noticias/${item.documentId}`}
-          className="relative block aspect-[4/5] overflow-hidden rounded-[12px] border border-line bg-surface-2 shadow-[0_50px_90px_-45px_rgb(var(--shadow-ink)/0.55)] sm:aspect-[16/9] md:aspect-[21/9]"
+        {/* Al abrir la nota, esta portada viaja hasta la cabecera del artículo */}
+        <ViewTransition
+          name={`news-${item.documentId}`}
+          share={{ 'news-card': 'news-morph', default: 'none' }}
+          default="none"
         >
-          {elastic ? (
-            <div className="absolute inset-0">
-              <ElasticMesh
-                image={sameOriginImage(cover)}
-                color1="#6443c4"
-                color2="#7c5ae0"
-                highlight="#fdfcff"
-                showGrid={!cover}
-                gridDensity={20}
-                gridOpacity={0.16}
-                gridColor="#fdfcff"
-                borderRadius={0}
-                tilt={0}
-                shading={0.45}
-                resolution={24}
-                interaction="hover"
-                stiffness={0.06}
-                damping={0.18}
-                grabRadius={0.45}
-                pull={0.32}
-                wobble={4}
+          <Link
+            href={`/noticias/${item.documentId}`}
+            transitionTypes={['news-card']}
+            className="relative block aspect-[4/5] overflow-hidden rounded-[12px] border border-line bg-surface-2 shadow-[0_50px_90px_-45px_rgb(var(--shadow-ink)/0.55)] sm:aspect-[16/9] md:aspect-[21/9]"
+          >
+            {elastic ? (
+              <div className="absolute inset-0">
+                <ElasticMesh
+                  image={sameOriginImage(cover)}
+                  color1="#6443c4"
+                  color2="#7c5ae0"
+                  highlight="#fdfcff"
+                  showGrid={!cover}
+                  gridDensity={20}
+                  gridOpacity={0.16}
+                  gridColor="#fdfcff"
+                  borderRadius={0}
+                  tilt={0}
+                  shading={0.45}
+                  resolution={24}
+                  interaction="hover"
+                  stiffness={0.06}
+                  damping={0.18}
+                  grabRadius={0.45}
+                  pull={0.32}
+                  wobble={4}
+                  fit={1.06}
+                />
+              </div>
+            ) : thumb ? (
+              <Image
+                src={thumb}
+                alt={item.coverImage?.alternativeText ?? ''}
+                fill
+                sizes="100vw"
+                className="object-cover"
+                priority
               />
-            </div>
-          ) : thumb ? (
-            <Image
-              src={thumb}
-              alt={item.coverImage?.alternativeText ?? ''}
-              fill
-              sizes="100vw"
-              className="object-cover"
-              priority
-            />
-          ) : (
-            <span aria-hidden className="news-cover absolute inset-0" />
-          )}
-          <span
-            aria-hidden
-            className="pointer-events-none absolute inset-0 bg-gradient-to-t from-dusk/85 via-dusk/25 to-transparent"
-          />
-          <span className="pointer-events-none absolute inset-0 flex flex-col justify-end p-6 text-paper md:p-10">
-            <h2
-              className="max-w-[22ch] text-[clamp(1.8rem,3.8vw,3.4rem)] leading-[1.02] text-paper"
-              style={{ fontVariationSettings: "'opsz' 96, 'SOFT' 40, 'WONK' 1" }}
-            >
-              <FoldText
-                text={item.title}
-                splitBy="word"
-                hinge="bottom"
-                trigger="mount"
-                stagger={0.06}
-                delay={0.4}
-              />
-            </h2>
-            {item.summary && (
-              <span className="mt-3 block max-w-[60ch] text-[0.98rem] leading-relaxed text-paper/80">
-                {excerpt(item.summary, 200)}
-              </span>
+            ) : (
+              <span aria-hidden className="news-cover absolute inset-0" />
             )}
-            <span className="ui-label mt-5 inline-flex w-fit items-center gap-2 rounded-[6px] border border-paper/40 px-4 py-2 font-semibold text-paper transition-[background-color,color,border-color] duration-300 group-hover:border-clay group-hover:bg-clay group-hover:text-ink">
-              Leer la nota <Arrow />
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-0 bg-gradient-to-t from-dusk/85 via-dusk/25 to-transparent"
+            />
+            <span className="pointer-events-none absolute inset-0 flex flex-col justify-end p-6 text-paper md:p-10">
+              <h2
+                className="max-w-[22ch] text-[clamp(1.8rem,3.8vw,3.4rem)] leading-[1.02] text-paper"
+                style={{ fontVariationSettings: "'opsz' 96, 'SOFT' 40, 'WONK' 1" }}
+              >
+                <FoldText
+                  text={item.title}
+                  splitBy="word"
+                  hinge="bottom"
+                  trigger="mount"
+                  stagger={0.06}
+                  delay={0.4}
+                />
+              </h2>
+              {item.summary && (
+                <span className="mt-3 block max-w-[60ch] text-[0.98rem] leading-relaxed text-paper/80">
+                  {excerpt(item.summary, 200)}
+                </span>
+              )}
+              <span className="ui-label mt-5 inline-flex w-fit items-center gap-2 rounded-[6px] border border-paper/40 px-4 py-2 font-semibold text-paper transition-[background-color,color,border-color] duration-300 group-hover:border-clay group-hover:bg-clay group-hover:text-ink">
+                Leer la nota <Arrow />
+              </span>
             </span>
-          </span>
-        </Link>
+          </Link>
+        </ViewTransition>
       </Tilt>
     </article>
   );
@@ -204,34 +214,41 @@ function Card({ item, n }: { item: NewsItem; n: number }) {
       <Tilt max={9} scale={1.03} className="h-full rounded-[10px]">
         <Link
           href={`/noticias/${item.documentId}`}
+          transitionTypes={['news-card']}
           className="group relative flex h-full flex-col overflow-hidden rounded-[10px] border border-[var(--rule)] bg-white [transform-style:preserve-3d]"
         >
-          <div className="relative aspect-[4/3] overflow-hidden bg-surface-2">
-            {cover ? (
-              <Image
-                src={cover}
-                alt={item.coverImage?.alternativeText ?? ''}
-                fill
-                sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw"
-                className="object-cover transition-transform duration-[1.4s] ease-(--ease-out-premium) group-hover:scale-[1.07]"
-              />
-            ) : (
+          <ViewTransition
+            name={`news-${item.documentId}`}
+            share={{ 'news-card': 'news-morph', default: 'none' }}
+            default="none"
+          >
+            <div className="relative aspect-[4/3] overflow-hidden bg-surface-2">
+              {cover ? (
+                <Image
+                  src={cover}
+                  alt={item.coverImage?.alternativeText ?? ''}
+                  fill
+                  sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw"
+                  className="object-cover transition-transform duration-[1.4s] ease-(--ease-out-premium) group-hover:scale-[1.07]"
+                />
+              ) : (
+                <span
+                  aria-hidden
+                  className="absolute inset-0 grid place-items-center font-display text-[4rem] text-fg-muted/30"
+                  style={{ fontVariationSettings: "'opsz' 144, 'WONK' 1" }}
+                >
+                  F
+                </span>
+              )}
               <span
                 aria-hidden
-                className="absolute inset-0 grid place-items-center font-display text-[4rem] text-fg-muted/30"
-                style={{ fontVariationSettings: "'opsz' 144, 'WONK' 1" }}
-              >
-                F
+                className="absolute inset-0 origin-bottom bg-[color-mix(in_oklab,var(--color-lilac)_22%,transparent)] transition-transform duration-700 ease-(--ease-cinematic) group-hover:scale-y-0"
+              />
+              <span className="mono-label absolute top-3 left-3 rounded-[4px] bg-bg/90 px-2 py-0.5 font-semibold text-fg">
+                {folio(n)}
               </span>
-            )}
-            <span
-              aria-hidden
-              className="absolute inset-0 origin-bottom bg-[color-mix(in_oklab,var(--color-lilac)_22%,transparent)] transition-transform duration-700 ease-(--ease-cinematic) group-hover:scale-y-0"
-            />
-            <span className="mono-label absolute top-3 left-3 rounded-[4px] bg-bg/90 px-2 py-0.5 font-semibold text-fg">
-              {folio(n)}
-            </span>
-          </div>
+            </div>
+          </ViewTransition>
           <div
             className="flex flex-1 flex-col p-5"
             data-depth

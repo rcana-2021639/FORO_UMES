@@ -12,6 +12,8 @@ import { pageMetadata } from '@/lib/seo';
 import { JsonLd } from '@/components/seo/JsonLd';
 import type { Activity } from '@/lib/types';
 import { Arrow } from '@/components/ui/Arrow';
+import { ActivityStub } from '@/components/sections/ActivityStub';
+import { ActivityGallery } from '@/components/sections/ActivityGallery';
 
 type Params = { params: Promise<{ documentId: string }> };
 
@@ -59,18 +61,29 @@ export default async function ActividadPage({ params }: Params) {
         size="article"
         kicker={`${ACTIVITY_LABEL[a.type]}, ${formatDate(a.date)}`}
         title={a.title}
+        visual={
+          <ActivityStub
+            variant="detail"
+            activity={{
+              documentId: a.documentId,
+              title: a.title,
+              type: a.type,
+              date: a.date,
+              summary: excerpt(a.description, 220),
+            }}
+          />
+        }
         aside={
           !!a.participatingUniversities?.length && (
             <div>
-              <p className="eyebrow text-fg-muted md:text-right">Participan</p>
+              <p className="eyebrow text-fg-muted">
+                Participan {a.participatingUniversities.length} de las nueve
+              </p>
               {/* Lista que salta de línea: en una sola fila las siglas se salían de la pantalla */}
-              <ul className="ui-label mt-2 flex flex-wrap gap-x-3 gap-y-1 md:justify-end">
+              <ul className="mt-3 flex flex-wrap gap-1.5">
                 {a.participatingUniversities.map((u) => (
                   <li key={u.documentId}>
-                    <Link
-                      href={`/universidades/${u.documentId}`}
-                      className="font-semibold text-accent-lilac underline decoration-transparent underline-offset-4 transition-[text-decoration-color] duration-300 hover:decoration-current"
-                    >
+                    <Link href={`/universidades/${u.documentId}`} className="uni-chip">
                       {acronymOf(u)}
                     </Link>
                   </li>
@@ -120,27 +133,20 @@ export default async function ActividadPage({ params }: Params) {
           {!!a.galleryItems?.length && (
             <section className="mt-10">
               <h2 className="eyebrow border-b border-line pb-3 text-fg-muted">Galería</h2>
-              <ul className="mt-4 grid grid-cols-3 gap-2">
-                {a.galleryItems.map((g) => {
-                  const src = mediaUrl(g.file?.formats?.thumbnail?.url ?? g.file?.url);
-                  return (
-                    <li
-                      key={g.documentId}
-                      className="relative aspect-square overflow-hidden rounded-[2px] border border-line bg-paper-2"
-                    >
-                      {src && (
-                        <Image
-                          src={src}
-                          alt={g.title ?? ''}
-                          fill
-                          sizes="120px"
-                          className="object-cover"
-                        />
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
+              <ActivityGallery
+                items={a.galleryItems
+                  .filter((g) => g.file)
+                  .map((g) => ({
+                    id: g.documentId,
+                    thumb: mediaUrl(g.file?.formats?.small?.url ?? g.file?.url),
+                    src: mediaUrl(g.file?.formats?.large?.url ?? g.file?.url),
+                    w: g.file?.width ?? 4,
+                    h: g.file?.height ?? 3,
+                    alt: g.file?.alternativeText ?? g.title ?? '',
+                    title: g.title,
+                    date: g.date ? formatDate(g.date) : null,
+                  }))}
+              />
             </section>
           )}
           <div className="mt-12">

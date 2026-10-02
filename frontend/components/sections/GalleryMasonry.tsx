@@ -2,7 +2,8 @@ import Image from 'next/image';
 import { PixelTrail } from './PixelTrail';
 import { ScrollExpand } from '@/components/ui/ScrollExpand';
 import { mediaUrl } from '@/lib/api';
-import { formatDate, formatDateShort, videoThumbnail } from '@/lib/format';
+import { formatDate, formatDateShort, videoEmbed, videoThumbnail } from '@/lib/format';
+import { GalleryGrid, type GridItem } from './GalleryGrid';
 import { cn } from '@/lib/cn';
 import type { GalleryItem } from '@/lib/types';
 
@@ -12,6 +13,37 @@ function imageOf(g: GalleryItem) {
   if (own) return { src: own, w: g.file?.width ?? 4, h: g.file?.height ?? 3, remote: false };
   const thumb = g.type === 'Video' ? videoThumbnail(g.videoUrl) : null;
   return thumb ? { src: thumb, w: 16, h: 9, remote: true } : null;
+}
+
+/** Lo que necesita el mosaico y su visor (todo serializable: lo arma el servidor). */
+function toGrid(g: GalleryItem): GridItem | null {
+  const img = imageOf(g);
+  const embed = g.type === 'Video' ? videoEmbed(g.videoUrl) : null;
+  if (!img && !embed) return null;
+  const large = mediaUrl(g.file?.formats?.large?.url ?? g.file?.url);
+  const activity = g.relatedActivity
+    ? {
+        href: `/actividades/${g.relatedActivity.documentId}`,
+        label: g.relatedActivity.title ? `De: ${g.relatedActivity.title}` : 'Ver la actividad',
+      }
+    : null;
+  // Un video de un proveedor que no se puede incrustar se abre en su sitio
+  const external =
+    g.type === 'Video' && !embed && g.videoUrl ? { href: g.videoUrl, label: 'Ver el video' } : null;
+  return {
+    id: g.documentId,
+    src: large ?? img?.src ?? null,
+    thumb: img?.src ?? null,
+    w: img?.w ?? 16,
+    h: img?.h ?? 9,
+    alt: g.file?.alternativeText ?? g.title ?? '',
+    title: g.title,
+    date: g.date ? formatDate(g.date) : null,
+    shortDate: g.date ? formatDateShort(g.date) : null,
+    embed,
+    isVideo: g.type === 'Video',
+    link: external ?? activity,
+  };
 }
 
 interface Props {
@@ -45,70 +77,9 @@ export function GalleryMasonry({ items, opener }: Props) {
       {rest.length > 0 && (
         <div className={cn('relative', opener && 'container-x mt-10 md:mt-14')}>
           <PixelTrail color="#7c5ae0" gooey />
-          {/* Cada pieza entra con una cortina que sube y la foto se asienta (data-reveal="clip") */}
-          <div
-            data-reveal-stagger="clip"
-            className="columns-2 gap-3 md:columns-3 lg:columns-4 [&>*]:mb-3 [&>*]:break-inside-avoid"
-          >
-            {rest.map((g) => {
-              const img = imageOf(g);
-              const isVideo = g.type === 'Video' && g.videoUrl;
-              return (
-                <figure
-                  key={g.documentId}
-                  className="group relative overflow-hidden rounded-[8px] bg-white shadow-[0_0_0_1px_var(--rule)]"
-                >
-                  {isVideo ? (
-                    <a
-                      href={g.videoUrl!}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={`Ver el video${g.title ? ` «${g.title}»` : ''} (se abre en otra pestaña)`}
-
-                      className="relative block aspect-video"
-                    >
-                      {img ? (
-                        <Image
-                          src={img.src}
-                          alt={g.title ?? ''}
-                          fill
-                          sizes="(min-width:1024px) 25vw, 50vw"
-                          className="object-cover transition-transform duration-[1.4s] ease-(--ease-out-premium) group-hover:scale-[1.03]"
-                        />
-                      ) : (
-                        <span className="absolute inset-0 grid place-items-center">
-                          <PlayGlyph />
-                        </span>
-                      )}
-                      <span className="absolute inset-0 bg-gradient-to-t from-dusk/70 to-transparent opacity-80" />
-                      <span className="absolute bottom-3 left-3 flex items-center gap-2 text-paper">
-                        <PlayGlyph small />
-                        <span className="ui-label">video</span>
-                      </span>
-                    </a>
-                  ) : img ? (
-                    <div className="relative" style={{ aspectRatio: `${img.w} / ${img.h}` }}>
-                      <Image
-                        src={img.src}
-                        alt={g.file?.alternativeText ?? g.title ?? ''}
-                        fill
-                        sizes="(min-width:1024px) 25vw, 50vw"
-                        className="object-cover transition-transform duration-[1.4s] ease-(--ease-out-premium) group-hover:scale-[1.03]"
-                      />
-                    </div>
-                  ) : null}
-                  {(g.title || g.date) && (
-                    <figcaption className="gallery-cap">
-                      {g.date && (
-                        <span className="gallery-cap__date">{formatDateShort(g.date)}</span>
-                      )}
-                      {g.title && <span className="gallery-cap__title">{g.title}</span>}
-                    </figcaption>
-                  )}
-                </figure>
-              );
-            })}
-          </div>
+          {/* Cada pieza entra con una cortina que sube y la foto se asienta (data-reveal="clip");
+              al pulsarla se abre en el visor */}
+          <GalleryGrid items={rest.map(toGrid).filter((g): g is GridItem => !!g)} />
         </div>
       )}
     </div>

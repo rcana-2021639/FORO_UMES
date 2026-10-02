@@ -4,6 +4,8 @@ import { Words } from '@/components/ui/Words';
 import { ActivitiesBoard } from '@/components/sections/ActivitiesBoard';
 import { MilestonesTrack } from '@/components/sections/MilestonesTrack';
 import { buildMilestones } from '@/lib/milestones';
+import { ActivityStub } from '@/components/sections/ActivityStub';
+import { excerpt } from '@/lib/format';
 import { api, critical } from '@/lib/api';
 import { pageMetadata } from '@/lib/seo';
 
@@ -22,6 +24,12 @@ export default async function ActividadesPage() {
   ]);
   // Aquí la historia completa, desde el primer ingreso (en la portada solo los últimos 14)
   const milestones = buildMilestones(universities.data, activities.data, 100);
+  // La próxima actividad (la más cercana que no ha pasado); si no hay, la más reciente
+  const today = new Date().toISOString().slice(0, 10);
+  const next =
+    [...activities.data]
+      .filter((a) => a.date >= today)
+      .sort((a, b) => a.date.localeCompare(b.date))[0] ?? activities.data[0];
 
   return (
     <>
@@ -30,6 +38,20 @@ export default async function ActividadesPage() {
         kicker="Lo que ya pasó y lo que viene"
         title="Actividades del Foro"
         intro="Encuentros, seminarios y proyectos de las nueve universidades. Filtra por tipo y pulsa un boleto para ver de qué se trata y quién participa."
+        visual={
+          next ? (
+            <ActivityStub
+              variant="upcoming"
+              activity={{
+                documentId: next.documentId,
+                title: next.title,
+                type: next.type,
+                date: next.date,
+                summary: excerpt(next.description, 220),
+              }}
+            />
+          ) : undefined
+        }
       />
       <div className="container-x">
         <ActivitiesBoard activities={activities.data} />

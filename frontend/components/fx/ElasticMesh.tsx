@@ -169,6 +169,7 @@ interface Live {
   interaction: 'hover' | 'drag';
   enabled: boolean;
   idle: number;
+  fit: number;
 }
 
 export interface ElasticMeshProps {
@@ -193,6 +194,11 @@ export interface ElasticMeshProps {
   enabled?: boolean;
   /** Respiración sin puntero (0 = quieta). 1 es un oleaje apenas visible. */
   idle?: number;
+  /**
+   * Cuánto del lienzo ocupa la tela (0.82 deja margen para que se deforme sin cortarse). Con 1 o
+   * más llena el recuadro, como una foto a sangre (portada destacada de /noticias).
+   */
+  fit?: number;
   className?: string;
   style?: CSSProperties;
 }
@@ -218,6 +224,7 @@ const ElasticMesh = ({
   interaction = 'hover',
   enabled = true,
   idle = 0,
+  fit = FIT,
   className = '',
   style,
 }: ElasticMeshProps) => {
@@ -245,6 +252,7 @@ const ElasticMesh = ({
     interaction,
     enabled,
     idle,
+    fit,
   };
   const propsRef = useRef<Live>(live);
   useEffect(() => {
@@ -688,6 +696,7 @@ const ElasticMesh = ({
       program.uniforms.uShading.value = p.shading;
       program.uniforms.uRadius.value = p.borderRadius;
       program.uniforms.uTilt.value = (p.tilt * Math.PI) / 180;
+      program.uniforms.uFit.value = p.fit;
       // Colores y revelado viajan suaves hacia su valor (independiente de los fps)
       const step = Math.max((now - last) / 1000, 1e-4);
       const kc = 1 - Math.exp(-step / 0.25);

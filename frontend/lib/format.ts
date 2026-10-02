@@ -208,3 +208,18 @@ export function modalitiesByUniversity(
   }
   return out;
 }
+
+/**
+ * Minutos de lectura de un texto en Markdown, a 200 palabras por minuto (lectura atenta en
+ * español); como mínimo 1. Las marcas de Markdown y las URL no cuentan como palabras.
+ */
+export function readingMinutes(markdown?: string | null): number {
+  if (!markdown) return 1;
+  const text = markdown
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/https?:\/\/\S+/g, ' ')
+    .replace(/[#>*_`~|-]+/g, ' ');
+  const words = text.split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w)).length;
+  return Math.max(1, Math.round(words / 200));
+}

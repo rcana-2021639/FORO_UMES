@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, ViewTransition } from 'react';
 import { AnimatePresence, motion, useInView } from 'motion/react';
 import TearTicket from '@/components/fx/TearTicket';
 import { DepthText } from '@/components/fx/DepthText';
@@ -12,19 +12,10 @@ import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { EASE, stagger } from '@/lib/motion';
 import { cn } from '@/lib/cn';
 import type { Activity, ActivityType } from '@/lib/types';
-import { DEEP, PALETTE } from '@/lib/palette';
+import { ACTIVITY_INK as INK } from '@/lib/activity-ink';
 import { Arrow } from '@/components/ui/Arrow';
 
 const TYPES: ActivityType[] = ['Encuentro', 'Conferencia', 'Seminario', 'Reunion', 'Proyecto'];
-
-/** Tinta de cada tipo de actividad: el boleto y su talón se imprimen con ella. */
-const INK: Record<ActivityType, { bg: string; stub: string; accent: string }> = {
-  Encuentro: { bg: DEEP.sage, stub: PALETTE.sage, accent: PALETTE.sage2 },
-  Conferencia: { bg: DEEP.lilac, stub: PALETTE.lilac, accent: PALETTE.lilac2 },
-  Seminario: { bg: DEEP.clay, stub: PALETTE.clay2, accent: PALETTE.clay },
-  Reunion: { bg: DEEP.sky, stub: '#4b4aa8', accent: PALETTE.sky },
-  Proyecto: { bg: DEEP.coral, stub: '#8e4fb8', accent: PALETTE.coral },
-};
 
 const DAY = new Intl.DateTimeFormat('es-GT', { day: '2-digit' });
 const MON = new Intl.DateTimeFormat('es-GT', { month: 'short' });
@@ -79,22 +70,40 @@ export function ActivitiesBoard({ activities }: { activities: Activity[] }) {
         heading="Anteriores"
         items={past}
         empty="Ninguna actividad anterior con este filtro."
+        byYear
       />
     </div>
   );
 }
+
+/** Años que se muestran abiertos de entrada en "Anteriores"; los demás, plegados. */
+const OPEN_YEARS = 2;
 
 function Group({
   id,
   heading,
   items,
   empty,
+  byYear,
 }: {
   id: string;
   heading: string;
   items: Activity[];
   empty: string;
+  /** Agrupar por año, con los años antiguos plegados (la lista completa medía 15 000 px). */
+  byYear?: boolean;
 }) {
+  const years = useMemo(() => {
+    const m = new Map<string, Activity[]>();
+    for (const a of items) {
+      const y = a.date.slice(0, 4);
+      m.set(y, [...(m.get(y) ?? []), a]);
+    }
+    return [...m.entries()].sort((a, b) => b[0].localeCompare(a[0]));
+  }, [items]);
+  const [opened, setOpened] = useState<Set<string>>(new Set());
+  const isOpen = (y: string, i: number) => i < OPEN_YEARS || opened.has(y);
+
   return (
     <section aria-labelledby={id}>
       <div className="mb-6 flex items-end justify-between gap-4 border-b border-line pb-4">
@@ -115,7 +124,44 @@ function Group({
           />
         </h2>
       </div>
-      {items.length ? (
+      {items.length && byYear ? (
+        <div className="space-y-12">
+          {years.map(([y, list], yi) => (
+            <section key={y} aria-labelledby={`${id}-${y}`} className="act-year">
+              <h3 id={`${id}-${y}`} className="act-year__head" data-reveal="left">
+                <span className="act-year__num">{y}</span>
+                <span className="act-year__count">
+                  {list.length} {list.length === 1 ? 'actividad' : 'actividades'}
+                </span>
+              </h3>
+              {isOpen(y, yi) ? (
+                <ul className="grid gap-x-6 gap-y-10 md:grid-cols-2 [perspective:1600px]">
+                  <AnimatePresence initial={false}>
+                    {list.map((a, i) => (
+                      <Ticket key={a.documentId} a={a} i={i} />
+                    ))}
+                  </AnimatePresence>
+                </ul>
+              ) : (
+                <button
+                  type="button"
+                  className="act-year__open"
+                  onClick={() => setOpened((s) => new Set(s).add(y))}
+                >
+                  Ver {list.length === 1 ? 'la actividad' : `las ${list.length} actividades`} de {y}
+                  <span className="act-year__titles">
+                    {list
+                      .slice(0, 3)
+                      .map((a) => a.title)
+                      .join(' · ')}
+                    {list.length > 3 ? ' …' : ''}
+                  </span>
+                </button>
+              )}
+            </section>
+          ))}
+        </div>
+      ) : items.length ? (
         <ul className="grid gap-x-6 gap-y-10 md:grid-cols-2 [perspective:1600px]">
           <AnimatePresence initial={false}>
             {items.map((a, i) => (
@@ -176,27 +222,38 @@ function Ticket({ a, i }: { a: Activity; i: number }) {
         onTear={() => router.push(href)}
         ariaLabel={`Arrancar el talón y abrir ${a.title}`}
         stub={
-          <div className="flex h-full flex-col items-center justify-center gap-1 px-3 text-center text-paper">
-            <span className="mono-label uppercase opacity-70">
-              {MON.format(d).replace('.', '')}
-            </span>
-            <span
-              className="font-display text-[3.2rem] leading-none"
-              style={{ fontVariationSettings: "'opsz' 96, 'WONK' 1" }}
-            >
-              {DAY.format(d)}
-            </span>
-            <span className="mono-label opacity-70">{YEAR.format(d)}</span>
-            <span
-              className="mt-3 rounded-[4px] border border-paper/40 px-2 py-0.5 text-[0.66rem] font-semibold tracking-[0.08em] uppercase"
-              style={{ color: ink.accent }}
-            >
-              Tira ⤴
-            </span>
-          </div>
+          // Al abrir la actividad desde el boleto, este talón vuela a la cabecera (ActivityStub)
+          <ViewTransition
+            name={`stub-${a.documentId}`}
+            share={{ 'act-ticket': 'stub-morph', default: 'none' }}
+            default="none"
+          >
+            <div className="flex h-full flex-col items-center justify-center gap-1 px-3 text-center text-paper">
+              <span className="mono-label uppercase opacity-70">
+                {MON.format(d).replace('.', '')}
+              </span>
+              <span
+                className="font-display text-[3.2rem] leading-none"
+                style={{ fontVariationSettings: "'opsz' 96, 'WONK' 1" }}
+              >
+                {DAY.format(d)}
+              </span>
+              <span className="mono-label opacity-70">{YEAR.format(d)}</span>
+              <span
+                className="mt-3 rounded-[4px] border border-paper/40 px-2 py-0.5 text-[0.66rem] font-semibold tracking-[0.08em] uppercase"
+                style={{ color: ink.accent }}
+              >
+                Tira ⤴
+              </span>
+            </div>
+          </ViewTransition>
         }
       >
-        <Link href={href} className="group flex h-full flex-col justify-end p-5 text-paper md:p-6">
+        <Link
+          href={href}
+          transitionTypes={['act-ticket']}
+          className="group flex h-full flex-col justify-end p-5 text-paper md:p-6"
+        >
           <span className="flex items-center gap-2">
             <span
               className="rounded-[4px] px-2 py-0.5 text-[0.68rem] font-semibold tracking-[0.07em] text-ink uppercase"

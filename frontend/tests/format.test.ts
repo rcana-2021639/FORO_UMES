@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { daysUntil, relativeDay } from '@/lib/activity-ink';
 import {
   countByLevel,
   excerpt,
@@ -6,6 +7,7 @@ import {
   levelsByUniversity,
   modalitiesByUniversity,
   parseVideo,
+  readingMinutes,
   videoEmbed,
   videoThumbnail,
 } from '@/lib/format';
@@ -112,5 +114,37 @@ describe('modalidades por universidad', () => {
         { modality: 'Presencial', university: null },
       ])
     ).toEqual({ a: { Presencial: 0, Virtual: 2, Hibrida: 1 } });
+  });
+});
+
+describe('fechas relativas de actividades', () => {
+  const today = new Date(2026, 9, 1); // 1 de octubre de 2026, hora local
+  it('cuenta días enteros hacia adelante y hacia atrás', () => {
+    expect(daysUntil('2026-10-22', today)).toBe(21);
+    expect(daysUntil('2026-10-01', today)).toBe(0);
+    expect(daysUntil('2026-09-30', today)).toBe(-1);
+    expect(daysUntil('2027-01-01', today)).toBe(92);
+  });
+  it('lo dice en palabras', () => {
+    expect(relativeDay(0)).toBe('Es hoy');
+    expect(relativeDay(1)).toBe('Es mañana');
+    expect(relativeDay(21)).toBe('Faltan 21 días');
+    expect(relativeDay(-1)).toBe('Fue ayer');
+    expect(relativeDay(-10)).toBe('Hace 10 días');
+    expect(relativeDay(-60)).toBe('Hace 2 meses');
+    expect(relativeDay(-400)).toBe('Hace 1 año');
+  });
+});
+
+describe('tiempo de lectura', () => {
+  it('cuenta palabras reales a 200 por minuto, mínimo 1', () => {
+    expect(readingMinutes(null)).toBe(1);
+    expect(readingMinutes('Hola mundo')).toBe(1);
+    expect(readingMinutes(Array(600).fill('palabra').join(' '))).toBe(3);
+  });
+  it('no cuenta marcas de Markdown, imágenes ni direcciones', () => {
+    const noise = '![foto](https://x.y/z.png) https://a.b/c *** - - # > '.repeat(200);
+    const md = `## Título\n\n${Array(399).fill('texto').join(' ')} [enlace](https://foro.org) ${noise}`;
+    expect(readingMinutes(md)).toBe(2);
   });
 });
