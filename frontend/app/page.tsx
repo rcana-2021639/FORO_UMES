@@ -12,10 +12,10 @@ import { ContributionsStrip } from '@/components/sections/ContributionsStrip';
 import { ContactForm } from '@/components/sections/ContactForm';
 import { SectionRail } from '@/components/nav/SectionRail';
 import { JsonLd } from '@/components/seo/JsonLd';
-import { api, critical } from '@/lib/api';
+import { api, critical, mediaUrl } from '@/lib/api';
 import { organizationJsonLd, websiteJsonLd } from '@/lib/json-ld';
 import { pageMetadata } from '@/lib/seo';
-import { countByUniversity } from '@/lib/format';
+import { countByLevel, countByUniversity, levelsByUniversity } from '@/lib/format';
 import { SITE_DESCRIPTION } from '@/lib/site';
 
 export const metadata = pageMetadata({ path: '/', description: SITE_DESCRIPTION });
@@ -57,6 +57,7 @@ export default async function Home() {
     acronym: u.acronym ?? u.name.slice(0, 4),
     name: u.name,
     href: `/universidades/${u.documentId}`,
+    logo: mediaUrl(u.logo?.formats?.small?.url ?? u.logo?.url),
   }));
 
   return (
@@ -64,7 +65,12 @@ export default async function Home() {
       <JsonLd data={[organizationJsonLd(universities.data), websiteJsonLd()]} />
       <SectionRail items={RAIL} />
 
-      <Hero year={year} counts={counts} universities={heroUniversities} />
+      <Hero
+        year={year}
+        counts={counts}
+        universities={heroUniversities}
+        levels={countByLevel(programs.data)}
+      />
 
       <Section
         id="universidades"
@@ -82,6 +88,7 @@ export default async function Home() {
         <UniversitiesBento
           universities={universities.data}
           programCounts={countByUniversity(programs.data)}
+          levels={levelsByUniversity(programs.data)}
         />
       </Section>
 

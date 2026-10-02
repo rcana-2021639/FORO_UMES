@@ -5,7 +5,8 @@ import Image from 'next/image';
 import { useEffect, useRef, useState, ViewTransition } from 'react';
 import { PixelSwap } from '@/components/ui/PixelSwap';
 import { mediaUrl } from '@/lib/api';
-import { excerpt, yearOf } from '@/lib/format';
+import { LEVEL_LABEL, excerpt, yearOf, type LevelCounts } from '@/lib/format';
+import { LEVELS, LEVEL_META } from '@/lib/levels';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useQuality } from '@/lib/quality';
 import { brandOf } from '@/lib/universities';
@@ -23,10 +24,13 @@ import { Arrow } from '@/components/ui/Arrow';
 export function UniversitiesBento({
   universities,
   programCounts = {},
+  levels = {},
 }: {
   universities: University[];
   /** Programas publicados por universidad (documentId → cantidad). */
   programCounts?: Record<string, number>;
+  /** Programas por nivel de cada universidad: el filete de la ficha es ese espectro. */
+  levels?: Record<string, LevelCounts>;
 }) {
   const reduced = useReducedMotion();
   const lite = useQuality() !== 'full';
@@ -34,7 +38,7 @@ export function UniversitiesBento({
   return (
     <ul
       data-reveal-stagger="tilt"
-      className="grid auto-rows-[11.5rem] grid-cols-2 gap-2.5 [perspective:1600px] sm:auto-rows-[13rem] sm:gap-3 lg:grid-cols-3"
+      className="uni-grid grid auto-rows-[6.4rem] grid-cols-1 gap-2 [perspective:1600px] sm:auto-rows-[13rem] sm:grid-cols-2 sm:gap-3 lg:grid-cols-3"
     >
       {universities.length === 0 && (
         <li className="col-span-full max-w-[44ch] text-fg-muted">
@@ -49,6 +53,7 @@ export function UniversitiesBento({
           reduced={reduced}
           lite={lite}
           programs={programCounts[u.documentId]}
+          levels={levels[u.documentId]}
         />
       ))}
     </ul>
@@ -61,12 +66,14 @@ function Cell({
   reduced,
   lite,
   programs,
+  levels,
 }: {
   u: University;
   i: number;
   reduced: boolean;
   lite: boolean;
   programs?: number;
+  levels?: LevelCounts;
 }) {
   const [on, setOn] = useState(false);
   // Si el archivo del logo no carga (seed incompleto, CDN caído), la sigla ocupa su lugar
@@ -111,6 +118,7 @@ function Cell({
       </div>
       <div>
         <p className="uni-face__name">{u.name}</p>
+        {levels && <Spectrum levels={levels} />}
         <p className="uni-face__meta">
           <span>
             {count ?? (joined ? `En el Foro desde ${joined}` : domain || 'Guatemala')}
@@ -192,5 +200,36 @@ function Cell({
         </Link>
       </ViewTransition>
     </li>
+  );
+}
+
+/**
+ * El filete de la ficha es su oferta: un tramo por nivel, de largo proporcional a cuántos programas
+ * tiene (maestrías, doctorados, especializaciones, diplomados, con los colores del catálogo). Se
+ * llena con el scroll y engrosa al pasar el cursor.
+ */
+function Spectrum({ levels }: { levels: LevelCounts }) {
+  const parts = LEVELS.filter((l) => levels[l] > 0);
+  const title = parts
+    .map(
+      (l) =>
+        `${levels[l]} ${levels[l] === 1 ? LEVEL_LABEL[l].toLowerCase() : LEVEL_META[l].plural.toLowerCase()}`
+    )
+    .join(' · ');
+  return (
+    <span className="uni-face__spectrum" title={title} aria-label={title} role="img">
+      {parts.map((l, i) => (
+        <span
+          key={l}
+          style={
+            {
+              flexGrow: levels[l],
+              background: LEVEL_META[l].color,
+              '--i': i,
+            } as React.CSSProperties
+          }
+        />
+      ))}
+    </span>
   );
 }

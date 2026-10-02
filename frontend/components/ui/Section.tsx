@@ -70,7 +70,7 @@ export function Section({
           {backdrop}
         </div>
       )}
-      <header className="container-x relative z-10">
+      <header className="sec-head container-x relative z-10">
         <div className="sec-head__top">
           <p data-reveal="left" className="sec-head__label eyebrow">
             {index != null && <MayaNumeral n={index} className="sec-head__maya" />}

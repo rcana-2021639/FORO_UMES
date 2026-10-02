@@ -1,13 +1,19 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
+import { motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { GuideDeck } from './GuideDeck';
+import { LinkPreview, PREVIEW_ITEM } from './LinkPreview';
 import { RollingNumber } from '@/components/ui/RollingNumber';
 import { Word, Words } from '@/components/ui/Words';
 import { gsap } from '@/lib/gsap';
 import { getQuality } from '@/lib/quality';
 import { LEVELS, LEVEL_META } from '@/lib/levels';
+import type { LevelCounts } from '@/lib/format';
+import { MayaNumber, mayaReading } from '@/components/ui/MayaNumber';
+import { Emblem } from '@/components/ui/Emblem';
 import { Arrow } from '@/components/ui/Arrow';
 import { MagnifyingGlassIcon } from '@phosphor-icons/react/dist/ssr';
 
@@ -15,6 +21,8 @@ export interface HeroUniversity {
   acronym: string;
   name: string;
   href: string;
+  /** Sello (formato pequeño) para el adelanto de la frase. */
+  logo?: string | null;
 }
 
 interface Props {
@@ -26,6 +34,8 @@ interface Props {
     contributions: number;
   };
   universities: HeroUniversity[];
+  /** Programas por nivel: el adelanto de "124 programas". */
+  levels: LevelCounts;
 }
 
 /** Los tres motivos por los que alguien llega al sitio. Es lo primero que hay que poder elegir. */
@@ -60,7 +70,7 @@ const PATHS = [
  * La entrada la hace el script de arranque (data-reveal): empieza en el primer pintado, antes de
  * que React hidrate, así que nada aparece, desaparece y vuelve a entrar.
  */
-export function Hero({ year, counts, universities }: Props) {
+export function Hero({ year, counts, universities, levels }: Props) {
   const root = useRef<HTMLElement>(null);
 
   // Parallax de los orbes con el scroll (solo modo completo)
@@ -118,16 +128,26 @@ export function Hero({ year, counts, universities }: Props) {
           </h1>
           <p data-reveal="blur" className="hero-lead">
             Las direcciones de posgrado de{' '}
-            <Link href="#universidades" className="hero-link">
+            <LinkPreview
+              href="#universidades"
+              className="hero-link"
+              label="Las nueve universidades del Foro"
+              preview={<UniversitiesPreview universities={universities} />}
+            >
               nueve universidades de Guatemala
-            </Link>{' '}
+            </LinkPreview>{' '}
             coordinan aquí su oferta{' '}
             {counts.academicPrograms > 0 ? (
               <>
                 —
-                <Link href="/programas" className="hero-link">
+                <LinkPreview
+                  href="/programas"
+                  className="hero-link"
+                  label="La oferta por nivel"
+                  preview={<LevelsPreview total={counts.academicPrograms} levels={levels} />}
+                >
                   {counts.academicPrograms} programas
-                </Link>{' '}
+                </LinkPreview>{' '}
                 de posgrado—
               </>
             ) : (
@@ -207,6 +227,14 @@ export function Hero({ year, counts, universities }: Props) {
             <HeroStat key={s.label} value={s.value} label={s.label} index={i} />
           ))}
         </dl>
+        {/* Las cifras también "a la maya": la misma lógica del emblema, explicada en una línea */}
+        <p data-reveal="fade" className="maya-note lg:col-span-12">
+          <Emblem bare className="maya-note__mark" />
+          <span>
+            Junto a cada cifra, la misma en <strong>numeración maya</strong>: el punto vale uno, la
+            barra cinco y cada piso, veinte veces más. El emblema del Foro es el nueve.
+          </span>
+        </p>
       </div>
 
       {/* Cinta con las nueve universidades: movimiento continuo, pausa al pasar el cursor */}
@@ -245,14 +273,76 @@ function HeroStat({ value, label, index }: { value: number; label: string; index
       <span aria-hidden className="hero-stat__rule" />
       <dt className="sr-only">{label}</dt>
       <dd>
-        <span className="hero-stat__num text-violet-grad block font-display text-[clamp(2.4rem,4vw,3.6rem)] leading-none [font-variation-settings:'opsz'_96,'SOFT'_50]">
-          <span aria-hidden className="hero-stat__flash" />
-          <RollingNumber value={value} delay={delay} onLand={() => setLanded(true)} />
+        <span className="hero-stat__row">
+          <span className="hero-stat__num text-violet-grad block font-display text-[clamp(2.4rem,4vw,3.6rem)] leading-none [font-variation-settings:'opsz'_96,'SOFT'_50]">
+            <span aria-hidden className="hero-stat__flash" />
+            <RollingNumber value={value} delay={delay} onLand={() => setLanded(true)} />
+          </span>
+          {/* La misma cifra en numeración maya: cae pieza a pieza cuando el odómetro se detiene */}
+          <span className="hero-stat__maya" title={mayaReading(value)}>
+            <MayaNumber value={value} />
+          </span>
         </span>
         <span aria-hidden className="hero-stat__label ui-label mt-2 block text-fg-muted">
           <span>{label}</span>
         </span>
       </dd>
     </div>
+  );
+}
+
+/** Adelanto de "nueve universidades": los nueve sellos, cada uno lleva a su perfil. */
+function UniversitiesPreview({ universities }: { universities: HeroUniversity[] }) {
+  return (
+    <>
+      <motion.span variants={PREVIEW_ITEM} className="link-preview__label">
+        Las nueve, en igualdad
+      </motion.span>
+      <span className="link-preview__seals">
+        {universities.map((u) => (
+          <motion.span key={u.href} variants={PREVIEW_ITEM} className="block">
+            <Link href={u.href} className="link-preview__seal" title={u.name}>
+              {u.logo ? (
+                <Image src={u.logo} alt="" width={88} height={88} />
+              ) : (
+                <span aria-hidden className="link-preview__seal-text">
+                  {u.acronym.slice(0, 3)}
+                </span>
+              )}
+              <span>{u.acronym}</span>
+            </Link>
+          </motion.span>
+        ))}
+      </span>
+    </>
+  );
+}
+
+/** Adelanto de "124 programas": cuántos hay de cada nivel, con su barra; cada fila filtra el catálogo. */
+function LevelsPreview({ total, levels }: { total: number; levels: LevelCounts }) {
+  const max = Math.max(1, ...LEVELS.map((l) => levels[l]));
+  return (
+    <>
+      <motion.span variants={PREVIEW_ITEM} className="link-preview__label">
+        {total} programas en cuatro niveles
+      </motion.span>
+      <span className="link-preview__rows">
+        {LEVELS.map((l, i) => (
+          <motion.span key={l} variants={PREVIEW_ITEM} className="block">
+            <Link
+              href={`/programas?nivel=${l}`}
+              className="link-preview__row"
+              style={{ '--c': LEVEL_META[l].color, '--i': i } as React.CSSProperties}
+            >
+              <span className="link-preview__name">{LEVEL_META[l].plural}</span>
+              <span aria-hidden className="link-preview__bar">
+                <span style={{ '--w': levels[l] / max } as React.CSSProperties} />
+              </span>
+              <span className="link-preview__n">{levels[l]}</span>
+            </Link>
+          </motion.span>
+        ))}
+      </span>
+    </>
   );
 }

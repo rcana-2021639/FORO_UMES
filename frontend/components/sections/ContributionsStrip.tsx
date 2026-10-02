@@ -2,11 +2,30 @@ import Link from 'next/link';
 import { CONTRIBUTION_LABEL, excerpt, formatDate } from '@/lib/format';
 import type { Contribution, ContributionType } from '@/lib/types';
 import { Arrow } from '@/components/ui/Arrow';
+import { HandHeartIcon, RocketLaunchIcon, SealCheckIcon } from '@phosphor-icons/react/dist/ssr';
 
-const TONE: Record<ContributionType, { rule: string; hint: string }> = {
-  Resultado: { rule: 'var(--color-sage)', hint: 'Ya ocurrió y se puede medir' },
-  Iniciativa: { rule: 'var(--color-lilac)', hint: 'Está en marcha' },
-  Beneficio: { rule: 'var(--color-clay-2)', hint: 'Lo ganan estudiantes y programas' },
+const TONE: Record<
+  ContributionType,
+  { rule: string; hint: string; Icon: typeof SealCheckIcon; gesture: string }
+> = {
+  Resultado: {
+    rule: 'var(--color-sage)',
+    hint: 'Ya ocurrió y se puede medir',
+    Icon: SealCheckIcon,
+    gesture: 'stamp',
+  },
+  Iniciativa: {
+    rule: 'var(--color-lilac)',
+    hint: 'Está en marcha',
+    Icon: RocketLaunchIcon,
+    gesture: 'launch',
+  },
+  Beneficio: {
+    rule: 'var(--color-clay-2)',
+    hint: 'Lo ganan estudiantes y programas',
+    Icon: HandHeartIcon,
+    gesture: 'beat',
+  },
 };
 
 /**
@@ -30,14 +49,16 @@ export function ContributionsStrip({ contributions }: { contributions: Contribut
         const tone = TONE[c.type];
         const inner = (
           <>
-            <span
-              aria-hidden
-              className="absolute inset-x-0 top-0 h-[3px]"
-              style={{ background: tone.rule }}
-            />
+            {/* Filete de su tipo: al pasar el cursor baja y tiñe la ficha */}
+            <span aria-hidden className="contrib-card__wash" />
             <span className="flex items-center justify-between gap-3">
-              <span className="chip" style={{ color: tone.rule, borderColor: 'currentColor' }}>
-                {CONTRIBUTION_LABEL[c.type]}
+              <span className="flex items-center gap-2.5">
+                <span aria-hidden className="contrib-card__icon" data-gesture={tone.gesture}>
+                  <tone.Icon weight="duotone" />
+                </span>
+                <span className="chip" style={{ color: tone.rule, borderColor: 'currentColor' }}>
+                  {CONTRIBUTION_LABEL[c.type]}
+                </span>
               </span>
               <span className="mono-label text-fg-muted">{formatDate(c.publishedOn)}</span>
             </span>
@@ -58,11 +79,17 @@ export function ContributionsStrip({ contributions }: { contributions: Contribut
         return (
           <li key={c.documentId}>
             {c.relatedActivity ? (
-              <Link href={`/actividades/${c.relatedActivity.documentId}`} className="contrib-card">
+              <Link
+                href={`/actividades/${c.relatedActivity.documentId}`}
+                className="contrib-card group"
+                style={{ '--tone': tone.rule } as React.CSSProperties}
+              >
                 {inner}
               </Link>
             ) : (
-              <div className="contrib-card">{inner}</div>
+              <div className="contrib-card" style={{ '--tone': tone.rule } as React.CSSProperties}>
+                {inner}
+              </div>
             )}
           </li>
         );

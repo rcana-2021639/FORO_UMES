@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { excerpt, formatDate, parseVideo, videoEmbed, videoThumbnail } from '@/lib/format';
+import {
+  countByLevel,
+  excerpt,
+  formatDate,
+  levelsByUniversity,
+  parseVideo,
+  videoEmbed,
+  videoThumbnail,
+} from '@/lib/format';
 
 describe('excerpt', () => {
   it('deja texto plano: sin Markdown, imágenes, enlaces ni HTML', () => {
@@ -65,5 +73,29 @@ describe('videos de YouTube y Vimeo', () => {
       expect(parseVideo(url)).toBeNull();
       expect(videoEmbed(url)).toBeNull();
     }
+  });
+});
+
+describe('conteos por nivel', () => {
+  const u = (documentId: string) => ({ id: 1, documentId, name: documentId });
+  const programs = [
+    { level: 'Maestria' as const, university: u('a') },
+    { level: 'Maestria' as const, university: u('b') },
+    { level: 'Doctorado' as const, university: u('a') },
+    { level: 'Diplomado' as const, university: null },
+  ];
+  it('cuenta toda la oferta por nivel, también los niveles vacíos', () => {
+    expect(countByLevel(programs)).toEqual({
+      Maestria: 2,
+      Doctorado: 1,
+      Especializacion: 0,
+      Diplomado: 1,
+    });
+  });
+  it('separa por universidad e ignora programas sin universidad', () => {
+    expect(levelsByUniversity(programs)).toEqual({
+      a: { Maestria: 1, Doctorado: 1, Especializacion: 0, Diplomado: 0 },
+      b: { Maestria: 1, Doctorado: 0, Especializacion: 0, Diplomado: 0 },
+    });
   });
 });

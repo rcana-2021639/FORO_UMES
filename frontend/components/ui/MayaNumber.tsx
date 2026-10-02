@@ -13,7 +13,7 @@ const DOT_GAP = 6;
 const BAR_H = 3.6;
 const ROW_GAP = 2.4;
 /** Separación entre niveles (veintenas y unidades): mayor que entre filas, para leer la posición. */
-const LEVEL_GAP = 6.5;
+const LEVEL_GAP = 9;
 const SHELL_H = 8;
 
 /** Cifras en base 20, de la más alta a la más baja (así se escriben: la mayor arriba). */
@@ -61,7 +61,23 @@ export function MayaNumber({ value, className }: Props) {
   const pieces: React.ReactNode[] = [];
 
   digits.forEach((d, level) => {
-    if (level > 0) y += LEVEL_GAP;
+    if (level > 0) {
+      // Filete tenue entre pisos: deja leer que son dos cifras (veintenas arriba, unidades abajo)
+      pieces.push(
+        <line
+          key={`f${level}`}
+          className="maya-num__floor"
+          x1={3}
+          x2={W - 3}
+          y1={y + LEVEL_GAP / 2}
+          y2={y + LEVEL_GAP / 2}
+          stroke="currentColor"
+          strokeWidth={0.8}
+          strokeDasharray="1.6 1.6"
+        />
+      );
+      y += LEVEL_GAP;
+    }
     if (d === 0) {
       pieces.push(<Shell key={`s${level}`} y={y} k={k++} />);
       y += SHELL_H;

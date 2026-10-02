@@ -382,3 +382,445 @@ html[data-quality='still']::view-transition-old(*),
 html[data-quality='still']::view-transition-new(*) {
   animation: none !important;
 }
+
+/* ============================================================================================
+   Portada (fase 2)
+   ============================================================================================ */
+
+/* ---------- Adelantos de la frase (components/hero/LinkPreview.tsx) ---------- */
+.hero-lead {
+  position: relative;
+}
+.link-preview {
+  position: absolute;
+  z-index: 40;
+  display: block;
+  width: 20rem;
+  padding: 0.95rem 1rem 1rem;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow:
+    0 0 0 1px var(--rule),
+    0 28px 60px -28px rgb(var(--shadow-ink) / 0.55),
+    0 8px 18px -12px rgb(var(--shadow-ink) / 0.25);
+  transform-origin: 1.5rem top;
+  font-size: 0.86rem;
+  line-height: 1.3;
+  color: var(--color-ink);
+}
+/* Pestaña que une el adelanto con la palabra */
+.link-preview::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 1.4rem;
+  width: 10px;
+  height: 10px;
+  rotate: 45deg;
+  background: #fff;
+  box-shadow: -1px -1px 0 0 var(--rule);
+}
+.link-preview__label {
+  display: block;
+  margin-bottom: 0.75rem;
+  font-size: var(--text-label);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-violet-700);
+}
+.link-preview__seals {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.35rem;
+}
+.link-preview__seal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.55rem 0.25rem 0.45rem;
+  border-radius: 8px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--color-ink-2);
+  transition:
+    background-color 0.25s var(--ease-snap),
+    color 0.25s var(--ease-snap);
+}
+.link-preview__seal img,
+.link-preview__seal-text {
+  width: 2.6rem;
+  height: 2.6rem;
+  object-fit: contain;
+  transition: scale 0.45s var(--ease-pop);
+}
+.link-preview__seal-text {
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  color: var(--color-violet-800);
+  background: var(--color-violet-50);
+}
+.link-preview__seal:hover,
+.link-preview__seal:focus-visible {
+  color: var(--color-violet-800);
+  background: var(--color-violet-50);
+}
+.link-preview__seal:hover img,
+.link-preview__seal:focus-visible img {
+  scale: 1.12;
+}
+.link-preview__rows {
+  display: grid;
+  gap: 0.15rem;
+}
+.link-preview__row {
+  display: grid;
+  grid-template-columns: 7.6rem 1fr 2rem;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.45rem 0.5rem;
+  border-radius: 6px;
+  transition: background-color 0.25s var(--ease-snap);
+}
+.link-preview__row:hover,
+.link-preview__row:focus-visible {
+  background: var(--color-violet-50);
+}
+.link-preview__name {
+  font-weight: 600;
+}
+.link-preview__bar {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: color-mix(in oklab, var(--c) 12%, transparent);
+  overflow: hidden;
+}
+.link-preview__bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--c);
+  transform-origin: left;
+  scale: max(var(--w), 0.04) 1;
+  animation: lp-grow 0.7s var(--ease-out-premium) calc(0.12s + var(--i) * 0.06s) backwards;
+}
+@keyframes lp-grow {
+  from {
+    scale: 0 1;
+  }
+}
+.link-preview__n {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--c);
+}
+
+/* ---------- Cifras con su numeral maya ---------- */
+.hero-stat__row {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.6rem, 1.1vw, 1rem);
+}
+.hero-stat__maya {
+  display: inline-flex;
+  align-items: center;
+  height: clamp(2rem, 3.2vw, 2.9rem);
+  color: var(--color-violet-400);
+  cursor: help;
+}
+/* Ancho fijo y alto según el número de pisos: todas las cifras a la misma escala */
+.hero-stat__maya .maya-num {
+  width: clamp(1.9rem, 2.8vw, 2.6rem);
+  height: auto;
+}
+.maya-num__el {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.maya-num__floor {
+  opacity: 0.45;
+}
+/* Mientras el odómetro gira, las piezas esperan; al detenerse caen en cascada desde arriba */
+html.js:not([data-quality='still']) .hero-stat .maya-num__el {
+  transition:
+    opacity 0.3s var(--ease-snap),
+    scale 0.55s var(--ease-pop),
+    translate 0.55s var(--ease-pop);
+  transition-delay: calc(var(--k) * 75ms);
+}
+html.js:not([data-quality='still']) .hero-stat:not([data-landed='true']) .maya-num__el {
+  opacity: 0;
+  scale: 0.2;
+  translate: 0 -6px;
+}
+html.js:not([data-quality='still']) .hero-stat .maya-num__floor {
+  transition: opacity 0.4s var(--ease-snap) 0.2s;
+}
+html.js:not([data-quality='still']) .hero-stat:not([data-landed='true']) .maya-num__floor {
+  opacity: 0;
+}
+
+.maya-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  max-width: 62ch;
+  margin-top: -0.75rem;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--fg-muted);
+}
+.maya-note strong {
+  font-weight: 600;
+  color: var(--color-ink-2);
+}
+.maya-note__mark {
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-top: -0.1rem;
+  color: var(--color-violet-500);
+}
+
+/* ---------- Universidades: el filete de la ficha es el espectro de su oferta ---------- */
+.uni-face__spectrum {
+  display: flex;
+  gap: 2px;
+  height: 3px;
+  margin-top: 0.7rem;
+  overflow: hidden;
+  border-radius: 2px;
+  transition: height 0.45s var(--ease-out-premium);
+}
+.uni-face__spectrum > span {
+  min-width: 4px;
+  border-radius: 2px;
+  transform-origin: left center;
+}
+.group:hover .uni-face__spectrum,
+.group:focus-within .uni-face__spectrum {
+  height: 6px;
+}
+/* Con el espectro, la línea de datos ya no necesita su propio filete */
+.uni-face__spectrum + .uni-face__meta {
+  margin-top: 0.55rem;
+  padding-top: 0;
+  border-top: 0;
+}
+/* Se llena de izquierda a derecha, tramo por tramo, cuando la ficha entra con el scroll */
+@supports (animation-timeline: view()) {
+  html:not([data-quality='still']) .uni-face__spectrum > span {
+    animation: spectrum-fill linear both;
+    animation-timeline: view();
+    animation-range: entry calc(20% + var(--i) * 8%) cover calc(38% + var(--i) * 6%);
+  }
+}
+@keyframes spectrum-fill {
+  from {
+    scale: 0 1;
+  }
+}
+
+/* En el teléfono, una fila por universidad: se lee de un vistazo y no queda una huérfana */
+@media (max-width: 639px) {
+  .uni-face {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-content: center;
+    column-gap: 0.95rem;
+    padding: 0.8rem 1rem;
+  }
+  .uni-face > div {
+    display: contents;
+  }
+  .uni-face__seal {
+    grid-row: 1 / span 4;
+    grid-column: 1;
+    align-self: center;
+  }
+  .uni-face__acronym {
+    grid-column: 2;
+    font-size: 1.15rem;
+  }
+  .uni-face__name {
+    grid-column: 2;
+    margin-top: 0.15rem;
+    -webkit-line-clamp: 1;
+  }
+  .uni-face__spectrum {
+    grid-column: 2;
+    margin-top: 0.45rem;
+  }
+  .uni-face__meta {
+    display: contents;
+  }
+  .uni-face__meta > span:first-child {
+    grid-column: 2;
+    margin-top: 0.35rem;
+  }
+  .uni-face__arrow {
+    grid-column: 3;
+    grid-row: 1 / span 4;
+    align-self: center;
+  }
+}
+/* Con dos columnas, la novena ocupa la fila entera en vez de quedar sola a la izquierda */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .uni-grid > li:last-child:nth-child(odd) {
+    grid-column: span 2;
+  }
+}
+
+/* ---------- Encabezado de capítulo: el numeral maya, más grande, se arma al entrar ---------- */
+.sec-head__maya {
+  width: 1.85rem;
+  color: var(--color-violet-500);
+}
+.section-dark .sec-head__maya {
+  color: var(--color-violet-300);
+}
+.maya-numeral__el {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+/* Los puntos caen y la barra se extiende, uno tras otro, ligados a la entrada del encabezado */
+@supports (animation-timeline: view()) {
+  .sec-head {
+    view-timeline-name: --chapter;
+  }
+  html:not([data-quality='still']) .sec-head__maya .maya-numeral__el {
+    animation: numeral-drop linear both;
+    animation-timeline: --chapter;
+    animation-range: entry calc(15% + var(--k) * 14%) entry calc(75% + var(--k) * 14%);
+  }
+  html:not([data-quality='still']) .sec-head__maya .maya-numeral__bar {
+    animation-name: numeral-bar;
+  }
+}
+@keyframes numeral-drop {
+  from {
+    opacity: 0;
+    translate: 0 -9px;
+    scale: 0.3;
+  }
+  60% {
+    opacity: 1;
+    translate: 0 1px;
+    scale: 1.15;
+  }
+  to {
+    translate: 0 0;
+    scale: 1;
+  }
+}
+@keyframes numeral-bar {
+  from {
+    opacity: 0;
+    scale: 0 1;
+  }
+}
+
+/* ---------- Ritmo: menos vacío entre capítulos ---------- */
+:root {
+  --section-y: clamp(3.25rem, 6vw, 5.25rem);
+}
+
+/* ---------- Aportes: icono de su tipo con su gesto y filete que tiñe la ficha ---------- */
+.contrib-card {
+  isolation: isolate;
+}
+.contrib-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--tone);
+}
+.contrib-card__wash {
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: -1;
+  height: 100%;
+  background: color-mix(in oklab, var(--tone) 7%, #fff);
+  transform-origin: top;
+  scale: 1 0.012;
+  transition: scale 0.7s var(--ease-out-premium);
+}
+a.contrib-card:hover .contrib-card__wash,
+a.contrib-card:focus-visible .contrib-card__wash {
+  scale: 1 1;
+}
+.contrib-card__icon {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  font-size: 1.15rem;
+  color: var(--tone);
+  background: color-mix(in oklab, var(--tone) 11%, #fff);
+}
+a.contrib-card:is(:hover, :focus-visible) .contrib-card__icon[data-gesture='stamp'] svg {
+  animation: gesture-stamp 0.6s var(--ease-pop);
+}
+a.contrib-card:is(:hover, :focus-visible) .contrib-card__icon[data-gesture='launch'] svg {
+  animation: gesture-launch 0.75s var(--ease-out-premium);
+}
+a.contrib-card:is(:hover, :focus-visible) .contrib-card__icon[data-gesture='beat'] svg {
+  animation: gesture-beat 0.8s var(--ease-snap);
+}
+@keyframes gesture-stamp {
+  0% {
+    scale: 1;
+    rotate: 0deg;
+  }
+  35% {
+    scale: 1.35;
+    rotate: -12deg;
+  }
+  60% {
+    scale: 0.88;
+    rotate: 0deg;
+  }
+}
+@keyframes gesture-launch {
+  0% {
+    translate: 0 0;
+    opacity: 1;
+  }
+  45% {
+    translate: 9px -9px;
+    opacity: 0;
+  }
+  46% {
+    translate: -9px 9px;
+    opacity: 0;
+  }
+  100% {
+    translate: 0 0;
+    opacity: 1;
+  }
+}
+@keyframes gesture-beat {
+  0%,
+  100% {
+    scale: 1;
+  }
+  20% {
+    scale: 1.25;
+  }
+  40% {
+    scale: 0.95;
+  }
+  60% {
+    scale: 1.15;
+  }
+}
+html[data-quality='still'] .contrib-card__icon svg {
+  animation: none !important;
+}

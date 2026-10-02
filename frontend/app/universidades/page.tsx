@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { UniversitiesBento } from '@/components/sections/UniversitiesBento';
 import { api, critical, safe } from '@/lib/api';
-import { countByUniversity } from '@/lib/format';
+import { countByUniversity, levelsByUniversity } from '@/lib/format';
 import { pageMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = pageMetadata({
@@ -31,6 +31,7 @@ export default async function UniversidadesPage() {
         <UniversitiesBento
           universities={universities.data}
           programCounts={countByUniversity(programs.data)}
+          levels={levelsByUniversity(programs.data)}
         />
       </div>
     </>

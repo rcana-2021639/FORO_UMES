@@ -33,11 +33,20 @@ export function MayaNumeral({ n, className }: Props) {
       fill="currentColor"
     >
       {Array.from({ length: dots }, (_, i) => (
-        <circle key={`d${i}`} cx={start + i * gap} cy={dotR} r={dotR} />
+        <circle
+          key={`d${i}`}
+          className="maya-numeral__el"
+          style={{ '--k': i } as React.CSSProperties}
+          cx={start + i * gap}
+          cy={dotR}
+          r={dotR}
+        />
       ))}
       {Array.from({ length: bars }, (_, i) => (
         <rect
           key={`b${i}`}
+          className="maya-numeral__el maya-numeral__bar"
+          style={{ '--k': dots + i } as React.CSSProperties}
           x={1}
           y={dotRow + (dots ? rowGap : 0) + i * (barH + rowGap)}
           width={W - 2}

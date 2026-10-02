@@ -635,3 +635,19 @@ destacadas, en violeta: un solo sistema de trazo para todo el sitio.
 - Iconos Phosphor y `Arrow` (flecha que sale por su lado y entra por el opuesto) en lugar de los
   caracteres → ↗ ← ↓ ✉; `Button` la pone sola en los botones que llevan a otra página y se hunde al
   presionar (`scale`, que no choca con el `transform` del efecto magnético).
+
+**Fase 2 — Portada.**
+
+- La frase de la portada abre **adelantos** al detener el cursor (`components/hero/LinkPreview.tsx`):
+  "nueve universidades" muestra los nueve sellos (cada uno lleva a su perfil); "124 programas", la
+  oferta por nivel con barras que crecen (cada fila abre el catálogo filtrado). Solo con puntero
+  fino; con teclado se abre al enfocar y Esc lo cierra; en táctil es un enlace normal.
+- Cada cifra lleva su **numeral maya** (`MayaNumber`), que cae pieza a pieza cuando el odómetro se
+  detiene, con un filete punteado entre pisos; una línea bajo las cifras explica cómo se leen.
+- Universidades: el filete de cada ficha es el **espectro de su oferta** (un tramo por nivel,
+  proporcional, con los colores del catálogo; se llena con el scroll y engrosa al pasar el cursor).
+  En el teléfono, una fila por universidad; entre 640 y 1023 px la novena ocupa la fila entera.
+- Encabezados de capítulo: el numeral maya crece y sus piezas caen ligadas a la entrada
+  (`view-timeline` del encabezado). Menos vacío entre capítulos (`--section-y` hasta 5.25 rem).
+- Aportes: icono Phosphor de su tipo con su gesto al pasar el cursor (el sello se estampa, el cohete
+  despega, la mano late) y el filete de color que baja y tiñe la ficha.

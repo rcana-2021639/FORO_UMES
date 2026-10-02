@@ -76,6 +76,35 @@ export function countByUniversity(programs: { university?: UniversityRef | null 
   return counts;
 }
 
+/** Cuántos programas hay de cada nivel (para el espectro de la oferta). */
+export type LevelCounts = Record<ProgramLevel, number>;
+
+export const emptyLevels = (): LevelCounts => ({
+  Maestria: 0,
+  Doctorado: 0,
+  Especializacion: 0,
+  Diplomado: 0,
+});
+
+export function countByLevel(programs: { level: ProgramLevel }[]): LevelCounts {
+  const out = emptyLevels();
+  for (const p of programs) if (p.level in out) out[p.level] += 1;
+  return out;
+}
+
+/** Programas por nivel de cada universidad (documentId → conteo por nivel). */
+export function levelsByUniversity(
+  programs: { level: ProgramLevel; university?: UniversityRef | null }[]
+): Record<string, LevelCounts> {
+  const out: Record<string, LevelCounts> = {};
+  for (const p of programs) {
+    const id = p.university?.documentId;
+    if (!id || !(p.level in emptyLevels())) continue;
+    (out[id] ??= emptyLevels())[p.level] += 1;
+  }
+  return out;
+}
+
 const ENTITIES: Record<string, string> = {
   '&amp;': '&',
   '&lt;': '<',
