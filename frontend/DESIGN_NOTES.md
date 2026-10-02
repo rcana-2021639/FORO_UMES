@@ -671,3 +671,16 @@ destacadas, en violeta: un solo sistema de trazo para todo el sitio.
 - Iconos de modalidad (`ModalityIcon`: aula, portátil, flechas) en lugar de ◉ ◎ ◐.
 - Backend: `watchIgnoreFiles: ['**/frontend/**']` en `config/admin.ts`. `npm run develop`
   reiniciaba Strapi con cada cambio del frontend (y `next build` salía sin datos).
+
+**Fase 4 — Programas.**
+
+- Cabecera de `/programas`: **toda la oferta en puntos** (`OfferDots`): un punto por programa, una
+  fila por universidad, color por nivel; la especialización además es un aro, para no depender solo
+  del color. Entran en una ola diagonal; al señalar un punto aparece el nombre del programa.
+- **Comparador de guardados** (`SavedCompare`): con una estrella marcada aparece una barra flotante
+  ("N guardados · Ver en la lista · Comparar"); el panel muestra los guardados lado a lado (desde la
+  derecha en escritorio, desde abajo en el teléfono) y permite quitarlos. Diálogo accesible: foco al
+  abrir y de vuelta al botón al cerrar, Esc y fondo cierran, la página no se desplaza detrás.
+- Búsqueda sin tildes ni mayúsculas ("gestion" encuentra "Gestión") y lo encontrado se **resalta**
+  en el nombre. La animación de reparto de tarjetas al filtrar se conserva.
+- Iconos de modalidad en los filtros; la barra de filtros se reparte mejor entre 768 y 1280 px.

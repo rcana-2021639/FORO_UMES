@@ -14,6 +14,9 @@ import { EASE } from '@/lib/motion';
 import { cn } from '@/lib/cn';
 import type { AcademicProgram, ProgramModality } from '@/lib/types';
 import { Arrow } from '@/components/ui/Arrow';
+import { ModalityIcon } from '@/components/ui/ModalityIcon';
+import { MagnifyingGlassIcon } from '@phosphor-icons/react/dist/ssr';
+import { SavedCompare } from './SavedCompare';
 
 const MODALITIES: ProgramModality[] = ['Presencial', 'Virtual', 'Hibrida'];
 
@@ -78,7 +81,7 @@ export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
         (p) =>
           (!modality || p.modality === modality) &&
           (!uni || p.university?.documentId === uni) &&
-          (!q || p.name.toLowerCase().includes(q.toLowerCase()))
+          (!q || fold(p.name).includes(fold(q.trim())))
       ),
     [programs, modality, uni, q]
   );
@@ -117,6 +120,14 @@ export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
     setQ('');
   };
   const filtering = level !== 'all' || modality || uni || q;
+  const savedPrograms = useMemo(
+    () => saved.map((id) => programs.find((p) => p.documentId === id)).filter((p) => !!p),
+    [saved, programs]
+  );
+  const showSaved = () => {
+    setLevel('saved');
+    document.getElementById('buscar')?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
+  };
 
   return (
     <div>
@@ -126,13 +137,13 @@ export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
         id="buscar"
         className="mt-6 grid scroll-mt-28 gap-4 rounded-[10px] border border-[var(--rule)] bg-white p-4 md:grid-cols-12 md:items-center md:p-5"
       >
-        <label className="relative block md:col-span-4">
+        <label className="relative block md:col-span-12 lg:col-span-4">
           <span className="sr-only">Buscar programa</span>
           <span
             aria-hidden
             className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-fg-muted"
           >
-            <SearchGlyph />
+            <MagnifyingGlassIcon weight="bold" className="h-4 w-4" />
           </span>
           <input
             type="search"
@@ -144,7 +155,7 @@ export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
         </label>
 
         <div
-          className="flex flex-wrap items-center gap-2 md:col-span-4"
+          className="flex flex-wrap items-center gap-2 md:col-span-7 lg:col-span-5"
           role="group"
           aria-label="Modalidad"
         >
@@ -154,12 +165,16 @@ export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
           </Pill>
           {MODALITIES.map((m) => (
             <Pill key={m} active={modality === m} onClick={() => setModality(m)}>
+              <ModalityIcon
+                modality={m}
+                className="mr-1 inline-block h-[1.05em] w-[1.05em] align-[-0.15em]"
+              />
               {MODALITY_LABEL[m]}
             </Pill>
           ))}
         </div>
 
-        <div className="flex items-center gap-2 md:col-span-4 md:justify-end">
+        <div className="flex items-center gap-2 md:col-span-5 md:justify-end lg:col-span-3">
           <label className="ui-label flex items-center gap-2 text-fg-muted">
             Universidad
             <select
@@ -284,6 +299,7 @@ export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
                         program={p}
                         saved={has(p.documentId)}
                         onToggle={() => toggle(p.documentId)}
+                        query={q}
                       />
                     </motion.li>
                   ))}
@@ -310,18 +326,43 @@ export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
           </div>
         )}
       </div>
+      <SavedCompare programs={savedPrograms} onRemove={toggle} onShowList={showSaved} />
     </div>
   );
 }
+
+/**
+ * El nombre con lo buscado resaltado (sin distinguir mayúsculas ni tildes: "gestion" encuentra
+ * "Gestión"). Se resalta sobre el texto original, así que nunca cambia cómo se escribe.
+ */
+function Highlight({ text, query }: { text: string; query: string }) {
+  const q = fold(query.trim());
+  if (!q) return <>{text}</>;
+  const at = fold(text).indexOf(q);
+  if (at < 0) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, at)}
+      <mark className="hl">{text.slice(at, at + q.length)}</mark>
+      {text.slice(at + q.length)}
+    </>
+  );
+}
+
+/** Minúsculas y sin tildes, conservando la longitud (para que las posiciones coincidan). */
+const fold = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
 function Card({
   program: p,
   saved,
   onToggle,
+  query,
 }: {
   program: AcademicProgram;
   saved: boolean;
   onToggle: () => void;
+  /** Lo que se busca: se resalta dentro del nombre. */
+  query: string;
 }) {
   const meta = LEVEL_META[p.level];
   return (
@@ -343,7 +384,9 @@ function Card({
           size={30}
         />
       </div>
-      <h3 className="catalog-card__title">{p.name}</h3>
+      <h3 className="catalog-card__title">
+        <Highlight text={p.name} query={query} />
+      </h3>
       <div className="catalog-card__foot">
         <p className="ui-label text-fg-muted">
           {p.university && (
@@ -395,22 +438,5 @@ function Pill({
     >
       {children}
     </button>
-  );
-}
-
-function SearchGlyph() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      aria-hidden
-    >
-      <circle cx="11" cy="11" r="7" />
-      <path d="m20 20-3.5-3.5" strokeLinecap="round" />
-    </svg>
   );
 }
