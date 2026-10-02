@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { SquaresFourIcon, TableIcon } from '@phosphor-icons/react/dist/ssr';
 import { UniversitiesBento } from './UniversitiesBento';
 import { UniversitiesCompare } from './UniversitiesCompare';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { useClientValue } from '@/hooks/useClientValue';
 import type { LevelCounts, ModalityCounts } from '@/lib/format';
 import type { University } from '@/lib/types';
 
@@ -33,15 +34,18 @@ export function UniversitiesExplorer({
   modalities: Record<string, ModalityCounts>;
 }) {
   const reduced = useReducedMotion();
-  const [view, setView] = useState<View>('fichas');
-
-  // La vista pedida en la URL se lee al montar (la página es estática: no depende de la consulta)
-  useEffect(() => {
-    if (new URLSearchParams(location.search).get('vista') === 'comparar') setView('comparar');
-  }, []);
+  // La vista pedida en la URL se lee en el navegador (la página es estática: no depende de la
+  // consulta); lo que la persona elija después manda
+  const fromUrl = useClientValue<View>(
+    () =>
+      new URLSearchParams(location.search).get('vista') === 'comparar' ? 'comparar' : 'fichas',
+    'fichas'
+  );
+  const [chosen, setChosen] = useState<View | null>(null);
+  const view = chosen ?? fromUrl;
 
   const choose = (v: View) => {
-    setView(v);
+    setChosen(v);
     const url = new URL(location.href);
     if (v === 'comparar') url.searchParams.set('vista', 'comparar');
     else url.searchParams.delete('vista');
