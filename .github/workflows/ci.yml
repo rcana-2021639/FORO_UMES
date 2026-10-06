@@ -45,7 +45,8 @@ jobs:
       - run: npm run format:check
       - run: npm run typecheck
       - name: Dependencias con vulnerabilidades altas o críticas
-        run: npm audit --audit-level=high
+        # Excepciones con justificación y vencimiento en scripts/audit-allowlist.json
+        run: node scripts/audit-check.mjs
 
   test:
     name: Pruebas (unitarias, integración y API)
@@ -118,7 +119,7 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - name: Dependencias con vulnerabilidades altas o críticas
-        run: npm audit --audit-level=high
+        run: node ../scripts/audit-check.mjs
       - run: npm run build
 
   build:

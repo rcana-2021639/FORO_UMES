@@ -57,7 +57,8 @@ export default tseslint.config(
   },
   {
     // Scripts de línea de comandos: la salida por consola es su interfaz
-    files: ['scripts/**/*.ts'],
+    files: ['scripts/**/*.{ts,mjs}'],
+    languageOptions: { globals: { console: 'readonly', process: 'readonly' } },
     rules: { 'no-console': 'off' },
   },
   // Desactiva reglas de formato que chocan con Prettier (siempre al final)

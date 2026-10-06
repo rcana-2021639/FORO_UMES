@@ -1,0 +1,8 @@
+[
+  {
+    "id": "GHSA-vfj7-8cjw-p6xm",
+    "package": "braces",
+    "reason": "Sin versión corregida. Solo lo usan chokidar (vigilante de archivos de `strapi develop`) y micromatch en el Content-Type Builder, siempre con patrones escritos en el código; ninguna petición pública llega a él (SEGURIDAD.md §13).",
+    "expires": "2027-01-05"
+  }
+]
