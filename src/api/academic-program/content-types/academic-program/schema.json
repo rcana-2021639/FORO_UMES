@@ -4,7 +4,7 @@
   "info": {
     "singularName": "academic-program",
     "pluralName": "academic-programs",
-    "displayName": "Programa academico",
+    "displayName": "Programa académico",
     "description": "Programa de posgrado ofrecido por una universidad"
   },
   "options": {

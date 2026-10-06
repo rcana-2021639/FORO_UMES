@@ -1,15 +1,18 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 import type { Core } from '@strapi/strapi';
 import type { Context, Next } from 'koa';
-import { RateLimiter, type RateLimitRule } from '../lib/rate-limiter';
+import { RateLimiter, ipKey, type RateLimitRule } from '../lib/rate-limiter';
 import { buildApiError } from '../lib/api-error';
+import { routePath } from '../lib/route-path';
 
 /**
  * Límite de tasa diferenciado por ruta (plan técnico, Sprint 5, tarea 4).
  * - POST /api/contact: estricto (5 por hora por IP) — anti spam.
  * - /api/* desde el servidor del frontend (X-Frontend-Token válido): cupo propio, amplio.
  * - Resto de /api/*: permisivo (protege de abuso básico sin molestar a un visitante).
- * - /admin/login lo protege el limitador nativo de Strapi (config/admin.ts → rateLimit).
+ * - /admin/login: además del limitador nativo de Strapi (por correo, config/admin.ts → rateLimit),
+ *   un tope por IP; igual para recuperar contraseña y aceptar invitaciones.
+ * - Las IPv6 se cuentan por bloque /64 (ipKey), no por dirección.
  *
  * Implementación en memoria (ver src/lib/rate-limiter.ts): adecuada para un proceso único.
  */
@@ -36,19 +39,40 @@ export function frontendMatcher(token: string | undefined): Matcher {
   };
 }
 
+const post = (ctx: Context, path: string) => ctx.method === 'POST' && routePath(ctx.path) === path;
+
 export function buildRules(isFrontend: Matcher): Array<{ match: Matcher; rule: RateLimitRule }> {
   return [
     {
-      match: (ctx) => ctx.method === 'POST' && ctx.path === '/api/contact',
+      match: (ctx) => post(ctx, '/api/contact'),
       rule: { name: 'contact', windowMs: 60 * 60 * 1000, max: 5 },
+    },
+    // Panel: el limitador nativo de Strapi cuenta por correo (+IP). Estos topes cuentan solo por IP,
+    // para frenar a quien prueba UNA contraseña contra muchos correos (los de los representantes
+    // son públicos en el sitio) o pide recuperaciones en masa para agotar la cuota de correo.
+    {
+      match: (ctx) => post(ctx, '/admin/login'),
+      rule: { name: 'admin-login', windowMs: 15 * 60 * 1000, max: 30 },
+    },
+    {
+      match: (ctx) => post(ctx, '/admin/forgot-password'),
+      rule: { name: 'admin-forgot-password', windowMs: 60 * 60 * 1000, max: 5 },
+    },
+    {
+      // Enlaces de invitación y de restablecimiento: tokens largos, pero no se deja adivinar en serie
+      match: (ctx) =>
+        post(ctx, '/admin/reset-password') ||
+        post(ctx, '/admin/register') ||
+        (ctx.method === 'GET' && routePath(ctx.path) === '/admin/registration-info'),
+      rule: { name: 'admin-token', windowMs: 15 * 60 * 1000, max: 20 },
     },
     {
       // El frontend cachea casi todo (ISR): el uso legítimo ronda decenas por minuto
-      match: (ctx) => ctx.path.startsWith('/api/') && isFrontend(ctx),
+      match: (ctx) => routePath(ctx.path).startsWith('/api/') && isFrontend(ctx),
       rule: { name: 'frontend', windowMs: 60 * 1000, max: 1500 },
     },
     {
-      match: (ctx) => ctx.path.startsWith('/api/'),
+      match: (ctx) => routePath(ctx.path).startsWith('/api/'),
       rule: { name: 'api', windowMs: 60 * 1000, max: 120 },
     },
   ];
@@ -73,7 +97,7 @@ export default (config: RateLimitConfig, { strapi }: { strapi: Core.Strapi }) =>
     const entry = rules.find((r) => r.match(ctx));
     if (!entry) return next();
 
-    const result = limiter.hit(entry.rule, ctx.ip);
+    const result = limiter.hit(entry.rule, ipKey(ctx.ip));
     ctx.set('X-RateLimit-Limit', String(entry.rule.max));
     ctx.set('X-RateLimit-Remaining', String(result.remaining));
 

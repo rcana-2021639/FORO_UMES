@@ -8,6 +8,7 @@ import {
   type WhitelistError,
 } from '../lib/query-whitelist';
 import { PUBLIC_DEFAULT_POPULATE } from '../lib/public-api';
+import { routePath } from '../lib/route-path';
 
 const RESOURCE_TO_UID: Record<string, string> = {
   universities: 'api::university.university',
@@ -27,7 +28,7 @@ const RESOURCE_TO_UID: Record<string, string> = {
 export default (_config: unknown, _ctx: { strapi: Core.Strapi }) => {
   return async (ctx: Context, next: Next) => {
     if (ctx.method !== 'GET') return next();
-    const match = /^\/api\/([a-z-]+)(?:\/|$)/.exec(ctx.path);
+    const match = /^\/api\/([a-z-]+)(?:\/|$)/.exec(routePath(ctx.path));
     const resource = match?.[1];
     const rules = resource ? PUBLIC_QUERY_RULES[resource] : undefined;
     if (!rules) return next();

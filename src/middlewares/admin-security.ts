@@ -1,6 +1,7 @@
 import type { Core } from '@strapi/strapi';
 import type { Context, Next } from 'koa';
 import { recordAudit } from '../security/audit';
+import { routePath } from '../lib/route-path';
 
 /**
  * Política de contraseñas del panel (Sprint 3, tarea 7): mínimo 12 caracteres con mayúscula,
@@ -34,7 +35,7 @@ const PASSWORD_ROUTES = [
 
 export default (_config: unknown, { strapi }: { strapi: Core.Strapi }) => {
   return async (ctx: Context, next: Next) => {
-    const path = ctx.path;
+    const path = routePath(ctx.path);
 
     if (
       (ctx.method === 'POST' || ctx.method === 'PUT') &&

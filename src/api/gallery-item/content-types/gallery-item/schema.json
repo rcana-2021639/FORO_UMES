@@ -4,7 +4,7 @@
   "info": {
     "singularName": "gallery-item",
     "pluralName": "gallery-items",
-    "displayName": "Elemento de galeria",
+    "displayName": "Elemento de galería",
     "description": "Foto o video de la galeria del Foro"
   },
   "options": {

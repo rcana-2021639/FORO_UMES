@@ -400,7 +400,7 @@ export interface ApiAcademicProgramAcademicProgram extends Struct.CollectionType
   collectionName: 'academic_programs';
   info: {
     description: 'Programa de posgrado ofrecido por una universidad';
-    displayName: 'Programa academico';
+    displayName: 'Programa acad\u00E9mico';
     pluralName: 'academic-programs';
     singularName: 'academic-program';
   };
@@ -484,7 +484,7 @@ export interface ApiAuditLogAuditLog extends Struct.CollectionTypeSchema {
   collectionName: 'audit_logs';
   info: {
     description: 'Registro de acciones administrativas: quien cambio que y cuando. Solo lectura para el Super Admin; lo escribe el sistema';
-    displayName: 'Bitacora de auditoria';
+    displayName: 'Bit\u00E1cora de auditor\u00EDa';
     pluralName: 'audit-logs';
     singularName: 'audit-log';
   };
@@ -648,7 +648,7 @@ export interface ApiGalleryItemGalleryItem extends Struct.CollectionTypeSchema {
   collectionName: 'gallery_items';
   info: {
     description: 'Foto o video de la galeria del Foro';
-    displayName: 'Elemento de galeria';
+    displayName: 'Elemento de galer\u00EDa';
     pluralName: 'gallery-items';
     singularName: 'gallery-item';
   };

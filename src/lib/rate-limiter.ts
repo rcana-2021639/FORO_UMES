@@ -62,3 +62,26 @@ export class RateLimiter {
     this.buckets.clear();
   }
 }
+
+/**
+ * Clave de límite para una IP. Una conexión IPv6 doméstica recibe un bloque /64 entero (18 trillones
+ * de direcciones): contar cada dirección por separado permitiría saltarse cualquier límite rotando
+ * de dirección. Se cuenta por el /64, como hacen los proveedores. Las IPv4 (y las IPv4 mapeadas en
+ * IPv6, "::ffff:1.2.3.4") se cuentan por dirección.
+ */
+export function ipKey(ip: string): string {
+  const value = ip.trim().toLowerCase();
+  const mapped = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/.exec(value);
+  if (mapped) return mapped[1];
+  if (!value.includes(':')) return value;
+
+  const [head, tail = ''] = value.split('::');
+  const left = head ? head.split(':') : [];
+  const right = tail ? tail.split(':') : [];
+  const missing = value.includes('::') ? 8 - left.length - right.length : 0;
+  const groups = [...left, ...Array<string>(Math.max(0, missing)).fill('0'), ...right];
+  return `${groups
+    .slice(0, 4)
+    .map((g) => (parseInt(g, 16) || 0).toString(16))
+    .join(':')}::/64`;
+}

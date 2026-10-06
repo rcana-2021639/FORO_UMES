@@ -3,6 +3,7 @@ import type { Context, Next } from 'koa';
 import { OWNED_CONTENT_TYPES, getEditorUniversity, isOwnedUid, isSuperAdmin } from './ownership';
 import { readRelation, refMatches } from './relation-input';
 import { recordAudit, type AuditAction } from './audit';
+import { routePath } from '../lib/route-path';
 
 type AdminUser = { id: number; email?: string; roles?: Array<{ code?: string }> };
 
@@ -48,7 +49,7 @@ export function createAdminGuard(strapi: Core.Strapi) {
         );
       }
 
-      const path = ctx.path;
+      const path = routePath(ctx.path);
       const body = (ctx.request.body ?? {}) as Record<string, unknown>;
       const { attribute, many } = OWNED_CONTENT_TYPES[uid];
       const isCreate = method === 'POST' && /\/collection-types\/[^/]+$/.test(path);
@@ -115,7 +116,7 @@ export function createAdminGuard(strapi: Core.Strapi) {
     if (user && isWrite && ctx.status < 400) {
       await recordAudit(strapi, {
         user,
-        action: actionFromPath(method, ctx.path),
+        action: actionFromPath(method, routePath(ctx.path)),
         contentType: uid || undefined,
         documentId: String(ctx.params?.id ?? extractDocumentId(ctx.body) ?? ''),
         summary: summarize(ctx.request.body) ?? summarize((ctx.body as { data?: unknown })?.data),
@@ -138,13 +139,13 @@ async function blockedPublishedAction(
   ctx: Context,
   uid: string
 ): Promise<string | undefined> {
-  const path = ctx.path;
-  if (/\/actions\/(unpublish|discard|bulkUnpublish)$/.test(path)) {
+  const path = routePath(ctx.path);
+  if (/\/actions\/(unpublish|discard|bulkunpublish)$/.test(path)) {
     return 'Despublicar o descartar contenido publicado está reservado al Super Admin.';
   }
   const ids: string[] = [];
   if (ctx.method === 'DELETE' && ctx.params?.id) ids.push(String(ctx.params.id));
-  if (/\/actions\/bulkDelete$/.test(path)) {
+  if (/\/actions\/bulkdelete$/.test(path)) {
     const body = (ctx.request.body ?? {}) as { documentIds?: unknown[] };
     ids.push(...(body.documentIds ?? []).map(String));
   }
@@ -175,9 +176,9 @@ async function currentRelationRefs(
 }
 
 function actionFromPath(method: string, path: string): AuditAction {
-  if (/bulkDelete/.test(path)) return 'bulk-delete';
-  if (/bulkPublish/.test(path)) return 'bulk-publish';
-  if (/bulkUnpublish/.test(path)) return 'bulk-unpublish';
+  if (/bulkdelete/.test(path)) return 'bulk-delete';
+  if (/bulkpublish/.test(path)) return 'bulk-publish';
+  if (/bulkunpublish/.test(path)) return 'bulk-unpublish';
   if (/\/actions\/publish$/.test(path)) return 'publish';
   if (/\/actions\/unpublish$/.test(path)) return 'unpublish';
   if (method === 'DELETE') return 'delete';

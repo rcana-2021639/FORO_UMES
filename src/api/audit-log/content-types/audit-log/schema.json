@@ -4,7 +4,7 @@
   "info": {
     "singularName": "audit-log",
     "pluralName": "audit-logs",
-    "displayName": "Bitacora de auditoria",
+    "displayName": "Bitácora de auditoría",
     "description": "Registro de acciones administrativas: quien cambio que y cuando. Solo lectura para el Super Admin; lo escribe el sistema"
   },
   "options": {

@@ -1,6 +1,7 @@
 import type { Core } from '@strapi/strapi';
 import type { Context, Next } from 'koa';
 import { buildApiError } from '../lib/api-error';
+import { routePath } from '../lib/route-path';
 
 /**
  * Manejo centralizado de errores de la API pública (Sprint 6, tarea 3; plan técnico 8.4).
@@ -54,7 +55,7 @@ export default (_config: unknown, { strapi }: { strapi: Core.Strapi }) => {
   return async (ctx: Context, next: Next) => {
     await next();
 
-    if (!ctx.path.startsWith('/api/') || ctx.status < 400) return;
+    if (!routePath(ctx.path).startsWith('/api/') || ctx.status < 400) return;
 
     const body = ctx.body as StrapiErrorBody | undefined;
     const err = body?.error;

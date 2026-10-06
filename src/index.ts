@@ -6,6 +6,8 @@ import { ensureUniversityEditorRole } from './security/university-editor-role';
 import { ensurePublicPermissions } from './security/public-permissions';
 import { CUSTOM_ROUTES_OPENAPI } from './openapi/custom-routes';
 import { registerRichTextSanitizer } from './security/richtext-sanitizer';
+import { ensureUploadSettings } from './security/upload-settings';
+import { ensurePanelLabels } from './panel/labels';
 
 /**
  * Engancha el guard de propiedad/auditoría a todas las rutas del content-manager.
@@ -53,8 +55,9 @@ export default {
     attachAdminGuard(strapi);
     removeUnusedPluginRoutes(strapi);
     registerRichTextSanitizer(strapi);
-    // Documenta las rutas personalizadas en la especificación OpenAPI (/documentation)
-    strapi.plugin('documentation').service('override').registerOverride(CUSTOM_ROUTES_OPENAPI);
+    // Documenta las rutas personalizadas en la especificación OpenAPI (/documentation, apagada en
+    // producción salvo DOCUMENTATION_ENABLED=true)
+    strapi.plugin('documentation')?.service('override').registerOverride(CUSTOM_ROUTES_OPENAPI);
   },
 
   /**
@@ -66,5 +69,7 @@ export default {
     await registerOwnershipCondition(strapi);
     await ensureUniversityEditorRole(strapi);
     await ensurePublicPermissions(strapi);
+    await ensureUploadSettings(strapi);
+    await ensurePanelLabels(strapi);
   },
 };

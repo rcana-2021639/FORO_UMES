@@ -93,9 +93,11 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin =>
     },
   },
 
-  // Especificación OpenAPI generada en /documentation (Sprint 4, tarea 9)
+  // Especificación OpenAPI generada en /documentation (Sprint 4, tarea 9). En producción va apagada
+  // salvo DOCUMENTATION_ENABLED=true: es un mapa listo de la API para quien la quiera atacar y no la
+  // usa ningún visitante. Quien desarrolla tiene openapi.yaml en el repositorio.
   documentation: {
-    enabled: true,
+    enabled: env.bool('DOCUMENTATION_ENABLED', env('NODE_ENV') !== 'production'),
     config: {
       openapi: '3.0.0',
       info: {

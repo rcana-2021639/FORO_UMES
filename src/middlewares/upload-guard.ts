@@ -2,6 +2,7 @@ import type { Core } from '@strapi/strapi';
 import type { Context, Next } from 'koa';
 import { open } from 'node:fs/promises';
 import { checkImageSignature } from '../lib/image-signature';
+import { routePath } from '../lib/route-path';
 
 type UploadedFile = {
   filepath?: string;
@@ -19,7 +20,7 @@ type UploadedFile = {
  */
 export default (_config: unknown, _ctx: { strapi: Core.Strapi }) => {
   return async (ctx: Context, next: Next) => {
-    if (ctx.method !== 'POST' || !/^\/(api\/)?upload\/?$/.test(ctx.path)) return next();
+    if (ctx.method !== 'POST' || !/^\/(api\/)?upload$/.test(routePath(ctx.path))) return next();
 
     const files = (ctx.request as { files?: { files?: UploadedFile | UploadedFile[] } }).files
       ?.files;

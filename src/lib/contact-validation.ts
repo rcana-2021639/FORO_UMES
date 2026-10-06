@@ -23,8 +23,9 @@ export type ContactValidation =
   | { ok: true; data: ContactInput }
   | { ok: false; errors: Array<{ field: string; message: string }> };
 
-// Formato de correo pragmático (RFC 5322 completo es innecesario aquí)
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+// Formato de correo pragmático (RFC 5322 completo es innecesario aquí). Sin comas, punto y coma ni
+// <>()"\: el correo va como "Responder a" del aviso y "a,b@x.org" se leería como dos destinatarios.
+const EMAIL_RE = /^[^\s@,;<>()"\\]+@[^\s@,;<>()"\\]+\.[^\s@,;<>()"\\]{2,}$/;
 
 /** Quita etiquetas HTML, caracteres de control y espacios repetidos. */
 export function sanitizeText(value: unknown): string {
@@ -40,6 +41,18 @@ export function sanitizeText(value: unknown): string {
   );
 }
 
+/**
+ * Campo de una sola línea (nombre, correo, asunto): además, los saltos de línea se vuelven espacios.
+ * El asunto va dentro del asunto del correo de aviso; un salto de línea ahí es la forma clásica de
+ * inyectar cabeceras ("Bcc: ..."). nodemailer ya las neutraliza; esto es la segunda barrera.
+ * \p{Zl} y \p{Zp} son los separadores de línea y de párrafo de Unicode.
+ */
+export function sanitizeLine(value: unknown): string {
+  return sanitizeText(value)
+    .replace(/[\r\n\p{Zl}\p{Zp}]+/gu, ' ')
+    .replace(/ {2,}/g, ' ');
+}
+
 export function isHoneypotFilled(body: Record<string, unknown>): boolean {
   const value = body[HONEYPOT_FIELD];
   return typeof value === 'string' ? value.trim().length > 0 : Boolean(value);
@@ -48,9 +61,9 @@ export function isHoneypotFilled(body: Record<string, unknown>): boolean {
 export function validateContact(body: Record<string, unknown>): ContactValidation {
   const errors: Array<{ field: string; message: string }> = [];
 
-  const name = sanitizeText(body.name);
-  const email = sanitizeText(body.email).toLowerCase();
-  const subject = sanitizeText(body.subject);
+  const name = sanitizeLine(body.name);
+  const email = sanitizeLine(body.email).toLowerCase();
+  const subject = sanitizeLine(body.subject);
   const message = sanitizeText(body.message);
 
   if (name.length < CONTACT_LIMITS.name.min) {

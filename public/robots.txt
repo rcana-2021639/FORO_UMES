@@ -1,3 +1,4 @@
-# To prevent search engines from seeing the site altogether, uncomment the next two lines:
-# User-Agent: *
-# Disallow: /
+# Este dominio es la API y el panel administrativo del Foro, no el sitio público.
+# Nada aquí debe aparecer en buscadores (en especial /admin, la pantalla de acceso del panel).
+User-agent: *
+Disallow: /
