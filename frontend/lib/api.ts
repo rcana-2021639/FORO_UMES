@@ -55,6 +55,12 @@ export function describeError(err: unknown): { title: string; description: strin
   if (err instanceof TypeError) {
     return { title: 'Sin conexión', description: ERROR_MESSAGES.NETWORK };
   }
+  if (err instanceof DOMException && err.name === 'TimeoutError') {
+    return {
+      title: 'El servidor tardó demasiado',
+      description: 'No respondió a tiempo. Espere un momento e inténtelo de nuevo.',
+    };
+  }
   return { title: 'Error inesperado', description: 'Algo salió mal. Inténtalo de nuevo.' };
 }
 
@@ -97,6 +103,9 @@ const SERVER_HEADERS: Record<string, string> =
     ? { 'X-Frontend-Token': process.env.FRONTEND_API_TOKEN }
     : {};
 
+/** Servidor de Next: 10 s. Navegador (formulario de contacto, con señal lenta): 20 s. */
+const REQUEST_TIMEOUT_MS = typeof window === 'undefined' ? 10_000 : 20_000;
+
 /**
  * Único punto de entrada a la API. Entiende el formato de error del backend y lanza ApiError.
  * Se usa tanto en Server Components (con `revalidate`) como en el cliente.
@@ -105,6 +114,9 @@ export async function apiFetch<T>(path: string, opts: FetchOptions = {}): Promis
   const url = `${API_URL}/api${path}${toSearch(opts.query)}`;
   const res = await fetch(url, {
     ...opts.init,
+    // Una API colgada (no caída: lenta) dejaría la página esperando sin fin. Con tiempo límite
+    // falla como una caída: ISR sigue sirviendo la última versión buena (critical/safe).
+    signal: opts.init?.signal ?? AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     headers: { Accept: 'application/json', ...SERVER_HEADERS, ...(opts.init?.headers ?? {}) },
     // Un 0 explícito (p. ej. el envío del formulario) nunca se cachea, tampoco en desarrollo
     next: {

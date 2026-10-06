@@ -5,6 +5,7 @@ import {
   allPages,
   apiFetch,
   critical,
+  describeError,
   findOne,
   parsePage,
   safe,
@@ -117,6 +118,26 @@ describe('apiFetch', () => {
     const err = await apiFetch('/universities').catch((e) => e);
     expect(err).toBeInstanceOf(ApiError);
     expect(err).toMatchObject({ status: 429, code: 'RATE_LIMITED', requestId: 'r-1' });
+  });
+
+  it('toda consulta lleva tiempo límite: una API colgada no deja la página esperando', async () => {
+    // El plazo ya venció: la API "colgada" solo responde cuando la señal la cancela
+    const expired = AbortSignal.abort(new DOMException('plazo vencido', 'TimeoutError'));
+    const timeout = vi.spyOn(AbortSignal, 'timeout').mockReturnValue(expired);
+    const hung = vi.fn(
+      (_url: string, init: RequestInit) =>
+        new Promise((_resolve, reject) => {
+          if (init.signal?.aborted) reject(init.signal.reason);
+        })
+    );
+    vi.stubGlobal('fetch', hung);
+
+    const err = await apiFetch('/universities').catch((e) => e);
+    expect(timeout).toHaveBeenCalledWith(10_000); // en el servidor
+    expect(hung.mock.calls[0][1].signal).toBe(expired);
+    expect(err).toBeInstanceOf(DOMException);
+    expect(describeError(err).title).toBe('El servidor tardó demasiado');
+    timeout.mockRestore();
   });
 
   it('en el servidor se identifica con FRONTEND_API_TOKEN (y nunca con uno vacío)', async () => {
