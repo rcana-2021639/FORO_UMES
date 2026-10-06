@@ -13,7 +13,9 @@ services:
       APP_DB_USER: ${DATABASE_USERNAME:-foro_app}
       APP_DB_PASSWORD: ${DATABASE_PASSWORD:?Define DATABASE_PASSWORD en .env}
     ports:
-      - '${DATABASE_PORT:-5432}:5432'
+      # Solo desde esta computadora: sin 127.0.0.1, Docker abre el puerto a toda la red (p. ej. el
+      # wifi de una cafetería) y la base queda expuesta a quien adivine la contraseña.
+      - '127.0.0.1:${DATABASE_PORT:-5432}:5432'
     volumes:
       - foro_posgrado_pgdata:/var/lib/postgresql
       - ./docker/init:/docker-entrypoint-initdb.d:ro

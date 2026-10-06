@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Backend for the Foro Interuniversitario de Estudios de Posgrado: **Strapi 5 (TypeScript)** on **Node.js 24** + **PostgreSQL 18**. Serves a public read-only REST API consumed by a Next.js frontend (in `frontend/`, a separate app with its own `CLAUDE.md`) and an admin panel with per-university permissions. Comments, docs, and commit history in this repo are in Spanish — match that when editing existing files.
 
-The repo implements an 8-sprint technical plan (see README.md) that is fully done; `SEGURIDAD.md`, `TESTING.md`, `OBSERVABILIDAD.md`, `DESPLIEGUE.md`, and `openapi.yaml` are the living references for security, testing, observability, and deployment respectively — check them before changing behavior in those areas rather than re-deriving it from scratch.
+The repo implements an 8-sprint technical plan (see README.md) that is fully done; `SEGURIDAD.md`, `TESTING.md`, `OBSERVABILIDAD.md`, `DESPLIEGUE.md`, and `openapi.yaml` are the living references for security, testing, observability, and deployment respectively — check them before changing behavior in those areas rather than re-deriving it from scratch. `AUDITORIA-PRODUCCION.md` holds the phased pre-production audit and its findings log.
 
 ## Commands
 

@@ -40,4 +40,6 @@ USER strapi
 EXPOSE 1337
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
   CMD curl -fsS -o /dev/null -w '%{http_code}' http://127.0.0.1:1337/_health | grep -q 204 || exit 1
-CMD ["npm", "run", "start"]
+# Strapi directo, sin npm de por medio: recibe la señal de apagado (SIGTERM) de Railway y cierra
+# las conexiones a la base ordenadamente en cada redespliegue
+CMD ["node", "node_modules/@strapi/strapi/bin/strapi.js", "start"]
