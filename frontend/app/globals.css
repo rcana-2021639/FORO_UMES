@@ -38,6 +38,8 @@
   --font-display: var(--font-display);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
+  --font-sc: var(--font-sc);
+  --font-hand: var(--font-hand);
   --ease-out-expo: var(--ease-out-expo);
   --ease-in-out-quart: var(--ease-in-out-quart);
 }
@@ -53,16 +55,14 @@
   }
 
   body {
-    background: var(--bg);
+    /* Papel fijo: el tono de cada capítulo lo ponen las capas body::before/::after (v6.css) */
+    background: var(--color-paper);
     color: var(--fg);
     font-family: var(--font-sans);
     font-size: var(--text-body);
     line-height: 1.62;
     font-variant-numeric: lining-nums proportional-nums;
     font-kerning: normal;
-    transition:
-      background-color 1.1s var(--ease-cinematic),
-      color 1.1s var(--ease-cinematic);
     overflow-x: clip;
   }
 
@@ -85,34 +85,38 @@
     border-radius: 2px;
   }
 
+  /* v7: Alegreya, caligráfica y con ritmo (no "recta y sin vida"). Titulares con peso para que
+     su trazo se luzca; la itálica de énfasis es de verdad, no inclinada a la fuerza. */
   h1,
   h2,
   h3 {
     font-family: var(--font-display);
-    font-weight: 500;
-    letter-spacing: -0.012em;
+    font-weight: 700;
+    letter-spacing: -0.01em;
     line-height: 1.02;
     text-wrap: balance;
   }
-  /* Newsreader con su eje óptico al máximo en titulares: trazo fino y contraste de publicación.
-     Peso 450–500: presencia sin la fragilidad del 300 anterior */
   h1 {
     font-size: var(--text-h1);
-    font-weight: 450;
-    letter-spacing: -0.02em;
-    line-height: 0.98;
-    font-variation-settings: 'opsz' 72;
+    font-weight: 760;
+    letter-spacing: -0.018em;
+    line-height: 0.96;
   }
   h2 {
     font-size: var(--text-h2);
-    font-weight: 450;
-    letter-spacing: -0.016em;
-    font-variation-settings: 'opsz' 72;
+    letter-spacing: -0.014em;
   }
   h3 {
     font-size: var(--text-h3);
-    line-height: 1.12;
-    font-variation-settings: 'opsz' 36;
+    font-weight: 600;
+    line-height: 1.1;
+  }
+  h1 em,
+  h2 em,
+  h3 em {
+    font-style: italic;
+    font-weight: inherit;
+    color: var(--color-violet-700);
   }
 
   img,
@@ -133,20 +137,30 @@
 
 /* Etiqueta de sección: versalitas con interletra, en el color de acento. Va sola o seguida de un
    filete (`.label-rule`). Sustituye al kicker en itálica de la v4 */
+/* Etiqueta en versalitas verdaderas (Alegreya Sans SC): mayúscula inicial y el resto en versalita */
 @utility eyebrow {
-  font-family: var(--font-sans);
+  font-family: var(--font-sc);
   font-style: normal;
-  font-weight: 600;
+  font-weight: 700;
   font-size: var(--text-label);
   line-height: 1.35;
   letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
+  text-transform: none;
+}
+
+/* Letra a mano (notas del anuario) */
+@utility font-hand {
+  font-family: var(--font-hand);
+  font-variation-settings:
+    'INFM' 70,
+    'BNCE' 30;
 }
 
 /* Etiqueta de interfaz: sans pequeña, sentence-case */
 @utility ui-label {
   font-family: var(--font-sans);
-  font-size: 0.84rem;
+  /* Alegreya Sans tiene el ojo pequeño: 0.92rem lee como el 0.84rem de antes */
+  font-size: 0.92rem;
   letter-spacing: 0.005em;
   line-height: 1.42;
 }
@@ -319,7 +333,12 @@
   transform: translate(-50%, -50%);
   transform-origin: center center;
   overflow: hidden;
-  will-change: transform, opacity, filter;
+  will-change: transform, opacity;
+}
+/* Solo existen las tarjetas a la vista (DepthCarousel les pone display en línea). Antes de
+   hidratar, las primeras bastan: con 124 tarjetas, cada una era una capa de GPU permanente. */
+.depth-carousel__card:nth-child(n + 8) {
+  display: none;
 }
 .depth-carousel__veil {
   position: absolute;
@@ -377,7 +396,7 @@
   background: var(--accent-lilac);
 }
 
-/* PixelSwap: cada píxel es una ventana a su propia copia del contenido entrante */
+/* PixelSwap: la cara entrante se recorta con un clip-path que reúne las celdas abiertas */
 .pixel-swap {
   position: relative;
   width: 100%;
@@ -391,21 +410,6 @@
 }
 .pixel-swap__layer[data-visible='false'] {
   visibility: hidden;
-}
-.pixel-swap__grid {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  pointer-events: none;
-}
-.pixel-swap__pixel {
-  position: absolute;
-  overflow: hidden;
-  opacity: 0;
-  contain: paint;
-}
-.pixel-swap__pixel-content {
-  position: absolute;
 }
 
 /* FlipCard (Representantes) */
@@ -712,24 +716,37 @@
 
 /* ---- v1.4: primitivas 3D (DESIGN_NOTES §18) ---- */
 
-/* Tilt: losa que se inclina con el puntero; hijos con data-depth se elevan en Z */
+/* Tilt: losa que se inclina con el puntero; hijos con data-depth se elevan en Z. El transform lo
+   escribe Tilt en línea en cada fotograma; la posición del brillo va en variables registradas que
+   NO se heredan, así el resto de la tarjeta no se recalcula con cada movimiento del puntero. */
+@property --tilt-gx {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 50%;
+}
+@property --tilt-gy {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 50%;
+}
+/* En reposo es una losa plana (sin capa de GPU propia): el 3D se enciende al entrar el cursor
+   (una sola vez, no por fotograma) y se apaga al salir */
 .tilt {
-  --tilt-rx: 0deg;
-  --tilt-ry: 0deg;
-  --tilt-gx: 50%;
-  --tilt-gy: 50%;
-  --tilt-on: 0;
   position: relative;
-  transform-style: preserve-3d;
-  transform: perspective(var(--tilt-persp, 900px)) rotateX(var(--tilt-rx)) rotateY(var(--tilt-ry))
-    scale(calc(1 + (var(--tilt-scale, 1.02) - 1) * var(--tilt-on)));
-  will-change: transform;
 }
 .tilt [data-depth] {
-  transform: translateZ(calc(var(--tilt-on) * 1px * var(--z, 24)));
   transition: transform 0.4s var(--ease-out-premium);
 }
+.tilt[data-tilting] {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.tilt[data-tilting] [data-depth] {
+  transform: translateZ(calc(1px * var(--z, 24)));
+}
 .tilt--glare::after {
+  --tilt-gx: inherit;
+  --tilt-gy: inherit;
   content: '';
   position: absolute;
   inset: 0;
@@ -741,13 +758,22 @@
     color-mix(in oklab, var(--color-paper) 55%, transparent),
     transparent 40%
   );
-  opacity: calc(var(--tilt-on) * 0.35);
+  opacity: 0;
   mix-blend-mode: soft-light;
+  transition: opacity 0.5s var(--ease-out-premium);
+}
+.tilt--glare[data-tilting]::after {
+  opacity: 0.35;
 }
 .tilt--shadow {
   box-shadow:
-    0 calc(var(--tilt-on) * 30px) calc(var(--tilt-on) * 60px) calc(var(--tilt-on) * -30px)
-      rgb(var(--shadow-ink) / 0.55),
+    0 0 0 -30px rgb(var(--shadow-ink) / 0),
+    0 1px 0 0 rgb(var(--shadow-ink) / 0.05);
+  transition: box-shadow 0.5s var(--ease-out-premium);
+}
+.tilt--shadow[data-tilting] {
+  box-shadow:
+    0 30px 60px -30px rgb(var(--shadow-ink) / 0.55),
     0 1px 0 0 rgb(var(--shadow-ink) / 0.05);
 }
 @media (prefers-reduced-motion: reduce), (pointer: coarse) {
@@ -767,11 +793,13 @@
 .fold-text-line {
   display: block;
 }
+/* Solo la perspectiva para el giro de la entrada (lo anima el script de arranque). Sin
+   preserve-3d ni backface-visibility en reposo: cada pieza quedaba como capa de GPU para siempre
+   (48 en la portada) aunque ya estuviera desplegada. */
 .fold-text-segment {
   display: inline-block;
   line-height: inherit;
   perspective: var(--fold-perspective, 700px);
-  transform-style: preserve-3d;
   vertical-align: baseline;
 }
 .fold-text-segment[data-fold-split='line'] {
@@ -782,16 +810,15 @@
   display: inline-block;
   color: inherit;
   line-height: inherit;
-  transform-style: preserve-3d;
-  backface-visibility: hidden;
 }
+/* El pliegue: sombra que se aclara mientras la pieza se despliega (--fold-crease 0.5 → 0). Sin
+   mix-blend-mode: obligaba a aislar y componer cada pieza aun con el pliegue en 0. */
 .fold-text-piece::after {
   content: '';
   position: absolute;
   inset: -0.08em -0.02em;
   pointer-events: none;
-  opacity: var(--fold-crease, 0);
-  mix-blend-mode: multiply;
+  opacity: calc(var(--fold-crease, 0) * 0.55);
   border-radius: 0.08em;
 }
 .fold-text-piece[data-fold-hinge='top']::after {

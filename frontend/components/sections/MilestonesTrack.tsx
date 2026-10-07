@@ -13,6 +13,7 @@ import { cn } from '@/lib/cn';
 import { brandOf } from '@/lib/universities';
 import type { Milestone } from '@/lib/milestones';
 import { Arrow } from '@/components/ui/Arrow';
+import { MayaNumber } from '@/components/ui/MayaNumber';
 
 /** Color de cada tipo de hito, siempre dentro de la familia violeta. */
 const TONE: Record<string, string> = {
@@ -72,6 +73,17 @@ export function MilestonesTrack({ milestones }: { milestones: Milestone[] }) {
       });
     };
     let last = -1;
+    // Las tres piezas que se mueven con la pista: la tarjeta (curva 3D y opacidad), su foto y su
+    // sigla (parallax). Se escriben directo y solo en propiedades que no se heredan: antes eran
+    // variables (--d, --ad) en el <li>, y cada escritura recalculaba el estilo de todo lo que hay
+    // dentro (nodo, fecha, tallo, icono, textos), unos 40 elementos por tarjeta y por fotograma.
+    const parts = cards.map((card) => ({
+      card: card.querySelector<HTMLElement>('.ms-card'),
+      img: card.querySelector<HTMLElement>('.ms-card__img'),
+      big: card.querySelector<HTMLElement>('.ms-card__big'),
+    }));
+    // Último valor escrito por tarjeta: las que están lejos quedan topadas en ±1.4 y no se tocan
+    const written: string[] = [];
 
     // Cuánto dista cada tarjeta del centro de la pantalla → curva 3D, parallax y tarjeta activa.
     // Solo corre mientras la pista se mueve (onUpdate del tween), sin lecturas de layout.
@@ -80,7 +92,7 @@ export function MilestonesTrack({ milestones }: { milestones: Milestone[] }) {
       const x = Number(gsap.getProperty(tr, 'x')) || 0;
       let best = 0;
       let bestD = Infinity;
-      cards.forEach((card, i) => {
+      cards.forEach((_, i) => {
         const d = (centers[i] + x - c) / c; // -1 … 1 aprox.
         const ad = Math.abs(d);
         if (ad < bestD) {
@@ -88,8 +100,17 @@ export function MilestonesTrack({ milestones }: { milestones: Milestone[] }) {
           best = i;
         }
         const k = Math.max(-1.4, Math.min(1.4, d));
-        card.style.setProperty('--d', k.toFixed(3));
-        card.style.setProperty('--ad', Math.min(1, Math.abs(k)).toFixed(3));
+        const v = k.toFixed(3);
+        if (written[i] === v) return;
+        written[i] = v;
+        const ak = Math.min(1, Math.abs(k));
+        const p = parts[i];
+        if (p.card) {
+          p.card.style.transform = `rotateY(${(k * -16).toFixed(2)}deg) translateZ(${(ak * -70).toFixed(1)}px)`;
+          p.card.style.opacity = (1 - ak * 0.32).toFixed(3);
+        }
+        if (p.img) p.img.style.translate = `${(k * -14).toFixed(1)}px 0`;
+        if (p.big) p.big.style.translate = `${(k * -10).toFixed(1)}px 0`;
       });
       if (best !== last) {
         last = best;
@@ -126,6 +147,13 @@ export function MilestonesTrack({ milestones }: { milestones: Milestone[] }) {
     return () => {
       window.clearTimeout(refresh);
       ctx.revert();
+      // Sin la pista fijada (pantalla angosta tras un cambio de tamaño), las tarjetas quedan planas
+      parts.forEach((p) => {
+        p.card?.style.removeProperty('transform');
+        p.card?.style.removeProperty('opacity');
+        p.img?.style.removeProperty('translate');
+        p.big?.style.removeProperty('translate');
+      });
     };
   }, [pinned, milestones.length]);
 
@@ -138,9 +166,10 @@ export function MilestonesTrack({ milestones }: { milestones: Milestone[] }) {
     let frame = 0;
     let target: HTMLElement | null = null;
     let point = { x: 0, y: 0 };
+    // Escrituras directas en la envoltura (transform) y en el brillo (su posición): con variables en
+    // la envoltura, cada movimiento del puntero recalculaba el estilo de toda la tarjeta
     const reset = (w: HTMLElement) => {
-      w.style.setProperty('--rx', '0deg');
-      w.style.setProperty('--ry', '0deg');
+      w.style.removeProperty('transform');
     };
     const apply = () => {
       frame = 0;
@@ -150,11 +179,11 @@ export function MilestonesTrack({ milestones }: { milestones: Milestone[] }) {
       const r = card.getBoundingClientRect();
       const px = Math.min(1, Math.max(0, (point.x - r.left) / r.width));
       const py = Math.min(1, Math.max(0, (point.y - r.top) / r.height));
-      target.style.setProperty('--gx', `${(px * 100).toFixed(1)}%`);
-      target.style.setProperty('--gy', `${(py * 100).toFixed(1)}%`);
+      const glare = target.querySelector<HTMLElement>('.ms-card__glare');
+      glare?.style.setProperty('--gx', `${(px * 100).toFixed(1)}%`);
+      glare?.style.setProperty('--gy', `${(py * 100).toFixed(1)}%`);
       if (tilt) {
-        target.style.setProperty('--rx', `${((0.5 - py) * 12).toFixed(2)}deg`);
-        target.style.setProperty('--ry', `${((px - 0.5) * 16).toFixed(2)}deg`);
+        target.style.transform = `perspective(900px) rotateX(${((0.5 - py) * 12).toFixed(2)}deg) rotateY(${((px - 0.5) * 16).toFixed(2)}deg) translateZ(26px)`;
       }
     };
     const move = (e: PointerEvent) => {
@@ -203,6 +232,8 @@ export function MilestonesTrack({ milestones }: { milestones: Milestone[] }) {
             transition={{ duration: 0.9, ease: EASE.premium }}
           >
             {year}
+            {/* El mismo año en la cuenta maya (base 20), como en el emblema */}
+            <MayaNumber value={Number(year)} className="ms-year__maya" />
           </motion.span>
         </AnimatePresence>
       </div>
@@ -287,6 +318,7 @@ function Card({
           <span className="ms-card__art" aria-hidden>
             {uni && <span className="ms-card__flood" />}
             <span className="ms-card__big">{uni ? m.unis[0] : m.label}</span>
+            {uni && <span className="ms-card__joined">se sumó al Foro</span>}
             {uni && m.image && (
               <span className="ms-card__seal">
                 <Image src={m.image} alt="" fill sizes="96px" className="object-contain" />
@@ -301,14 +333,17 @@ function Card({
         </span>
       </span>
       <span className="ms-card__body">
+        {/* Folio de la página: su número en la cuenta maya */}
+        <span className="ms-card__folio" aria-hidden>
+          <MayaNumber value={i + 1} />
+        </span>
         <span className="ms-card__title">{m.title}</span>
         {m.summary && <span className="ms-card__summary">{m.summary}</span>}
         {m.unis.length > 0 && !uni && (
           <span className="ms-card__unis">
-            {m.unis.slice(0, 4).map((u) => (
-              <span key={u}>{u}</span>
-            ))}
-            {m.unis.length > 4 && <span>+{m.unis.length - 4}</span>}
+            <span className="ms-card__with">con</span>
+            {m.unis.slice(0, 4).join(' · ')}
+            {m.unis.length > 4 && ` · +${m.unis.length - 4}`}
           </span>
         )}
       </span>

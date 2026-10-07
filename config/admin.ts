@@ -32,7 +32,7 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Admin => 
   // `npm run develop` reinicia Strapi al cambiar cualquier archivo del proyecto. El frontend vive
   // en el mismo repositorio: cada `next build` o guardado allí tumbaba la API durante el reinicio
   // (y el build de Next salía sin datos). Solo afecta al modo desarrollo.
-  watchIgnoreFiles: ['**/frontend/**', '**/.claude/**'],
+  watchIgnoreFiles: ['**/frontend/**', '**/video/**', '**/.claude/**'],
   // Funciones de IA de Strapi: requieren licencia Enterprise y enviarían contenido a un servicio
   // externo. Apagadas de forma explícita (auditoría de producción).
   ai: { enabled: false },

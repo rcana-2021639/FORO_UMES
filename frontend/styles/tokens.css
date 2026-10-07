@@ -74,22 +74,27 @@
   --surface-2: color-mix(in oklab, var(--color-violet-500) 8%, var(--bg));
   --surface-3: color-mix(in oklab, var(--color-violet-500) 13%, var(--bg));
 
-  /* Tipografía (variables inyectadas por next/font en <html>) */
-  --font-display: var(--font-newsreader), 'Iowan Old Style', Georgia, serif;
-  --font-sans: var(--font-schibsted), system-ui, sans-serif;
+  /* Tipografía (variables inyectadas por next/font en <html>). v7 "Anuario anotado":
+     Alegreya (titulares), Alegreya Sans (texto), Alegreya Sans SC (versalitas) y Shantell Sans
+     (notas a mano). */
+  --font-display: var(--font-alegreya), 'Iowan Old Style', Georgia, serif;
+  --font-sans: var(--font-alegreya-sans), system-ui, sans-serif;
+  --font-sc: var(--font-alegreya-sc), var(--font-alegreya-sans), system-ui, sans-serif;
+  --font-hand: var(--font-shantell), 'Segoe Print', 'Comic Sans MS', cursive;
   /* v5: sin monoespaciada. Los datos (fechas, siglas, contadores) van en la sans con cifras
      tabulares: el aire de "terminal" restaba seriedad institucional */
-  --font-mono: var(--font-schibsted), system-ui, sans-serif;
+  --font-mono: var(--font-alegreya-sans), system-ui, sans-serif;
 
   /* Escala fluida */
   --text-h1: clamp(2.6rem, 6.2vw, 5.9rem);
   --text-h2: clamp(2rem, 4.1vw, 3.75rem);
   --text-h3: clamp(1.4rem, 2.2vw, 1.95rem);
-  --text-body: 1.0625rem;
-  --text-mono: 0.8rem;
+  /* Alegreya Sans tiene ojo pequeño: un punto más que con Schibsted para leer igual */
+  --text-body: 1.125rem;
+  --text-mono: 0.86rem;
   /* Etiquetas en versalitas (etiqueta ── filete) */
-  --text-label: 0.75rem;
-  --tracking-label: 0.09em;
+  --text-label: 0.86rem;
+  --tracking-label: 0.05em;
 
   /* Ritmo: no todas las secciones respiran igual */
   --gutter: clamp(1rem, 4vw, 4.5rem);

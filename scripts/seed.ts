@@ -296,12 +296,17 @@ const LEVEL_TEXT: Record<SeedProgram['level'], { intro: string; audience: string
 
 const MODALITY_TEXT = { Presencial: 'Presencial', Virtual: 'Virtual', Hibrida: 'Híbrida' };
 
+/**
+ * La descripción como la escribiría una universidad: un primer párrafo que se entiende solo (el
+ * resumen de la ficha) y los datos prácticos. Facultad, temas y a quién va dirigido van en sus
+ * propios campos (faculty, topics, audience).
+ */
 function programDescription(u: SeedUniversity, p: SeedProgram) {
   const t = LEVEL_TEXT[p.level];
+  // "La Maestría…", "La Especialización…", pero "El Doctorado…", "El Diplomado…", "El Posgrado…"
+  const article = /^(Maestría|Especialización)/.test(p.name) ? 'La' : 'El';
   return [
-    `La **${p.name}** de la ${u.name} se imparte en la ${p.unit}. ${t.intro}`,
-    `**Ejes del programa**\n\n${p.focus.map((f) => `- ${f}`).join('\n')}`,
-    `**Dirigido a:** ${t.audience}`,
+    `${article} **${p.name}** de la ${u.name} se imparte en la ${p.unit}. ${t.intro}`,
     `**Modalidad:** ${MODALITY_TEXT[p.modality]} · **Duración:** ${p.duration}`,
   ].join('\n\n');
 }
@@ -397,6 +402,9 @@ async function seed(strapi: Core.Strapi) {
           modality: p.modality,
           duration: p.duration,
           description: programDescription(u, p),
+          faculty: p.unit,
+          topics: p.focus.join('\n'),
+          audience: LEVEL_TEXT[p.level].audience,
           infoUrl: u.postgradUrl,
           university: uni.documentId,
         },

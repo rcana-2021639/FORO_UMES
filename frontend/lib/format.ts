@@ -223,3 +223,92 @@ export function readingMinutes(markdown?: string | null): number {
   const words = text.split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w)).length;
   return Math.max(1, Math.round(words / 200));
 }
+
+export interface ProgramBrief {
+  /** Dónde se imparte ("Facultad de Humanidades"), si la descripción lo dice. */
+  where: string | null;
+  /** Qué es o qué forma, en una o dos frases. */
+  lead: string | null;
+  /** Ejes o temas del programa (hasta cuatro). */
+  axes: string[];
+  /** A quién va dirigido. */
+  audience: string | null;
+}
+
+const plain = (s: string) =>
+  decodeEntities(s.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/<[^>]+>/g, ''))
+    .replace(/[*_`#>~]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+/** Campos propios del programa en Strapi que alimentan la ficha abierta (pueden venir vacíos). */
+export interface ProgramBriefFields {
+  faculty?: string | null;
+  /** Un tema por línea. */
+  topics?: string | null;
+  audience?: string | null;
+}
+
+/**
+ * Las partes de un programa para la ficha abierta de la portada. Mandan los campos propios que
+ * llena cada universidad en Strapi (facultad, temas, dirigido a); lo que quede vacío se busca en
+ * la descripción, que puede seguir una plantilla (frase con la facultad, "Ejes del programa" en
+ * lista, "Dirigido a:"). Lo que no se reconoce queda como `lead` (recortado): nada se inventa ni
+ * se pierde.
+ */
+export function programBrief(markdown?: string | null, own: ProgramBriefFields = {}): ProgramBrief {
+  const out = briefFromText(markdown);
+  const faculty = own.faculty?.trim();
+  if (faculty) out.where = faculty;
+  const topics = (own.topics ?? '')
+    .split(/\r?\n/)
+    .map((l) => plain(l.replace(/^\s*[-*•]\s*/, '')))
+    .filter(Boolean);
+  if (topics.length) out.axes = topics.slice(0, 4);
+  const audience = own.audience?.trim();
+  if (audience) out.audience = audience;
+  return out;
+}
+
+function briefFromText(markdown?: string | null): ProgramBrief {
+  const out: ProgramBrief = { where: null, lead: null, axes: [], audience: null };
+  if (!markdown) return out;
+  const loose: string[] = [];
+  for (const block of markdown.replace(/\r/g, '').split(/\n{2,}/)) {
+    const lines = block
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean);
+    if (!lines.length) continue;
+    const items = lines.filter((l) => /^[-*•]\s+/.test(l));
+    if (items.length && items.length === lines.length) {
+      out.axes.push(...items.map((l) => plain(l.replace(/^[-*•]\s+/, ''))).filter(Boolean));
+      continue;
+    }
+    const text = plain(block);
+    const audience = text.match(/^dirigido a:?\s*(.+)$/i);
+    if (audience) {
+      out.audience = audience[1];
+      continue;
+    }
+    // Encabezados de lista ("Ejes del programa") y la línea de modalidad/duración ya están en la ficha
+    if (/^ejes( del programa)?:?$/i.test(text) || /^modalidad:/i.test(text)) continue;
+    loose.push(text);
+  }
+  out.axes = out.axes.slice(0, 4);
+  const first = loose.shift() ?? '';
+  const sentences = first.split(/(?<=\.)\s+/);
+  const at = sentences.findIndex((s) => /\bse imparte en\b/i.test(s));
+  if (at >= 0) {
+    // "se imparte en la Facultad de Humanidades" → "Facultad de Humanidades"
+    const where = sentences[at]
+      .replace(/^.*?\bse imparte en\s+/i, '')
+      .replace(/^(la|el|los|las)\s+/i, '')
+      .replace(/\.$/, '');
+    out.where = where ? where[0].toUpperCase() + where.slice(1) : null;
+    sentences.splice(0, at + 1);
+  }
+  const lead = [...sentences, ...loose].join(' ').trim();
+  out.lead = lead ? excerpt(lead, 220) : null;
+  return out;
+}

@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <base href="/guia/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Guía del panel · Foro de Posgrado</title>
+    <link rel="icon" href="/favicon.png" />
+    <link rel="stylesheet" href="guia.css" />
+  </head>
+  <body>
+    <a class="skip" href="#contenido">Saltar al contenido</a>
+    <header class="top">
+      <div class="wrap top__in">
+        <svg class="emblem" viewBox="0 0 40 40" aria-hidden="true">
+          <rect width="40" height="40" rx="9" fill="#3a2677" />
+          <g fill="#fff">
+            <circle cx="9.65" cy="15" r="2.55" />
+            <circle cx="16.55" cy="15" r="2.55" />
+            <circle cx="23.45" cy="15" r="2.55" />
+            <circle cx="30.35" cy="15" r="2.55" />
+            <rect x="7.1" y="21.6" width="25.8" height="5.2" rx="2.6" />
+          </g>
+        </svg>
+        <div>
+          <p class="top__kicker">Foro Interuniversitario de Estudios de Posgrado</p>
+          <h1>Guía del panel para editores de universidad</h1>
+        </div>
+        <button class="print" type="button" data-print>Imprimir o guardar en PDF</button>
+      </div>
+    </header>
+
+    <main id="contenido" class="wrap">
+      <section class="intro">
+        <p class="lead">
+          El panel es donde cada universidad mantiene al día su información en el sitio del Foro:
+          sus programas de posgrado, su representante y las actividades en las que participa. Esta
+          guía muestra cada paso con capturas reales; pulsa <b>Reproducir</b> para verla como un
+          video o avanza con las flechas.
+        </p>
+        <div class="cards">
+          <article class="card card--yes">
+            <h2>Lo que haces tú</h2>
+            <ul>
+              <li>Agregar, corregir y quitar los <b>programas</b> de tu universidad.</li>
+              <li>Mantener al día a tu <b>representante</b> (cargo, correo, foto).</li>
+              <li>Proponer <b>actividades</b> y sumar a otras universidades.</li>
+              <li>Escribir <b>noticias y aportes</b> como borrador.</li>
+              <li>Subir <b>fotos</b> para tus programas, actividades y noticias.</li>
+            </ul>
+          </article>
+          <article class="card card--admin">
+            <h2>Lo que hace el Super Admin</h2>
+            <ul>
+              <li>Crea tu cuenta y la une a tu universidad.</li>
+              <li>Mantiene la ficha de la universidad (nombre, logo, colores).</li>
+              <li>Revisa y <b>publica</b> las noticias y los aportes.</li>
+              <li>Quita universidades de una actividad compartida.</li>
+            </ul>
+            <p class="card__note">
+              Solo ves y editas lo de tu universidad: lo de las demás no aparece en tu panel.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <nav class="chapters" aria-label="Capítulos de la guía" data-chapters></nav>
+
+      <section class="player" data-player aria-roledescription="presentación">
+        <header class="player__head">
+          <p class="player__chapter" data-chapter-title></p>
+          <p class="player__lead" data-chapter-lead></p>
+        </header>
+        <div class="stage" data-stage>
+          <img data-shot alt="" width="1366" height="820" />
+          <div class="stage__boxes" data-boxes aria-hidden="true"></div>
+          <svg class="cursor" data-cursor viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 2l15 9-6.5 1.6L16 20l-3 1.4-3.4-7.3L4 18z" />
+          </svg>
+          <div class="stage__progress" aria-hidden="true"><span data-progress></span></div>
+        </div>
+        <div class="caption" aria-live="polite">
+          <p class="caption__count" data-count></p>
+          <h3 class="caption__title" data-title></h3>
+          <p class="caption__text" data-text></p>
+        </div>
+        <div class="controls">
+          <button type="button" class="btn" data-prev aria-label="Paso anterior">←</button>
+          <button type="button" class="btn btn--play" data-play>▶ Reproducir</button>
+          <button type="button" class="btn" data-next aria-label="Paso siguiente">→</button>
+          <ol class="dots" data-dots aria-label="Pasos"></ol>
+        </div>
+      </section>
+
+      <section class="block" id="sitio">
+        <h2>Dónde se ve en el sitio</h2>
+        <p>
+          Así aparece un programa en la portada del sitio («Toda la oferta»). Cada número es un
+          campo del panel:
+        </p>
+        <div class="site">
+          <div class="site__shot">
+            <img src="img/sitio-01.webp" alt="Ficha de un programa en la portada del sitio" width="1366" height="820" loading="lazy" />
+            <div data-site-marks></div>
+          </div>
+          <ol class="site__legend">
+            <li><b>Nombre del programa</b> y, encima, el grado.</li>
+            <li><b>Universidad</b> y <b>Facultad o escuela</b>.</li>
+            <li>El <b>primer párrafo de la descripción</b>: que se entienda solo.</li>
+            <li><b>Temas principales</b>, uno por línea (hasta cuatro).</li>
+            <li><b>Dirigido a</b>, en una frase.</li>
+            <li>El botón <b>Ficha oficial</b> lleva al <b>enlace oficial del programa</b>.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="block" id="consejos">
+        <h2>Antes de guardar</h2>
+        <ul class="tips">
+          <li><b>Escribe para un estudiante.</b> Frases cortas, sin siglas sin explicar.</li>
+          <li><b>Revisa los enlaces:</b> que empiecen con https:// y abran la página correcta.</li>
+          <li><b>Fotos:</b> PNG, JPG o WebP de hasta 5 MB. Llena el <i>texto alternativo</i> (qué se ve en la foto): lo usan quienes no ven la imagen.</li>
+          <li><b>Datos personales:</b> en la ficha del representante solo va el correo institucional.</li>
+        </ul>
+      </section>
+
+      <section class="block" id="problemas">
+        <h2>Si algo no funciona</h2>
+        <details>
+          <summary>Guardé y no aparece en el sitio</summary>
+          <p>El sitio se actualiza solo cada pocos minutos. Espera un momento y recarga la página. Las noticias y los aportes aparecen cuando el Super Admin los publica.</p>
+        </details>
+        <details>
+          <summary>Me dice que no tengo permiso</summary>
+          <p>Solo puedes editar lo de tu universidad. Si el registro es tuyo y aun así sale el aviso, escribe al Super Admin: quizá tu cuenta no está unida a tu universidad.</p>
+        </details>
+        <details>
+          <summary>La foto no sube</summary>
+          <p>Revisa el formato (PNG, JPG o WebP) y el tamaño (hasta 5 MB). Las fotos del teléfono en formato HEIC no se aceptan: ábrelas y guárdalas como JPG.</p>
+        </details>
+        <details>
+          <summary>El panel me sacó</summary>
+          <p>Por seguridad, la sesión se cierra tras una hora sin usarse. Vuelve a entrar; lo que no guardaste se pierde, así que guarda seguido.</p>
+        </details>
+        <details>
+          <summary>Olvidé mi contraseña</summary>
+          <p>En la pantalla de entrada, pulsa «¿Olvidó su contraseña?» y sigue el correo que te llega. Tras varios intentos fallidos, el panel bloquea la entrada unos minutos.</p>
+        </details>
+      </section>
+
+      <section class="block block--admin" id="super-admin">
+        <h2>Para el Super Admin</h2>
+        <ol class="admin-steps">
+          <li><b>Crear la cuenta de un editor:</b> Configuraciones → Usuarios → «Invitar nuevo usuario». Rol: <i>Editor de Universidad</i>. Envía a la persona el enlace de invitación.</li>
+          <li><b>Unirla a su universidad:</b> Gestor de contenido → <i>Perfil de editor</i> → «Crear nueva entrada»: elige el usuario y la universidad. Sin este paso, el editor no puede cargar nada.</li>
+          <li><b>Logo de cada universidad:</b> Gestor de contenido → <i>Universidad</i> → su ficha → campo «Logotipo» (PNG, JPG o WebP; con fondo transparente o blanco). Aparece en el pie de todas las páginas y en su perfil.</li>
+          <li><b>Publicar noticias y aportes:</b> abre el borrador, revísalo y pulsa «Publicar».</li>
+          <li><b>Mensajes de contacto:</b> Gestor de contenido → <i>Mensaje de contacto</i>. Se borran solos al año.</li>
+          <li><b>Quitar a un editor:</b> Configuraciones → Usuarios → desactiva su cuenta (no la borres: el registro de cambios conserva lo que hizo).</li>
+        </ol>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <div class="wrap">Foro Interuniversitario de Estudios de Posgrado · Guía del panel</div>
+    </footer>
+
+    <script src="datos.js"></script>
+    <script src="guia.js"></script>
+  </body>
+</html>

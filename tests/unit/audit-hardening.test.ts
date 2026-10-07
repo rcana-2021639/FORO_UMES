@@ -126,3 +126,52 @@ describe('applyPanelConfig', () => {
     }
   });
 });
+
+describe('applyPanelConfig · orden del formulario', () => {
+  const current = {
+    settings: {},
+    metadatas: {
+      name: { edit: { label: 'name' } },
+      description: { edit: { label: 'description' } },
+      topics: { edit: { label: 'topics' } },
+      audience: { edit: { label: 'audience' } },
+      infoUrl: { edit: { label: 'infoUrl' } },
+    },
+    layouts: {
+      list: ['name'],
+      edit: [
+        [{ name: 'name', size: 6 }],
+        [{ name: 'description', size: 12 }],
+        [{ name: 'infoUrl', size: 6 }],
+        [
+          { name: 'topics', size: 12 },
+          { name: 'audience', size: 6 },
+        ],
+      ],
+    },
+  };
+
+  it('ordena por filas, reparte el ancho y deja al final lo que no se nombra', () => {
+    const next = applyPanelConfig(current, {
+      fields: {},
+      edit: [['name'], ['topics', 'audience'], ['description'], ['noExiste']],
+    });
+    expect(next!.layouts.edit).toEqual([
+      [{ name: 'name', size: 12 }],
+      [
+        { name: 'topics', size: 6 },
+        { name: 'audience', size: 6 },
+      ],
+      [{ name: 'description', size: 12 }],
+      [{ name: 'infoUrl', size: 6 }],
+    ]);
+  });
+
+  it('los programas tienen sus campos nuevos con etiqueta y en el formulario', () => {
+    const p = PANEL_LABELS['api::academic-program.academic-program'];
+    for (const f of ['faculty', 'topics', 'audience']) {
+      expect(p.fields[f]?.label).toBeTruthy();
+      expect(p.edit!.flat()).toContain(f);
+    }
+  });
+});

@@ -9,8 +9,9 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Middlewar
       ? frontendUrls
       : [...frontendUrls, 'http://localhost:3000', 'http://127.0.0.1:3000'];
 
-  // Host de las imágenes en producción (R2/CDN), para la CSP
-  const mediaHost = env('S3_PUBLIC_URL', '');
+  // Host de las imágenes en producción (R2/CDN o Cloudinary), para la CSP
+  const mediaHost =
+    env('S3_PUBLIC_URL', '') || (env('CLOUDINARY_NAME') ? 'res.cloudinary.com' : '');
 
   return [
     // requestId + registro estructurado por petición (reemplaza strapi::logger)

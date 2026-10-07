@@ -15,3 +15,6 @@ frontend/.next
 frontend/out
 frontend/next-env.d.ts
 frontend/package-lock.json
+
+# Video explicativo (local, no se versiona)
+video/

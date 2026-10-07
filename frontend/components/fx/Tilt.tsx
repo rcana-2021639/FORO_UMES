@@ -22,9 +22,16 @@ interface Props {
 
 /**
  * Losa que se inclina en 3D siguiendo al puntero (rotateX/rotateY con perspectiva), con un
- * brillo que se desplaza y una sombra que se separa al levantarla. Todo en transforms y
- * opacidad. Los hijos con `data-depth="N"` se elevan N px en Z (parallax dentro de la losa).
- * Con puntero grueso o reduced-motion no hace nada.
+ * brillo que se desplaza y una sombra que se separa al levantarla. Los hijos con `data-depth="N"`
+ * se elevan N px en Z (parallax dentro de la losa). Con puntero grueso o reduced-motion no hace
+ * nada.
+ *
+ * Rendimiento: en cada fotograma solo se escribe el `transform` de la losa y la posición del
+ * brillo, en variables registradas que no se heredan (`@property … inherits: false`, globals.css).
+ * Antes eran cinco variables heredables: cada fotograma recalculaba el estilo de todo lo que hay
+ * dentro (foto, textos), y la sombra grande se repintaba; por eso las tarjetas de noticias se
+ * trababan al pasar el cursor. La sombra y la elevación de los hijos se encienden una vez al
+ * entrar (`data-tilting`) con una transición de CSS.
  */
 export function Tilt({
   children,
@@ -53,16 +60,24 @@ export function Tilt({
     c.gx += (t.gx - c.gx) * 0.14;
     c.gy += (t.gy - c.gy) * 0.14;
     c.on += (t.on - c.on) * 0.14;
-    el.style.setProperty('--tilt-rx', `${c.rx.toFixed(2)}deg`);
-    el.style.setProperty('--tilt-ry', `${c.ry.toFixed(2)}deg`);
-    el.style.setProperty('--tilt-gx', `${c.gx.toFixed(1)}%`);
-    el.style.setProperty('--tilt-gy', `${c.gy.toFixed(1)}%`);
-    el.style.setProperty('--tilt-on', c.on.toFixed(3));
     const still =
       Math.abs(t.rx - c.rx) < 0.02 &&
       Math.abs(t.ry - c.ry) < 0.02 &&
       Math.abs(t.on - c.on) < 0.005 &&
       Math.abs(t.gx - c.gx) < 0.1;
+    if (still && t.on === 0) {
+      // En reposo vuelve a su estado de CSS (sin transform en línea)
+      el.style.removeProperty('transform');
+      raf.current = 0;
+      return;
+    }
+    el.style.transform =
+      `perspective(${perspective}px) rotateX(${c.rx.toFixed(2)}deg) ` +
+      `rotateY(${c.ry.toFixed(2)}deg) scale(${(1 + (scale - 1) * c.on).toFixed(4)})`;
+    if (glare) {
+      el.style.setProperty('--tilt-gx', `${c.gx.toFixed(1)}%`);
+      el.style.setProperty('--tilt-gy', `${c.gy.toFixed(1)}%`);
+    }
     raf.current = still ? 0 : requestAnimationFrame(loop);
   }
 
@@ -84,6 +99,7 @@ export function Tilt({
     const r = el.getBoundingClientRect();
     const px = (e.clientX - r.left) / r.width;
     const py = (e.clientY - r.top) / r.height;
+    if (!el.hasAttribute('data-tilting')) el.setAttribute('data-tilting', '');
     target.current = {
       rx: (0.5 - py) * max * 2,
       ry: (px - 0.5) * max * 2,
@@ -94,6 +110,7 @@ export function Tilt({
     kick();
   };
   const onLeave = () => {
+    ref.current?.removeAttribute('data-tilting');
     target.current = { rx: 0, ry: 0, gx: 50, gy: 50, on: 0 };
     kick();
   };
@@ -104,13 +121,7 @@ export function Tilt({
       onPointerMove={onMove}
       onPointerLeave={onLeave}
       className={cn('tilt', glare && 'tilt--glare', shadow && 'tilt--shadow', className)}
-      style={
-        {
-          ...style,
-          '--tilt-persp': `${perspective}px`,
-          '--tilt-scale': scale,
-        } as CSSProperties
-      }
+      style={{ ...style, '--tilt-persp': `${perspective}px` } as CSSProperties}
     >
       {children}
     </Tag>

@@ -8,8 +8,9 @@ import { AnimatePresence, motion } from 'motion/react';
 import { mediaUrl, sameOriginImage } from '@/lib/api';
 import { excerpt, formatDate, folio } from '@/lib/format';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
-import { useClientValue } from '@/hooks/useClientValue';
 import { useQuality } from '@/lib/quality';
+import { useNear } from '@/hooks/useNear';
+import { webglAvailable } from '@/lib/webgl';
 import { EASE } from '@/lib/motion';
 import { cn } from '@/lib/cn';
 import type { NewsItem } from '@/lib/types';
@@ -31,19 +32,6 @@ const TONES: [string, string][] = [
 
 const CYCLE_MS = 7000;
 
-let glCache: boolean | null = null;
-function webglAvailable() {
-  if (glCache === null) {
-    try {
-      const c = document.createElement('canvas');
-      glCache = !!(c.getContext('webgl2') || c.getContext('webgl'));
-    } catch {
-      glCache = false;
-    }
-  }
-  return glCache;
-}
-
 /**
  * Noticias del Foro. A la izquierda, la portada de la nota activa es una tela elástica (React
  * Bits `ElasticMesh`): se hunde bajo el cursor, respira sola y, al cambiar de nota, la nueva
@@ -58,8 +46,10 @@ export function NewsMorph({ news }: { news: NewsItem[] }) {
   const root = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
   const quality = useQuality();
-  const gl = useClientValue(webglAvailable, false);
-  const elastic = gl && quality === 'full' && !reduced;
+  // La tela (WebGL) se monta al acercarse: al cargar, su malla, su textura y la prueba de WebGL
+  // ocupaban el hilo principal aunque la sección estuviera muy abajo. Hasta entonces, la portada fija.
+  const near = useNear(root);
+  const elastic = near && quality === 'full' && !reduced && webglAvailable();
 
   // Solo avanza sola si se ve y nadie la está usando
   useEffect(() => {

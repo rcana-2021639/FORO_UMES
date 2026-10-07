@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { Words } from './Words';
+import type { ScribbleKind } from './Scribble';
 import { cn } from '@/lib/cn';
 
 export interface Crumb {
@@ -23,6 +24,8 @@ interface Props {
    * regresiva, el buscador… Con ella, la explicación y el botón pasan bajo el título.
    */
   visual?: ReactNode;
+  /** Palabra del título marcada a mano (v7 "Anuario anotado"). */
+  mark?: { word: string; kind: ScribbleKind };
 }
 
 /**
@@ -40,6 +43,7 @@ export function PageHeader({
   size = 'page',
   className,
   visual,
+  mark,
 }: Props) {
   if (visual) {
     return (
@@ -62,7 +66,7 @@ export function PageHeader({
                   size === 'article' ? 'page-head__title--article' : 'page-head__title'
                 )}
               >
-                {typeof title === 'string' ? <Words text={title} /> : title}
+                {typeof title === 'string' ? <Words text={title} mark={mark} /> : title}
               </h1>
               {intro && (
                 <p data-reveal="blur" className="sec-head__intro mt-6">
@@ -102,7 +106,7 @@ export function PageHeader({
               size === 'article' ? 'page-head__title--article' : 'page-head__title'
             )}
           >
-            {typeof title === 'string' ? <Words text={title} /> : title}
+            {typeof title === 'string' ? <Words text={title} mark={mark} /> : title}
           </h1>
           {(intro || aside) && (
             <div className="flex flex-col items-start gap-5 md:col-span-4 md:self-end">

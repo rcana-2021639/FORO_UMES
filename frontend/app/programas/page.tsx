@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ProgramsCatalog } from '@/components/sections/ProgramsCatalog';
-import { OfferDots } from '@/components/sections/OfferDots';
-import { api, critical, safe } from '@/lib/api';
+import { OfferAbacus } from '@/components/sections/OfferAbacus';
+import { api, critical, mediaUrl, safe } from '@/lib/api';
 import { LEVELS } from '@/lib/levels';
 import { pageMetadata } from '@/lib/seo';
 
@@ -40,11 +40,20 @@ export default async function ProgramasPage() {
         crumbs={[{ label: 'Programas' }]}
         kicker="Lo que se puede estudiar"
         title="Catálogo de programas"
+        mark={{ word: 'programas', kind: 'double' }}
         intro="Toda la oferta de posgrado de las nueve universidades en una sola lista. Filtra por nivel, modalidad o universidad, busca por nombre y guarda con la estrella los que quieras comparar."
-        visual={rows.length ? <OfferDots rows={rows} total={programs.length} /> : undefined}
+        visual={rows.length ? <OfferAbacus rows={rows} total={programs.length} /> : undefined}
       />
       <div className="container-x pb-[var(--section-y)]">
-        <ProgramsCatalog programs={programs} />
+        <ProgramsCatalog
+          programs={programs}
+          universities={universities.data.map((u) => ({
+            documentId: u.documentId,
+            acronym: u.acronym ?? u.name.slice(0, 4),
+            name: u.name,
+            logo: mediaUrl(u.logo?.formats?.thumbnail?.url ?? u.logo?.url),
+          }))}
+        />
       </div>
     </>
   );

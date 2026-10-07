@@ -4,6 +4,11 @@ import { cn } from '@/lib/cn';
 interface Props {
   value: number;
   className?: string;
+  /**
+   * Si se da (ms), cada pieza cae en su sitio con el script de arranque (`data-reveal="maya"`) a
+   * partir de ese instante, en cascada, desde que su grupo (`data-reveal-group`) entra en pantalla.
+   */
+  revealAt?: number;
 }
 
 /** Medidas en unidades del SVG: el ancho de una barra y el paso entre puntos. */
@@ -52,9 +57,12 @@ export function mayaReading(n: number): string {
  * mayor arriba. Es el mismo sistema del emblema (el 9) y del numeral de cada capítulo; aquí sirve
  * para escribir las cifras del Foro "a la maya" junto a la cifra arábiga, que es la que se lee.
  *
- * Cada pieza lleva `--k` (su orden) para que el CSS la haga caer en su sitio en cascada.
+ * Cada pieza lleva `--k` (su orden) para que el CSS la haga caer en su sitio en cascada, o, con
+ * `revealAt`, su momento exacto para el script de arranque.
  */
-export function MayaNumber({ value, className }: Props) {
+export function MayaNumber({ value, className, revealAt }: Props) {
+  const fall = (k: number) =>
+    revealAt == null ? {} : { 'data-reveal': 'maya', 'data-reveal-at': revealAt + k * 75 };
   const digits = vigesimal(value);
   let y = 0;
   let k = 0;
@@ -67,6 +75,7 @@ export function MayaNumber({ value, className }: Props) {
         <line
           key={`f${level}`}
           className="maya-num__floor"
+          {...(revealAt == null ? {} : { 'data-reveal': 'fade', 'data-reveal-at': revealAt + 200 })}
           x1={3}
           x2={W - 3}
           y1={y + LEVEL_GAP / 2}
@@ -79,7 +88,8 @@ export function MayaNumber({ value, className }: Props) {
       y += LEVEL_GAP;
     }
     if (d === 0) {
-      pieces.push(<Shell key={`s${level}`} y={y} k={k++} />);
+      pieces.push(<Shell key={`s${level}`} y={y} k={k} reveal={fall(k)} />);
+      k++;
       y += SHELL_H;
       return;
     }
@@ -91,6 +101,7 @@ export function MayaNumber({ value, className }: Props) {
         pieces.push(
           <circle
             key={`d${level}-${i}`}
+            {...fall(k)}
             className="maya-num__el"
             cx={start + i * DOT_GAP}
             cy={y + DOT_R}
@@ -105,6 +116,7 @@ export function MayaNumber({ value, className }: Props) {
       pieces.push(
         <rect
           key={`b${level}-${i}`}
+          {...fall(k)}
           className="maya-num__el maya-num__bar"
           x={1}
           y={y}
@@ -132,10 +144,10 @@ export function MayaNumber({ value, className }: Props) {
 }
 
 /** El cero maya: una concha (contorno de lente con dos pliegues). */
-function Shell({ y, k }: { y: number; k: number }) {
+function Shell({ y, k, reveal }: { y: number; k: number; reveal?: object }) {
   const cy = y + SHELL_H / 2;
   return (
-    <g className="maya-num__el" style={{ '--k': k } as CSSProperties}>
+    <g {...reveal} className="maya-num__el" style={{ '--k': k } as CSSProperties}>
       <path
         d={`M2 ${cy} Q${W / 2} ${y - 2.6} ${W - 2} ${cy} Q${W / 2} ${y + SHELL_H + 2.6} 2 ${cy} Z`}
         fill="none"

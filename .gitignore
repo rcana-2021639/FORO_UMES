@@ -135,3 +135,9 @@ src/extensions/documentation/documentation/
 # Archivos temporales de trabajo local
 .tmp-*
 backups/
+
+# Cuentas de prueba locales (scripts/demo-editor.ts)
+scripts/.cuentas-demo.local.json
+
+# Video explicativo (local, pesa varios GB)
+video/

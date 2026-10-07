@@ -72,11 +72,13 @@ export function ClickSparkLayer() {
 
     const onDown = (e: PointerEvent) => {
       if (e.button !== 0) return;
-      // En el perfil de una universidad, las chispas salen de su color
+      // En el perfil de una universidad, las chispas salen de su color; si no, del capítulo donde
+      // se hizo click (cada capítulo define su --spark)
       const root = getComputedStyle(document.documentElement);
+      const target = e.target instanceof Element ? e.target : document.documentElement;
       const color =
         root.getPropertyValue('--u-primary').trim() ||
-        root.getPropertyValue('--spark').trim() ||
+        getComputedStyle(target).getPropertyValue('--spark').trim() ||
         '#7c5ae0';
       const now = performance.now();
       for (let i = 0; i < COUNT; i++) {

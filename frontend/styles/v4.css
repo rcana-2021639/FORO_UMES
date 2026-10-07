@@ -628,7 +628,7 @@
   fill: rgb(255 255 255 / 0.3);
 }
 [data-front='true'] .ga-bar {
-  animation: ga-grow 0.9s calc(0.2s + var(--k) * 0.12s) var(--ease-out-premium) both;
+  animation: ga-grow 0.9s calc(0.2s + var(--k) * 0.12s) var(--ease-out-premium) backwards;
 }
 @keyframes ga-grow {
   from {
@@ -641,7 +641,7 @@
   stroke-dasharray: 0.035 0.03;
 }
 [data-front='true'] .ga-trail {
-  animation: ga-fade 0.8s 0.8s both;
+  animation: ga-fade 0.8s 0.8s backwards;
 }
 .ga-flag {
   fill: rgb(255 255 255 / 0.92);
@@ -744,14 +744,14 @@
   stroke-opacity: 0.9;
 }
 [data-front='true'] .ga-node {
-  animation: ga-pop 0.5s calc(0.12s + var(--k) * 0.08s) var(--ease-out-premium) both;
+  animation: ga-pop 0.5s calc(0.12s + var(--k) * 0.08s) var(--ease-out-premium) backwards;
 }
 .ga-new {
   fill: #fff;
   stroke: none;
 }
 [data-front='true'] .ga-new {
-  animation: ga-pop 0.6s 1.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation: ga-pop 0.6s 1.25s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
 }
 .ga-pulse {
   stroke-opacity: 0.8;
@@ -933,7 +933,7 @@
   font-size: 10px;
 }
 [data-front='true'] .ga-stop {
-  animation: ga-pop 0.6s calc(0.3s + var(--k) * 0.2s) cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation: ga-pop 0.6s calc(0.3s + var(--k) * 0.2s) cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
 }
 .ga-start {
   fill: #fff;
@@ -1573,17 +1573,14 @@ html[data-quality='still'] .news-row__progress {
   box-shadow:
     0 0 0 1px color-mix(in oklab, var(--tone) 18%, transparent),
     0 26px 50px -34px rgb(var(--shadow-ink) / 0.55);
-  transition:
-    box-shadow 0.6s var(--ease-out-premium),
-    filter 0.6s var(--ease-out-premium),
-    opacity 0.6s var(--ease-out-premium);
+  transition: box-shadow 0.6s var(--ease-out-premium);
 }
-/* Curva 3D según la distancia al centro (solo con la pista fijada) */
+/* Curva 3D según la distancia al centro (solo con la pista fijada): MilestonesTrack escribe en
+   cada fotograma transform y opacidad de la tarjeta, y el parallax de su foto y su sigla, directo
+   en esas piezas. Sin transición (cada fotograma la reiniciaba) ni filtro (se volvía a rasterizar
+   la tarjeta con su foto en cada fotograma). */
 .ms--pinned .ms-card {
-  transform: rotateY(calc(var(--d) * -16deg)) translateZ(calc(var(--ad) * -70px));
   transform-origin: 50% 50%;
-  filter: saturate(calc(1 - var(--ad) * 0.35));
-  opacity: calc(1 - var(--ad) * 0.28);
 }
 .ms--pinned .ms-item.is-active .ms-card {
   box-shadow:
@@ -1624,11 +1621,14 @@ html[data-quality='still'] .news-row__progress {
   background: linear-gradient(150deg, var(--tone), color-mix(in oklab, var(--tone) 45%, #fff));
 }
 .ms-card__img {
-  transform: translateX(calc(var(--d) * -14px)) scale(1.12);
-  transition: transform 0.9s var(--ease-out-premium);
+  /* Parallax (translate, lo escribe MilestonesTrack sin transición) y acercamiento al pasar el
+     cursor (scale, con transición) en propiedades separadas: antes la transición se reiniciaba en
+     cada fotograma */
+  scale: 1.12;
+  transition: scale 0.9s var(--ease-out-premium);
 }
 .ms-card:hover .ms-card__img {
-  transform: translateX(calc(var(--d) * -14px)) scale(1.18);
+  scale: 1.18;
 }
 .ms-card__art {
   position: absolute;
@@ -1657,7 +1657,6 @@ html[data-quality='still'] .news-row__progress {
   font-variation-settings:
     'opsz' 144,
     'SOFT' 60;
-  transform: translateX(calc(var(--d) * -10px));
 }
 .ms-card__chip {
   position: absolute;
@@ -1669,7 +1668,6 @@ html[data-quality='still'] .news-row__progress {
   color: #fff;
   background: color-mix(in oklab, var(--tone) 80%, #000 10%);
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.25);
-  backdrop-filter: blur(4px);
 }
 .ms-card__body {
   display: block;
@@ -1840,18 +1838,19 @@ html[data-quality='still'] .ms-node__dot::after {
 
 /* ---------- Hitos: entrada atada a la línea e interacción de cada tarjeta ---------- */
 /* La tarjeta gira sobre el borde que toca la línea (la entrada la despliega desde ahí) y, con el
-   cursor encima, se inclina hacia él y se adelanta. --rx/--ry los escribe MilestonesTrack. */
+   cursor encima, se inclina hacia él y se adelanta: el transform lo escribe MilestonesTrack en
+   línea mientras el cursor está encima. En reposo no lleva transform 3D (antes llevaba siempre
+   perspective(), y cada tarjeta y sus vecinos quedaban como capas de GPU). */
 .ms-card-wrap {
-  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg))
-    translateZ(var(--lift, 0px));
   transform-origin: 50% 100%;
   transition: transform 0.6s var(--ease-out-premium);
 }
 .ms-item[data-side='bottom'] .ms-card-wrap {
   transform-origin: 50% 0%;
 }
+/* Sin la inclinación con el puntero (táctil, modo liviano): se levanta un poco */
 .ms-card-wrap:hover {
-  --lift: 26px;
+  transform: translateY(-6px);
 }
 .ms-item[data-side='bottom'] .ms-stem {
   transform-origin: top;
@@ -2450,43 +2449,6 @@ html[data-quality='still'] :focus-visible {
   --surface-2: color-mix(in oklab, var(--u-primary) 8%, var(--color-paper));
   --surface-3: color-mix(in oklab, var(--u-primary) 13%, var(--color-paper));
 }
-/* Fuera del perfil pero en su página (lo publica brandRootCss en :root mientras está montado) */
-html:has(.u-profile) {
-  scrollbar-color: color-mix(in oklab, var(--u-primary) 55%, transparent) transparent;
-  accent-color: var(--u-primary);
-  caret-color: var(--u-primary);
-}
-html:has(.u-profile) ::selection {
-  background: color-mix(in oklab, var(--u-primary) 24%, transparent);
-}
-html:has(.u-profile) .scroll-progress {
-  background: linear-gradient(90deg, var(--u-primary), var(--u-accent));
-}
-html:has(.u-profile) .nav-link.is-active,
-html:has(.u-profile) .nav-link:hover,
-html:has(.u-profile) .nav-link:focus-visible {
-  color: var(--u-text);
-}
-html:has(.u-profile) .nav-active {
-  background: linear-gradient(90deg, var(--u-primary), var(--u-accent));
-}
-html:has(.u-profile) .nav-hover {
-  background: color-mix(in oklab, var(--u-primary) 10%, #fff);
-}
-html:has(.u-profile) .nav-shell[data-scrolled='true'] .nav-bar {
-  box-shadow:
-    inset 0 0 0 1px color-mix(in oklab, var(--u-primary) 26%, transparent),
-    0 18px 40px -22px color-mix(in oklab, var(--u-primary) 55%, transparent);
-}
-html:has(.u-profile) .to-top {
-  color: var(--u-text);
-}
-html:has(.u-profile) .to-top:hover {
-  background: color-mix(in oklab, var(--u-primary) 8%, #fff);
-}
-html:has(.u-profile) .to-top__fill {
-  stroke: var(--u-primary);
-}
-html:has(.u-profile) .to-top__track {
-  stroke: color-mix(in oklab, var(--u-primary) 22%, transparent);
-}
+/* Fuera del perfil pero en su página: las reglas viajan con brandRootCss (lib/universities.ts).
+   Antes eran `html:has(.u-profile) …`, que obligaba a revisar todo el documento con cada cambio
+   del DOM en cualquier página. */

@@ -408,12 +408,20 @@ export interface ApiAcademicProgramAcademicProgram extends Struct.CollectionType
     draftAndPublish: false;
   };
   attributes: {
+    audience: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 300;
+      }>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
     description: Schema.Attribute.RichText;
     duration: Schema.Attribute.String &
       Schema.Attribute.SetMinMaxLength<{
         maxLength: 100;
+      }>;
+    faculty: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 200;
       }>;
     infoUrl: Schema.Attribute.String;
     level: Schema.Attribute.Enumeration<['Maestria', 'Doctorado', 'Especializacion', 'Diplomado']> &
@@ -432,6 +440,10 @@ export interface ApiAcademicProgramAcademicProgram extends Struct.CollectionType
         maxLength: 250;
       }>;
     publishedAt: Schema.Attribute.DateTime;
+    topics: Schema.Attribute.Text &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 600;
+      }>;
     university: Schema.Attribute.Relation<'manyToOne', 'api::university.university'> &
       Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;

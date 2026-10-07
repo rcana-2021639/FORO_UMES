@@ -50,6 +50,7 @@ export function ActivitiesBoard({ activities }: { activities: Activity[] }) {
         className="flex flex-wrap items-center gap-2"
         role="group"
         aria-label="Tipo de actividad"
+        data-reveal-stagger="up"
       >
         <Pill active={type === 'all'} onClick={() => setType('all')} color="var(--fg)">
           Todas <span className="mono-label opacity-70">{counts.all}</span>
@@ -106,7 +107,10 @@ function Group({
 
   return (
     <section aria-labelledby={id}>
-      <div className="mb-6 flex items-end justify-between gap-4 border-b border-line pb-4">
+      <div
+        className="mb-6 flex items-end justify-between gap-4 border-b border-line pb-4"
+        data-reveal="left"
+      >
         <h2
           id={id}
           className="flex items-baseline gap-3 text-[clamp(1.6rem,3vw,2.4rem)] leading-none"
@@ -145,6 +149,7 @@ function Group({
               ) : (
                 <button
                   type="button"
+                  data-reveal="up"
                   className="act-year__open"
                   onClick={() => setOpened((s) => new Set(s).add(y))}
                 >

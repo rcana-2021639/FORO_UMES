@@ -18,6 +18,7 @@ export default function ContactoPage() {
       className="section-dark section-dark--dusk section-dark--solid relative isolate min-h-svh text-fg"
     >
       <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+        {/* El mismo fondo que el contacto de la portada: una sola versión del diseño */}
         <div className="dusk-glow" />
         <span className="contact-bigword">Hola</span>
       </div>
@@ -25,6 +26,7 @@ export default function ContactoPage() {
         crumbs={[{ label: 'Contacto' }]}
         kicker="Universidades, prensa y estudiantes"
         title="Escríbele al Foro"
+        mark={{ word: 'Escríbele', kind: 'swash' }}
       />
       <div className="container-x relative z-10 pb-[var(--section-y)]">
         <ContactForm />

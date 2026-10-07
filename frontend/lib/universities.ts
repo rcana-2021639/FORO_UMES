@@ -133,14 +133,39 @@ export function brandVars(acronym?: string | null): React.CSSProperties {
 }
 
 /**
- * Los mismos colores en la raíz del documento, para lo que vive fuera del perfil (barra de
- * navegación, progreso de lectura, selección, barras de desplazamiento). Lo renderiza el perfil en
- * un <style>: aparece con la página y se va con ella. Los valores salen de BRANDS (hex fijos).
+ * Lo que vive fuera del perfil pero en su página (barra de navegación, progreso de lectura,
+ * selección, barras de desplazamiento, "volver arriba") toma el color de la universidad. Viaja en
+ * el mismo <style> que las variables, así que solo existe mientras el perfil está montado. Antes
+ * eran reglas `html:has(.u-profile) …` en la hoja global: el navegador tenía que revisar el
+ * documento entero con cada cambio del DOM, en cualquier página. `html:root` pesa lo mismo.
+ */
+const BRAND_PAGE_RULES =
+  'html:root{scrollbar-color:color-mix(in oklab,var(--u-primary) 55%,transparent) transparent;' +
+  'accent-color:var(--u-primary);caret-color:var(--u-primary)}' +
+  'html:root ::selection{background:color-mix(in oklab,var(--u-primary) 24%,transparent)}' +
+  'html:root .scroll-progress{background:linear-gradient(90deg,var(--u-primary),var(--u-accent))}' +
+  'html:root .nav-link.is-active,html:root .nav-link:hover,html:root .nav-link:focus-visible{color:var(--u-text)}' +
+  'html:root .nav-active{background:linear-gradient(90deg,var(--u-primary),var(--u-accent))}' +
+  'html:root .nav-hover{background:color-mix(in oklab,var(--u-primary) 10%,#fff)}' +
+  // Sin comillas: el texto de un <style> no debe llevar caracteres que React pueda escapar
+  'html:root .nav-shell[data-scrolled=true] .nav-bar{box-shadow:inset 0 0 0 1px ' +
+  'color-mix(in oklab,var(--u-primary) 26%,transparent),0 18px 40px -22px ' +
+  'color-mix(in oklab,var(--u-primary) 55%,transparent)}' +
+  'html:root .to-top{color:var(--u-text)}' +
+  'html:root .to-top:hover{background:color-mix(in oklab,var(--u-primary) 8%,#fff)}' +
+  'html:root .to-top__fill{stroke:var(--u-primary)}' +
+  'html:root .to-top__track{stroke:color-mix(in oklab,var(--u-primary) 22%,transparent)}';
+
+/**
+ * Los colores de la universidad en la raíz del documento y las reglas que los usan fuera del
+ * perfil. Lo renderiza el perfil en un <style>: aparece con la página y se va con ella. Los valores
+ * salen de BRANDS (hex fijos).
  */
 export function brandRootCss(acronym?: string | null) {
   const b = brandOf(acronym);
   return (
     `:root{--u-primary:${b.primary};--u-surface:${b.surface};--u-on-surface:${b.onSurface};` +
-    `--u-accent:${b.accent};--u-on-accent:${b.onAccent};--u-text:${b.text}}`
+    `--u-accent:${b.accent};--u-on-accent:${b.onAccent};--u-text:${b.text}}` +
+    BRAND_PAGE_RULES
   );
 }

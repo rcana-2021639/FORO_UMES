@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
-import { ViewTransition } from 'react';
+import { useEffect, useRef, ViewTransition, type RefObject } from 'react';
 import { FoldText } from '@/components/fx/FoldText';
 import { Tilt } from '@/components/fx/Tilt';
 import { DepthText } from '@/components/fx/DepthText';
@@ -41,6 +41,8 @@ export function NewsArchive({ news, page, pageCount }: Props) {
   const featured = page === 1 ? first : null;
   const grid = page === 1 ? rest : news;
   const offset = (page - 1) * 12;
+  const gridRef = useRef<HTMLUListElement>(null);
+  usePhotoPan(gridRef, fine && !reduced && quality !== 'still');
 
   if (!news.length)
     return (
@@ -59,8 +61,9 @@ export function NewsArchive({ news, page, pageCount }: Props) {
       )}
 
       <ul
+        ref={gridRef}
         data-reveal-stagger="tilt"
-        className="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 [perspective:1600px]"
+        className="clips grid gap-x-7 gap-y-12 sm:grid-cols-2 lg:grid-cols-3"
       >
         {grid.map((n, i) => (
           <Card key={n.documentId} item={n} n={offset + i + (featured ? 2 : 1)} />
@@ -210,76 +213,99 @@ function Featured({ item, elastic }: { item: NewsItem; elastic: boolean }) {
 function Card({ item, n }: { item: NewsItem; n: number }) {
   const cover = mediaUrl(item.coverImage?.formats?.medium?.url ?? item.coverImage?.url);
   return (
-    <li className="[transform-style:preserve-3d]">
-      <Tilt max={9} scale={1.03} className="h-full rounded-[10px]">
-        <Link
-          href={`/noticias/${item.documentId}`}
-          transitionTypes={['news-card']}
-          className="group relative flex h-full flex-col overflow-hidden rounded-[10px] border border-[var(--rule)] bg-white [transform-style:preserve-3d]"
+    <li className="clip-li" style={{ '--tilt': `${n % 2 ? -0.7 : 0.6}deg` } as React.CSSProperties}>
+      <Link href={`/noticias/${item.documentId}`} transitionTypes={['news-card']} className="clip">
+        <span aria-hidden className="clip__tape" />
+        <p className="clip__dateline">
+          <span>N.º {folio(n)}</span>
+          <span>{formatDate(item.publishedAt)}</span>
+        </p>
+        <ViewTransition
+          name={`news-${item.documentId}`}
+          share={{ 'news-card': 'news-morph', default: 'none' }}
+          default="none"
         >
-          <ViewTransition
-            name={`news-${item.documentId}`}
-            share={{ 'news-card': 'news-morph', default: 'none' }}
-            default="none"
-          >
-            <div className="relative aspect-[4/3] overflow-hidden bg-surface-2">
-              {cover ? (
+          <div className="clip__photo">
+            {cover ? (
+              <span className="clip__pan">
                 <Image
                   src={cover}
                   alt={item.coverImage?.alternativeText ?? ''}
                   fill
                   sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw"
-                  className="object-cover transition-transform duration-[1.4s] ease-(--ease-out-premium) group-hover:scale-[1.07]"
+                  className="clip__img"
                 />
-              ) : (
-                <span
-                  aria-hidden
-                  className="absolute inset-0 grid place-items-center font-display text-[4rem] text-fg-muted/30"
-                  style={{ fontVariationSettings: "'opsz' 144, 'WONK' 1" }}
-                >
-                  F
-                </span>
-              )}
-              <span
-                aria-hidden
-                className="absolute inset-0 origin-bottom bg-[color-mix(in_oklab,var(--color-lilac)_22%,transparent)] transition-transform duration-700 ease-(--ease-cinematic) group-hover:scale-y-0"
-              />
-              <span className="mono-label absolute top-3 left-3 rounded-[4px] bg-bg/90 px-2 py-0.5 font-semibold text-fg">
-                {folio(n)}
               </span>
-            </div>
-          </ViewTransition>
-          <div
-            className="flex flex-1 flex-col p-5"
-            data-depth
-            style={{ '--z': 22 } as React.CSSProperties}
-          >
-            <p className="text-[0.7rem] font-semibold tracking-[0.07em] text-fg-muted uppercase">
-              {formatDate(item.publishedAt)}
-            </p>
-            <h2
-              className="mt-2 text-[1.3rem] leading-[1.15] text-fg underline decoration-transparent underline-offset-[5px] transition-[text-decoration-color] duration-500 group-hover:decoration-[color:var(--accent-sage)]"
-              style={{ fontVariationSettings: "'opsz' 32, 'SOFT' 30" }}
-            >
-              {item.title}
-            </h2>
-            {item.summary && (
-              <p className="mt-2 text-[0.95rem] leading-relaxed text-fg-muted">
-                {excerpt(item.summary, 120)}
-              </p>
+            ) : (
+              <span aria-hidden className="clip__blank">
+                F
+              </span>
             )}
-            <span className="ui-label mt-auto inline-flex items-center gap-2 pt-4 text-fg-muted transition-colors duration-300 group-hover:text-fg">
-              Leer{' '}
-              <span
-                aria-hidden
-                className="transition-transform duration-300 group-hover:translate-x-1"
-              >
-                <Arrow />
-              </span>
-            </span>
+            {/* La foto "impresa" en trama de puntos; al tomar el recorte, se revela a color */}
+            <span aria-hidden className="clip__screen" />
           </div>
-        </Link>
-      </Tilt>
+        </ViewTransition>
+        <div className="clip__body">
+          <h2 className="clip__title">
+            <span>{item.title}</span>
+            <svg aria-hidden className="clip__under" viewBox="0 0 200 8" preserveAspectRatio="none">
+              <path pathLength={1} d="M2 5.2C40 2.6 88 6.4 132 3.8 158 2.4 180 4.6 198 3.4" />
+            </svg>
+          </h2>
+          {item.summary && <p className="clip__summary">{excerpt(item.summary, 120)}</p>}
+          <span className="clip__read">
+            Leer la nota <Arrow />
+          </span>
+        </div>
+      </Link>
     </li>
   );
+}
+
+/**
+ * Con el cursor sobre un recorte, su foto se desplaza un poco hacia el lado contrario (paralaje en
+ * 2D: el texto nunca se inclina, así que se ve nítido). Un solo listener para toda la rejilla y
+ * como mucho una escritura de `translate` por fotograma, solo en la foto bajo el cursor.
+ */
+function usePhotoPan(ref: RefObject<HTMLElement | null>, on: boolean) {
+  useEffect(() => {
+    const root = ref.current;
+    if (!root || !on) return;
+    let frame = 0;
+    let target: HTMLElement | null = null;
+    let pan: HTMLElement | null = null;
+    let point = { x: 0, y: 0 };
+    const reset = () => {
+      pan?.style.removeProperty('translate');
+      target = null;
+      pan = null;
+    };
+    const apply = () => {
+      frame = 0;
+      if (!target || !pan) return;
+      const r = target.getBoundingClientRect();
+      const px = (point.x - r.left) / r.width - 0.5;
+      const py = (point.y - r.top) / r.height - 0.5;
+      pan.style.translate = `${(px * -14).toFixed(1)}px ${(py * -10).toFixed(1)}px`;
+    };
+    const move = (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse') return;
+      const card = (e.target as HTMLElement).closest<HTMLElement>('.clip');
+      if (card !== target) {
+        reset();
+        target = card;
+        pan = card?.querySelector<HTMLElement>('.clip__pan') ?? null;
+      }
+      point = { x: e.clientX, y: e.clientY };
+      if (target && !frame) frame = requestAnimationFrame(apply);
+    };
+    root.addEventListener('pointermove', move);
+    root.addEventListener('pointerleave', reset);
+    return () => {
+      cancelAnimationFrame(frame);
+      reset();
+      root.removeEventListener('pointermove', move);
+      root.removeEventListener('pointerleave', reset);
+    };
+  }, [ref, on]);
 }

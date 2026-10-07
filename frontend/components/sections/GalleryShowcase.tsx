@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { mediaUrl, sameOriginImage } from '@/lib/api';
 import { formatDate, videoEmbed, videoThumbnail } from '@/lib/format';
 import { useQuality } from '@/lib/quality';
+import { useNear } from '@/hooks/useNear';
 import { EASE } from '@/lib/motion';
 import type { GalleryItem } from '@/lib/types';
 import type { FlexCarouselHandle, FlexCarouselItem } from '@/components/fx/FlexCarousel';
@@ -16,7 +17,7 @@ const FlexCarousel = dynamic(
   { ssr: false }
 );
 
-interface Entry {
+export interface Entry {
   id: string;
   kind: 'image' | 'video';
   /** Imagen que se muestra en el carrusel (foto, miniatura o fotograma). */
@@ -29,7 +30,7 @@ interface Entry {
   subtitle?: string;
 }
 
-function toEntry(g: GalleryItem): Entry {
+export function toEntry(g: GalleryItem): Entry {
   const isVideo = g.type === 'Video' || !!g.file?.mime?.startsWith('video/');
   const fileUrl = mediaUrl(g.file?.url);
   const img = !isVideo
@@ -150,6 +151,9 @@ export function GalleryShowcase({
   const [postersReady, setPostersReady] = useState(false);
   const quality = useQuality();
   const carousel = useRef<FlexCarouselHandle | null>(null);
+  // Miniaturas y carrusel (WebGL) se preparan al acercarse, no al cargar la página
+  const wrap = useRef<HTMLDivElement>(null);
+  const near = useNear(wrap);
 
   // Al cerrar el reproductor, la tarjeta ampliada vuelve a su sitio y el carrusel sigue vivo
   const closeViewer = useCallback(() => {
@@ -159,6 +163,7 @@ export function GalleryShowcase({
 
   // Miniaturas de video: fotograma de los subidos y versión 16:9 de las de YouTube
   useEffect(() => {
+    if (!near) return;
     let alive = true;
     const jobs = base
       .filter((e) => e.kind === 'video')
@@ -171,7 +176,7 @@ export function GalleryShowcase({
     return () => {
       alive = false;
     };
-  }, [base]);
+  }, [base, near]);
 
   const entries = base
     .map((e) => ({ ...e, poster: posters[e.id] ?? e.poster ?? null }))
@@ -196,11 +201,11 @@ export function GalleryShowcase({
 
   const webgl = quality === 'full' && !unsupported && carouselItems.length > 0;
   if (webgl && !postersReady) {
-    return <div aria-hidden className="w-full" style={{ height }} />;
+    return <div ref={wrap} aria-hidden className="w-full" style={{ height }} />;
   }
 
   return (
-    <>
+    <div ref={wrap}>
       {webgl ? (
         <div className="gallery-flex relative w-full" style={{ height }}>
           <FlexCarousel
@@ -227,7 +232,7 @@ export function GalleryShowcase({
         <GalleryStrip entries={entries} onOpen={setOpen} />
       )}
       <Lightbox entry={open} onClose={closeViewer} />
-    </>
+    </div>
   );
 }
 
@@ -266,7 +271,7 @@ function GalleryStrip({ entries, onOpen }: { entries: Entry[]; onOpen: (e: Entry
 }
 
 /** Visor a pantalla completa: foto grande, embed de YouTube/Vimeo o archivo de video. */
-function Lightbox({ entry, onClose }: { entry: Entry | null; onClose: () => void }) {
+export function Lightbox({ entry, onClose }: { entry: Entry | null; onClose: () => void }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (!entry) return;

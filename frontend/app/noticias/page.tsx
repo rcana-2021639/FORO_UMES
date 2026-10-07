@@ -39,6 +39,7 @@ export default async function NoticiasPage({ searchParams }: Props) {
         crumbs={[{ label: 'Noticias' }]}
         kicker="Lo último que se dijo"
         title="Archivo de noticias"
+        mark={{ word: 'noticias', kind: 'highlight' }}
         intro="Comunicados, convocatorias y crónicas de las actividades del Foro, de la más reciente a la más antigua. La primera abre a lo grande; el resto, en fichas numeradas."
         visual={
           all.data.length ? (

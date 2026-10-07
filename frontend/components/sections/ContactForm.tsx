@@ -13,20 +13,23 @@ import { Arrow } from '@/components/ui/Arrow';
 const AUDIENCES = [
   {
     who: 'Universidad',
-    what: 'Incorporación, convenios y actividades conjuntas.',
+    what: 'Convenios, actividades conjuntas o los datos de tu universidad en este sitio.',
     subject: 'Universidad: ',
   },
   {
     who: 'Prensa',
-    what: 'Comunicados, entrevistas y material gráfico.',
+    what: 'Entrevistas, comunicados y fotografías del Foro.',
     subject: 'Prensa: ',
   },
   {
     who: 'Estudiante',
-    what: 'Orientación sobre programas y requisitos.',
+    what: 'Orientación para elegir un posgrado entre las nueve universidades.',
     subject: 'Orientación sobre posgrados',
   },
 ];
+
+/** Qué pasa con el mensaje, en tres pasos. */
+const HOW = ['Escribes aquí', 'Lo lee la secretaría técnica', 'Te responde a tu correo'];
 
 const LIMITS = { name: [2, 200], email: [0, 255], subject: [0, 250], message: [10, 2000] } as const;
 
@@ -46,10 +49,12 @@ function validate(v: Record<Field, string>): Errors {
 }
 
 /**
- * Contacto: sin recuadros. Todo flota sobre el violeta profundo del cierre: a la izquierda, a
- * quién le escribes (tres palabras que se subrayan al elegirlas y rellenan el asunto); a la
- * derecha, campos de una sola línea con etiqueta flotante. POST /api/contact con `sileo.promise`
- * y el honeypot `website` que exige el backend.
+ * Contacto (el mismo en la portada y en /contacto): sin recuadros, sobre el violeta profundo del
+ * cierre. A la izquierda, a quién le escribes y sobre qué (tres opciones con su descripción, que
+ * se subrayan al elegirlas y rellenan el asunto); debajo, qué pasa con el mensaje en tres pasos y
+ * el aviso de que las inscripciones las hace cada universidad. A la derecha, campos de una línea
+ * con etiqueta flotante. POST /api/contact con `sileo.promise` y el honeypot `website` que exige
+ * el backend.
  */
 export function ContactForm() {
   const id = useId();
@@ -136,18 +141,22 @@ export function ContactForm() {
   const ready = done === 3;
 
   return (
-    <div className="contact grid gap-16 lg:grid-cols-12 lg:gap-12">
-      {/* A quién le escribes */}
+    <div className="contact grid gap-x-12 gap-y-14 lg:grid-cols-12">
+      {/* Qué es y sobre qué escribes */}
       <div data-reveal="up" className="lg:col-span-5">
-        <p className="contact__lead">
-          Tu mensaje llega a la secretaría técnica que coordina a las nueve universidades.
+        <p className="contact__lead">¿Una pregunta, una propuesta o una entrevista?</p>
+        <p className="contact__sub">
+          La secretaría técnica del Foro coordina a las nueve universidades: lee cada mensaje y te
+          responde al correo que dejes.
         </p>
-        <p className="contact__kicker mt-10">¿Quién escribe?</p>
+        <p className="contact__kicker mt-9" id={`${id}-who`}>
+          ¿Sobre qué escribes?
+        </p>
         <ul
           data-reveal-stagger="left"
-          className="mt-4"
+          className="mt-3"
           role="radiogroup"
-          aria-label="Quién escribe"
+          aria-labelledby={`${id}-who`}
         >
           {AUDIENCES.map((a, i) => (
             <li key={a.who} className="contact__who-row">
@@ -161,36 +170,47 @@ export function ContactForm() {
                 <span className="contact__who-n" aria-hidden>
                   {String(i + 1).padStart(2, '0')}
                 </span>
-                <span className="contact__who-word">{a.who}</span>
+                <span className="contact__who-text">
+                  <span className="contact__who-word">{a.who}</span>
+                  <span className="contact__who-what">{a.what}</span>
+                </span>
                 <span className="contact__who-arrow" aria-hidden>
                   <Arrow />
                 </span>
               </button>
-              <span className="contact__who-what" aria-hidden>
-                {a.what}
-              </span>
             </li>
           ))}
         </ul>
         <p className="contact__hint" aria-live="polite">
           {audience === null
-            ? 'Elige una opción y dejamos el asunto listo. También puedes escribir directamente.'
-            : AUDIENCES[audience].what}
+            ? 'Al elegir una, el asunto queda escrito. Es opcional.'
+            : 'Listo: el asunto ya está escrito. Ahora tu nombre y tu correo.'}
         </p>
-        <dl className="contact__facts">
-          <div>
-            <dt>Quién responde</dt>
-            <dd>La secretaría técnica del Foro</dd>
-          </div>
-          <div>
-            <dt>Dónde</dt>
-            <dd>Al correo que dejes en el formulario</dd>
-          </div>
-        </dl>
+        {/* Lo que el Foro no hace: las inscripciones (se enciende al elegir «Estudiante») */}
+        <aside className="contact__aside" data-hl={audience === 2 || undefined}>
+          <p>
+            <b>¿Quieres inscribirte en un programa?</b> La inscripción la hace cada universidad:
+            busca el programa y abre su ficha oficial.
+          </p>
+          <Link href="/programas" className="contact__aside-link">
+            Buscar un programa <Arrow />
+          </Link>
+        </aside>
       </div>
 
       {/* Formulario sin recuadros; al enviarse, da paso al acuse con el sello del Foro */}
       <div data-reveal="up" className="relative lg:col-span-7">
+        {/* Qué pasa con el mensaje, de un vistazo */}
+        <ol className="contact__how" aria-label="Qué pasa con tu mensaje">
+          {HOW.map((h, i) => (
+            <li key={h} style={{ '--i': i } as React.CSSProperties}>
+              <span className="contact__how-n" aria-hidden>
+                {i + 1}
+              </span>
+              {h}
+            </li>
+          ))}
+        </ol>
         <AnimatePresence mode="wait" initial={false}>
           {receipt ? (
             <motion.div
@@ -236,11 +256,11 @@ export function ContactForm() {
               exit={reduced ? undefined : { opacity: 0, y: 16, filter: 'blur(4px)' }}
               transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
             >
-              <p id={`${id}-help`} className="sr-only">
-                Todos los campos son obligatorios salvo el asunto.
+              <p id={`${id}-help`} className="contact__form-head">
+                Tu mensaje <span>· todo es obligatorio salvo el asunto</span>
               </p>
-              <div className="grid gap-x-10 gap-y-5 sm:grid-cols-2 sm:gap-y-9">
-                <FloatField id={`${id}-name`} n="01" label="Nombre" error={errors.name}>
+              <div className="grid gap-x-10 gap-y-5 sm:grid-cols-2 sm:gap-y-6">
+                <FloatField id={`${id}-name`} n="01" label="Tu nombre" error={errors.name}>
                   <input
                     ref={nameRef}
                     id={`${id}-name`}
@@ -254,7 +274,7 @@ export function ContactForm() {
                     className="contact__input"
                   />
                 </FloatField>
-                <FloatField id={`${id}-email`} n="02" label="Correo" error={errors.email}>
+                <FloatField id={`${id}-email`} n="02" label="Tu correo" error={errors.email}>
                   <input
                     id={`${id}-email`}
                     name="email"
@@ -288,7 +308,7 @@ export function ContactForm() {
                 <FloatField
                   id={`${id}-message`}
                   n="04"
-                  label="Mensaje"
+                  label="Tu mensaje"
                   error={errors.message}
                   hint={`${values.message.length}/2000`}
                   className="sm:col-span-2"

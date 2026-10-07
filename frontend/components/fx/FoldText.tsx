@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, type CSSProperties, type ReactNode } from 'react';
 import { gsap } from '@/lib/gsap';
+import { Scribble, type ScribbleKind } from '@/components/ui/Scribble';
 
 type SplitBy = 'char' | 'word' | 'line';
 type Hinge = 'top' | 'bottom' | 'left' | 'right';
@@ -21,7 +22,20 @@ export interface FoldTextProps {
   className?: string;
   style?: CSSProperties;
   as?: 'span' | 'h1' | 'h2' | 'h3' | 'p';
+  /**
+   * Una palabra marcada a mano (v7): se subraya, se encierra o se resalta con un trazo que se
+   * dibuja justo después de que esa palabra se despliega. Solo con `splitBy="word"`.
+   */
+  mark?: { word: string; kind: ScribbleKind };
 }
+
+/** Compara palabras sin tildes, mayúsculas ni signos de puntuación. */
+const bare = (w: string) =>
+  w
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\p{L}\p{N}]/gu, '')
+    .toLowerCase();
 
 const HINGE: Record<Hinge, { origin: string; rx: number; ry: number }> = {
   top: { origin: '50% 0%', rx: -92, ry: 0 },
@@ -55,6 +69,7 @@ export function FoldText({
   className,
   style,
   as: Tag = 'span',
+  mark,
 }: FoldTextProps) {
   const root = useRef<HTMLElement>(null);
   const tl = useRef<gsap.core.Timeline | null>(null);
@@ -93,16 +108,29 @@ export function FoldText({
           {seg(line || ' ', `sl${i}`, 'line')}
         </span>
       ));
-    if (splitBy === 'word')
+    if (splitBy === 'word') {
+      const target = mark ? bare(mark.word) : null;
+      let marked = false;
       return text.split(/(\s+)/).flatMap((part, i) => {
         if (!part) return [];
         if (/^\s+$/.test(part)) return <span key={`ws${i}`}> </span>;
-        return seg(part, `sw${n}`);
+        const piece = seg(part, `sw${n}`);
+        if (!mark || marked || bare(part) !== target) return piece;
+        marked = true;
+        // El trazo se dibuja cuando su palabra ya se desplegó
+        const at = Math.round((n - 1) * stagger * 1000 + duration * 650);
+        return (
+          <span key={`m${i}`} className={`marked marked--${mark.kind}`}>
+            {piece}
+            <Scribble kind={mark.kind} at={scripted ? at : undefined} />
+          </span>
+        );
       });
+    }
     return Array.from(text).map((ch, i) =>
       ch === '\n' ? <br key={`br${i}`} /> : seg(ch === ' ' ? ' ' : ch, `sc${i}`)
     );
-  }, [text, splitBy, hinge, h.origin, persp, scripted]);
+  }, [text, splitBy, hinge, h.origin, persp, scripted, mark, stagger, duration]);
 
   useEffect(() => {
     const el = root.current;

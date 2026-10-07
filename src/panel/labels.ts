@@ -19,7 +19,14 @@ type PanelConfig = {
   list?: string[];
   /** Campo con el que se muestra un registro al elegirlo en una relación */
   mainField?: string;
+  /**
+   * Orden del formulario de edición, por filas (los campos de una fila se reparten el ancho). Los
+   * campos que no se nombran conservan su lugar, después de estos: ninguno desaparece del panel.
+   */
+  edit?: string[][];
 };
+
+type EditCell = { name: string; size: number };
 
 const IMAGE_RULES = 'PNG, JPG o WebP de hasta 5 MB.';
 const URL_RULE = 'Dirección completa, empezando con https://';
@@ -120,6 +127,14 @@ export const PANEL_LABELS: Record<string, PanelConfig> = {
   'api::academic-program.academic-program': {
     mainField: 'name',
     list: ['name', 'level', 'modality', 'university'],
+    edit: [
+      ['name'],
+      ['level', 'modality'],
+      ['duration', 'faculty'],
+      ['description'],
+      ['topics', 'audience'],
+      ['infoUrl', 'university'],
+    ],
     fields: {
       name: {
         label: 'Nombre del programa',
@@ -135,7 +150,23 @@ export const PANEL_LABELS: Record<string, PanelConfig> = {
       },
       description: {
         label: 'Descripción',
-        description: `A quién va dirigido, requisitos de ingreso, horario y lo esencial del plan de estudios. ${RICH_TEXT}`,
+        description: `El primer párrafo es el resumen que se ve en la ficha de la portada: que se entienda solo. Después, requisitos de ingreso, horario y plan de estudios. ${RICH_TEXT}`,
+      },
+      faculty: {
+        label: 'Facultad o escuela',
+        description: 'Quién imparte el programa. Se muestra junto al nombre de la universidad.',
+        placeholder: 'Facultad de Humanidades',
+      },
+      topics: {
+        label: 'Temas principales',
+        description:
+          'Uno por línea, hasta 4. Se ven como «Lo que se estudia» en la ficha de la portada.',
+        placeholder: 'Gestión pública',
+      },
+      audience: {
+        label: 'Dirigido a',
+        description: 'En una frase: a quién va dirigido. Se ve en la ficha de la portada.',
+        placeholder: 'Profesionales con licenciatura en áreas de la salud',
       },
       infoUrl: {
         label: 'Enlace oficial del programa',
@@ -307,12 +338,14 @@ export function applyPanelConfig(
   }
 
   const list = config.list?.filter((field) => field in metadatas);
+  let layouts = list?.length ? { ...current.layouts, list } : current.layouts;
+  if (config.edit) layouts = { ...layouts, edit: editLayout(current.layouts.edit, config.edit) };
   const next: Configuration = {
     settings: config.mainField
       ? { ...current.settings, mainField: config.mainField }
       : current.settings,
     metadatas,
-    layouts: list?.length ? { ...current.layouts, list } : current.layouts,
+    layouts,
   };
 
   const same =
@@ -320,6 +353,21 @@ export function applyPanelConfig(
     JSON.stringify(next.metadatas) === JSON.stringify(current.metadatas) &&
     JSON.stringify(next.layouts) === JSON.stringify(current.layouts);
   return same ? null : next;
+}
+
+/** Filas del formulario en el orden pedido; lo que ya estaba y no se nombra va al final. */
+function editLayout(current: unknown, rows: string[][]): EditCell[][] {
+  const existing = Array.isArray(current) ? (current as EditCell[][]) : [];
+  const known = new Set(existing.flat().map((c) => c.name));
+  const named = new Set(rows.flat());
+  const ordered = rows
+    .map((row) => row.filter((name) => known.has(name)))
+    .filter((row) => row.length)
+    .map((row) => row.map((name) => ({ name, size: 12 / row.length })));
+  const rest = existing
+    .map((row) => row.filter((c) => !named.has(c.name)))
+    .filter((row) => row.length);
+  return [...ordered, ...rest];
 }
 
 export async function ensurePanelLabels(strapi: Core.Strapi): Promise<void> {

@@ -13,6 +13,8 @@ export default tseslint.config(
       '.tmp/**',
       'types/generated/**',
       'public/**',
+      // Video explicativo (local, no se versiona)
+      'video/**',
       'coverage/**',
       'frontend/**',
       // Worktrees de otras herramientas anidados en el repo (p. ej. Kilo Code): tienen su

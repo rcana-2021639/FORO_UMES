@@ -26,6 +26,7 @@ export default function PrivacidadPage() {
         crumbs={[{ label: 'Aviso de privacidad' }]}
         kicker={`Actualizado el ${UPDATED}`}
         title="Aviso de privacidad"
+        mark={{ word: 'privacidad', kind: 'underline' }}
         intro="En corto: solo pedimos tus datos cuando nos escribes, los usamos únicamente para responderte, no los vendemos ni los compartimos para publicidad y se borran solos al año."
       />
       <div className="container-x grid pb-[var(--section-y)] md:grid-cols-12">

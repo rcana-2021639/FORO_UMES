@@ -34,8 +34,9 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin =>
         allowedTypes: allowedMediaTypes,
         deniedTypes,
       },
-      // Producción: almacenamiento de objetos compatible con S3 (Cloudflare R2).
-      // Si no hay bucket configurado (desarrollo) se usa el disco local (public/uploads).
+      // Producción: almacenamiento de objetos compatible con S3 (Cloudflare R2) o, en el plan
+      // gratuito (DESPLIEGUE.md §8), Cloudinary. Sin ninguno (desarrollo) se usa el disco local
+      // (public/uploads). Un servidor sin disco permanente (Render gratis) necesita uno de los dos.
       ...(env('S3_BUCKET')
         ? {
             provider: 'aws-s3',
@@ -54,7 +55,21 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin =>
             },
             actionOptions: { upload: {}, uploadStream: {}, delete: {} },
           }
-        : {}),
+        : env('CLOUDINARY_NAME')
+          ? {
+              provider: 'cloudinary',
+              providerOptions: {
+                cloud_name: env('CLOUDINARY_NAME'),
+                api_key: env('CLOUDINARY_KEY'),
+                api_secret: env('CLOUDINARY_SECRET'),
+              },
+              actionOptions: {
+                upload: { folder: env('CLOUDINARY_FOLDER', 'foro-posgrado') },
+                uploadStream: { folder: env('CLOUDINARY_FOLDER', 'foro-posgrado') },
+                delete: {},
+              },
+            }
+          : {}),
     },
   },
 

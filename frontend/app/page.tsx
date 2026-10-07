@@ -5,7 +5,7 @@ import { UniversitiesBento } from '@/components/sections/UniversitiesBento';
 import { ProgramsRail } from '@/components/sections/ProgramsRail';
 import { MilestonesTrack } from '@/components/sections/MilestonesTrack';
 import { NewsMorph } from '@/components/sections/NewsMorph';
-import { GalleryShowcase } from '@/components/sections/GalleryShowcase';
+import { HomeGallery } from '@/components/sections/HomeGallery';
 import { buildMilestones } from '@/lib/milestones';
 import { ProcessSteps } from '@/components/sections/ProcessSteps';
 import { ContributionsStrip } from '@/components/sections/ContributionsStrip';
@@ -77,6 +77,7 @@ export default async function Home() {
         index={1}
         kicker="Quiénes forman el Foro"
         title="Las nueve universidades"
+        mark={{ word: 'nueve', kind: 'circle' }}
         intro="Todas participan en igualdad de condiciones. Pasa el cursor por una para verla con sus colores y entra a su perfil: oferta, representantes y contacto."
         theme="paper-2"
         aside={
@@ -97,6 +98,7 @@ export default async function Home() {
         index={2}
         kicker="Qué se puede estudiar"
         title="Programas de posgrado"
+        mark={{ word: 'posgrado', kind: 'swash' }}
         intro="Elige un nivel, recorre las tarjetas y guarda con la estrella los que quieras comparar."
         bleed
         aside={
@@ -113,6 +115,7 @@ export default async function Home() {
         index={3}
         kicker="Lo que ya pasó y lo que viene"
         title="Hitos del Foro"
+        mark={{ word: 'Hitos', kind: 'double' }}
         intro="Ingresos de universidades, encuentros, seminarios y proyectos, en el orden en que ocurrieron. Sigue bajando y la línea avanza sola."
         theme="paper-2"
         bleed
@@ -130,6 +133,7 @@ export default async function Home() {
         index={4}
         kicker="Lo último que se dijo"
         title="Noticias del Foro"
+        mark={{ word: 'Noticias', kind: 'highlight' }}
         aside={
           <Button variant="secondary" href="/noticias">
             Leer el archivo completo
@@ -144,7 +148,8 @@ export default async function Home() {
         index={5}
         kicker="Lo que quedó en fotos y videos"
         title="Galería"
-        intro="Arrastra el carrusel, usa las flechas del teclado o haz click en la foto del centro para ampliarla; los videos se abren en un reproductor."
+        mark={{ word: 'Galería', kind: 'zigzag' }}
+        intro="Arrastra la foto para fundirla en la siguiente, usa las flechas o elige una en la hoja de contactos; con un click se ve en grande. Los videos están en la galería completa."
         theme="paper-2"
         bleed
         aside={
@@ -153,7 +158,7 @@ export default async function Home() {
           </Button>
         }
       >
-        <GalleryShowcase items={gallery.data} />
+        <HomeGallery items={gallery.data} />
       </Section>
 
       <Section
@@ -161,12 +166,16 @@ export default async function Home() {
         index={6}
         kicker="Cómo se decide"
         title="Así trabaja el Foro"
+        mark={{ word: 'trabaja', kind: 'underline' }}
         intro="Tres pasos, siempre los mismos. Pulsa cualquiera o deja que avance solo; debajo está lo que ya salió de ellos."
         bleed
       >
-        <ProcessSteps />
+        <ProcessSteps acronyms={universities.data.map((u) => u.acronym ?? u.name.slice(0, 4))} />
         <div className="container-x mt-16 md:mt-20">
-          <h3 className="mb-6 font-display text-[1.6rem] [font-variation-settings:'opsz'_36]">
+          <h3
+            className="mb-6 font-display text-[1.6rem] [font-variation-settings:'opsz'_36]"
+            data-reveal="left"
+          >
             Lo que ya dio resultados
           </h3>
           <ContributionsStrip contributions={contributions.data} />
@@ -178,6 +187,7 @@ export default async function Home() {
         index={7}
         kicker="Universidades, prensa y estudiantes"
         title="Escríbele al Foro"
+        mark={{ word: 'Escríbele', kind: 'swash' }}
         theme="dusk"
         backdrop={
           <>

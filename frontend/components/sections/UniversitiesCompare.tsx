@@ -3,35 +3,53 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useMemo, useState, type CSSProperties } from 'react';
-import { motion } from 'motion/react';
-import { CaretDownIcon, CaretUpIcon, CaretUpDownIcon } from '@phosphor-icons/react/dist/ssr';
+import { AnimatePresence, motion } from 'motion/react';
 import { Arrow } from '@/components/ui/Arrow';
 import { ModalityIcon } from '@/components/ui/ModalityIcon';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { LEVELS, LEVEL_META } from '@/lib/levels';
 import { MODALITY_LABEL, yearOf, type LevelCounts, type ModalityCounts } from '@/lib/format';
+import {
+  COMPARE_QUESTIONS,
+  compareAnswer,
+  compareSort,
+  compareValue,
+  type CompareKey,
+  type CompareRow,
+} from '@/lib/compare';
 import { mediaUrl } from '@/lib/api';
 import type { ProgramLevel, ProgramModality, University } from '@/lib/types';
-
-type Key = 'order' | 'name' | 'joined' | 'total' | ProgramLevel;
-
-interface Row {
-  u: University;
-  joined: number | null;
-  total: number;
-  levels: LevelCounts;
-  modalities: ModalityCounts;
-}
 
 const MODALITIES: ProgramModality[] = ['Presencial', 'Hibrida', 'Virtual'];
 const EMPTY_LEVELS: LevelCounts = { Maestria: 0, Doctorado: 0, Especializacion: 0, Diplomado: 0 };
 const EMPTY_MOD: ModalityCounts = { Presencial: 0, Virtual: 0, Hibrida: 0 };
 
+/** Qué se lee en la columna de la cifra para cada pregunta. */
+const METRIC_LABEL: Record<CompareKey, string> = {
+  total: 'Programas',
+  Maestria: 'Maestrías',
+  Doctorado: 'Doctorados',
+  Especializacion: 'Especializ.',
+  Diplomado: 'Diplomados',
+  online: 'A distancia',
+  joined: 'Desde',
+};
+
+const isLevel = (k: CompareKey): k is ProgramLevel => (LEVELS as string[]).includes(k);
+
+interface Row extends CompareRow {
+  u: University;
+}
+
 /**
- * Vista "Comparar" de /universidades (DESIGN_NOTES §28.4, fase 3): las nueve en una tabla con lo
- * que alguien compara al elegir dónde estudiar (cuántos programas de cada nivel, modalidades y
- * desde cuándo está en el Foro). Cada encabezado ordena; las filas se reacomodan deslizándose a su
- * nuevo lugar en vez de saltar. Cada cifra lleva una barra proporcional para leer de un vistazo.
+ * "Comparar" de /universidades (DESIGN_NOTES §29.6). Antes: una tabla de nueve columnas con
+ * flechas para ordenar, difícil de leer. Ahora se elige una pregunta ("¿qué quieres comparar?") y
+ * una frase la contesta con los datos; la tabla se ordena por esa pregunta y resalta lo que importa:
+ * - una sola barra por universidad con su oferta por nivel (el largo es su total, cada tramo un
+ *   nivel en su color); al preguntar por un nivel, solo ese tramo queda encendido;
+ * - la cifra que responde, grande; las modalidades, con icono y cantidad.
+ * Entrada: las filas llegan en cascada y las barras se llenan tramo por tramo; al cambiar de
+ * pregunta las filas se deslizan a su nuevo lugar.
  */
 export function UniversitiesCompare({
   universities,
@@ -43,7 +61,7 @@ export function UniversitiesCompare({
   modalities: Record<string, ModalityCounts>;
 }) {
   const reduced = useReducedMotion();
-  const [sort, setSort] = useState<{ key: Key; desc: boolean }>({ key: 'order', desc: false });
+  const [key, setKey] = useState<CompareKey>('total');
 
   const rows: Row[] = useMemo(
     () =>
@@ -51,6 +69,8 @@ export function UniversitiesCompare({
         const lv = levels[u.documentId] ?? EMPTY_LEVELS;
         return {
           u,
+          acronym: u.acronym ?? u.name,
+          order: u.displayOrder,
           joined: yearOf(u.joinedForumAt),
           total: LEVELS.reduce((n, l) => n + lv[l], 0),
           levels: lv,
@@ -59,109 +79,91 @@ export function UniversitiesCompare({
       }),
     [universities, levels, modalities]
   );
-
-  const max = useMemo(() => {
-    const m: Record<string, number> = { total: 1 };
-    for (const l of LEVELS) m[l] = Math.max(1, ...rows.map((r) => r.levels[l]));
-    m.total = Math.max(1, ...rows.map((r) => r.total));
-    return m;
-  }, [rows]);
-
-  const sorted = useMemo(() => {
-    const val = (r: Row): number | string => {
-      switch (sort.key) {
-        case 'order':
-          return r.u.displayOrder;
-        case 'name':
-          return r.u.acronym ?? r.u.name;
-        case 'joined':
-          return r.joined ?? 9999;
-        case 'total':
-          return r.total;
-        default:
-          return r.levels[sort.key];
-      }
-    };
-    // En un empate manda siempre el orden oficial del Foro, en cualquier sentido
-    return [...rows].sort((a, b) => {
-      const x = val(a);
-      const y = val(b);
-      const c = typeof x === 'string' ? x.localeCompare(String(y), 'es') : x - (y as number);
-      return (sort.desc ? -c : c) || a.u.displayOrder - b.u.displayOrder;
-    });
-  }, [rows, sort]);
-
-  // Las cifras empiezan de mayor a menor (lo que se busca al comparar); el nombre y el año, al revés
-  const toggle = (key: Key) =>
-    setSort((s) =>
-      s.key === key
-        ? { key, desc: !s.desc }
-        : { key, desc: key !== 'name' && key !== 'joined' && key !== 'order' }
-    );
-
-  const head = (key: Key, label: string, className?: string) => {
-    const on = sort.key === key;
-    const Icon = !on ? CaretUpDownIcon : sort.desc ? CaretDownIcon : CaretUpIcon;
-    return (
-      <th
-        scope="col"
-        className={className}
-        aria-sort={on ? (sort.desc ? 'descending' : 'ascending') : 'none'}
-      >
-        <button type="button" className="cmp__sort" data-on={on} onClick={() => toggle(key)}>
-          {label}
-          <Icon aria-hidden weight="bold" />
-        </button>
-      </th>
-    );
-  };
+  const maxTotal = Math.max(1, ...rows.map((r) => r.total));
+  const sorted = useMemo(() => compareSort(key, rows) as Row[], [key, rows]);
+  const answer = useMemo(() => compareAnswer(key, rows), [key, rows]);
+  const focusLevel = isLevel(key) ? key : null;
 
   return (
-    <div className="cmp" data-reveal="up">
-      <div
-        className="cmp__scroll"
-        tabIndex={0}
-        aria-label="Tabla comparativa, se desplaza a los lados"
-      >
-        <table className="cmp__table">
+    <div className="cmp2">
+      <div className="cmp2__ask" data-reveal="up">
+        <p className="cmp2__q" id="cmp2-q">
+          ¿Qué quieres comparar?
+        </p>
+        <div className="cmp2__chips" role="radiogroup" aria-labelledby="cmp2-q">
+          {COMPARE_QUESTIONS.map((q) => {
+            const lv = isLevel(q.key) ? LEVEL_META[q.key] : null;
+            return (
+              <button
+                key={q.key}
+                type="button"
+                role="radio"
+                aria-checked={key === q.key}
+                className="cmp2__chip"
+                style={lv ? ({ '--c': lv.color } as CSSProperties) : undefined}
+                title={lv?.hint}
+                onClick={() => setKey(q.key)}
+              >
+                {key === q.key && (
+                  <motion.span
+                    layoutId="cmp2-chip"
+                    className="cmp2__chip-bg"
+                    transition={{ type: 'spring', stiffness: 520, damping: 40 }}
+                  />
+                )}
+                {lv && <span className="cmp2__chip-glyph">{lv.glyph}</span>}
+                {q.label}
+              </button>
+            );
+          })}
+        </div>
+        {/* La respuesta, en una frase */}
+        <div className="cmp2__answer" aria-live="polite">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.p
+              key={key}
+              initial={reduced ? false : { opacity: 0, y: 8, filter: 'blur(4px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              exit={reduced ? undefined : { opacity: 0, y: -6, filter: 'blur(4px)' }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            >
+              {answer}
+            </motion.p>
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* Qué es cada color */}
+      <ul className="cmp2__legend" aria-label="Niveles de posgrado" data-reveal="fade">
+        {LEVELS.map((l) => (
+          <li
+            key={l}
+            style={{ '--c': LEVEL_META[l].color } as CSSProperties}
+            data-dim={focusLevel !== null && focusLevel !== l ? true : undefined}
+          >
+            <span aria-hidden className="cmp2__swatch" />
+            <b>{LEVEL_META[l].plural}</b>
+            <span className="cmp2__hint">{LEVEL_META[l].hint}</span>
+          </li>
+        ))}
+      </ul>
+
+      <div className="cmp2__scroll" tabIndex={0} aria-label="Comparación, se desplaza a los lados">
+        <table className="cmp2__table" data-key={key}>
           <caption className="sr-only">
-            Comparación de las nueve universidades del Foro: programas por nivel, modalidades y año
-            de ingreso. Los encabezados ordenan la tabla.
+            Comparación de las nueve universidades del Foro ordenada por: {METRIC_LABEL[key]}.{' '}
+            {answer}
           </caption>
           <thead>
             <tr>
-              {head('name', 'Universidad', 'cmp__first')}
-              {head('joined', 'En el Foro')}
-              {head('total', 'Programas')}
-              {LEVELS.map((l) => (
-                <th
-                  key={l}
-                  scope="col"
-                  className="cmp__lvl-h"
-                  style={{ '--c': LEVEL_META[l].color } as CSSProperties}
-                >
-                  <button
-                    type="button"
-                    className="cmp__sort"
-                    data-on={sort.key === l}
-                    onClick={() => toggle(l)}
-                    title={LEVEL_META[l].plural}
-                  >
-                    <span className="cmp__glyph">{LEVEL_META[l].glyph}</span>
-                    <span className="cmp__lvl-name">{LEVEL_META[l].plural}</span>
-                    {sort.key === l ? (
-                      sort.desc ? (
-                        <CaretDownIcon aria-hidden weight="bold" />
-                      ) : (
-                        <CaretUpIcon aria-hidden weight="bold" />
-                      )
-                    ) : (
-                      <CaretUpDownIcon aria-hidden weight="bold" />
-                    )}
-                  </button>
-                </th>
-              ))}
-              <th scope="col">Modalidades</th>
+              <th scope="col">Universidad</th>
+              <th scope="col" className="cmp2__metric-h">
+                {METRIC_LABEL[key]}
+              </th>
+              <th scope="col">Su oferta por nivel</th>
+              <th scope="col" className="cmp2__mods-h">
+                Modalidades
+              </th>
               <th scope="col">
                 <span className="sr-only">Perfil</span>
               </th>
@@ -170,49 +172,56 @@ export function UniversitiesCompare({
           <tbody>
             {sorted.map((r, i) => {
               const logo = mediaUrl(r.u.logo?.formats?.thumbnail?.url ?? r.u.logo?.url);
+              const value = compareValue(key, r);
               return (
                 <motion.tr
                   key={r.u.documentId}
                   layout={reduced ? false : 'position'}
                   transition={{ type: 'spring', stiffness: 380, damping: 36, mass: 0.8 }}
-                  className="cmp__row"
+                  className="cmp2__row"
                   style={{ '--i': i } as CSSProperties}
                 >
-                  <th scope="row" className="cmp__first">
-                    <Link href={`/universidades/${r.u.documentId}`} className="cmp__uni">
+                  <th scope="row">
+                    <Link href={`/universidades/${r.u.documentId}`} className="cmp2__uni">
                       {logo ? (
-                        <Image src={logo} alt="" width={64} height={64} className="cmp__seal" />
+                        <Image src={logo} alt="" width={64} height={64} className="cmp2__seal" />
                       ) : (
-                        <span aria-hidden className="cmp__seal cmp__seal--text">
-                          {(r.u.acronym ?? r.u.name).slice(0, 3)}
+                        <span aria-hidden className="cmp2__seal cmp2__seal--text">
+                          {r.acronym.slice(0, 3)}
                         </span>
                       )}
                       <span>
-                        <span className="cmp__acr">{r.u.acronym ?? r.u.name}</span>
-                        <span className="cmp__name">{r.u.name}</span>
+                        <span className="cmp2__acr">{r.acronym}</span>
+                        <span className="cmp2__name">{r.u.name}</span>
                       </span>
                     </Link>
                   </th>
-                  <td className="cmp__num">{r.joined ?? '—'}</td>
-                  <td>
-                    <Cell n={r.total} max={max.total} color="var(--color-violet-700)" strong />
+                  <td className="cmp2__metric" data-zero={!value || undefined}>
+                    {(value ?? 0) > 0 && (
+                      <span className="cmp2__pos" aria-hidden>
+                        {i + 1}.
+                      </span>
+                    )}
+                    {value ?? '—'}
                   </td>
-                  {LEVELS.map((l) => (
-                    <td key={l}>
-                      <Cell n={r.levels[l]} max={max[l]} color={LEVEL_META[l].color} />
-                    </td>
-                  ))}
                   <td>
-                    <span className="cmp__mods">
-                      {MODALITIES.filter((m) => r.modalities[m] > 0).map((m) => (
-                        <span key={m} className="cmp__mod" data-m={m}>
-                          <ModalityIcon modality={m} /> {MODALITY_LABEL[m]} <b>{r.modalities[m]}</b>
-                        </span>
-                      ))}
-                      {MODALITIES.every((m) => !r.modalities[m]) && '—'}
-                    </span>
+                    <Bar row={r} max={maxTotal} focus={focusLevel} />
                   </td>
-                  <td className="cmp__go">
+                  <td className="cmp2__mods" data-on={key === 'online' || undefined}>
+                    {MODALITIES.map((m) => (
+                      <span
+                        key={m}
+                        className="cmp2__mod"
+                        data-zero={!r.modalities[m] || undefined}
+                        title={`${MODALITY_LABEL[m]}: ${r.modalities[m]}`}
+                      >
+                        <ModalityIcon modality={m} />
+                        <span className="sr-only">{MODALITY_LABEL[m]}</span>
+                        <b>{r.modalities[m]}</b>
+                      </span>
+                    ))}
+                  </td>
+                  <td className="cmp2__go">
                     <Link
                       href={`/universidades/${r.u.documentId}`}
                       aria-label={`Abrir el perfil de ${r.u.name}`}
@@ -226,31 +235,40 @@ export function UniversitiesCompare({
           </tbody>
         </table>
       </div>
-      <p className="cmp__note">
-        Pulsa un encabezado para ordenar. Las barras comparan cada cifra con la más alta de su
-        columna.
+      <p className="cmp2__note">
+        El largo de cada barra es su número de programas; cada tramo, un nivel. Iconos:{' '}
+        <ModalityIcon modality="Presencial" className="cmp2__note-icon" /> presencial,{' '}
+        <ModalityIcon modality="Hibrida" className="cmp2__note-icon" /> híbrida,{' '}
+        <ModalityIcon modality="Virtual" className="cmp2__note-icon" /> virtual.
       </p>
     </div>
   );
 }
 
-function Cell({
-  n,
-  max,
-  color,
-  strong,
-}: {
-  n: number;
-  max: number;
-  color: string;
-  strong?: boolean;
-}) {
+/** Su oferta en una barra: largo = total; tramos = niveles (el de la pregunta, encendido). */
+function Bar({ row, max, focus }: { row: Row; max: number; focus: string | null }) {
+  const parts = LEVELS.filter((l) => row.levels[l] > 0);
   return (
-    <span className="cmp__cell" data-zero={n === 0} data-strong={strong}>
-      <span className="cmp__n">{n}</span>
-      <span aria-hidden className="cmp__bar">
-        <span style={{ '--w': n / max, background: color } as CSSProperties} />
-      </span>
+    <span
+      className="cmp2__bar"
+      style={{ '--len': row.total / max } as CSSProperties}
+      aria-label={
+        parts.length
+          ? parts.map((l) => `${row.levels[l]} ${LEVEL_META[l].plural.toLowerCase()}`).join(', ')
+          : 'Sin programas publicados'
+      }
+      role="img"
+    >
+      {parts.map((l, s) => (
+        <span
+          key={l}
+          className="cmp2__seg"
+          data-dim={focus !== null && focus !== l ? true : undefined}
+          style={{ '--n': row.levels[l], '--c': LEVEL_META[l].color, '--s': s } as CSSProperties}
+        >
+          {row.levels[l]}
+        </span>
+      ))}
     </span>
   );
 }

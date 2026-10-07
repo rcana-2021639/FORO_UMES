@@ -79,7 +79,7 @@ export function UniversitiesExplorer({
         <p className="views__hint">
           {view === 'fichas'
             ? 'Pasa el cursor por una ficha para verla con sus colores.'
-            : 'Ordena por nivel para saber quién ofrece más de lo que buscas.'}
+            : 'Elige una pregunta: la tabla se ordena y una frase te da la respuesta.'}
         </p>
       </div>
 

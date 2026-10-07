@@ -8,7 +8,13 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Server =>
   url: env('PUBLIC_URL', ''),
   // Detrás del proxy del hosting (Railway/Render): confía en X-Forwarded-For / X-Forwarded-Proto
   // para que la IP real llegue al límite de tasa y a la bitácora, y HTTPS se detecte bien.
-  proxy: { koa: env.bool('TRUST_PROXY', false), ipHeader: 'X-Forwarded-For', maxIpsCount: 1 },
+  // Cabecera y saltos configurables: cada hosting pone la IP del visitante distinto (ver
+  // DESPLIEGUE.md §8.7 para comprobarlo después del primer despliegue).
+  proxy: {
+    koa: env.bool('TRUST_PROXY', false),
+    ipHeader: env('PROXY_IP_HEADER', 'X-Forwarded-For'),
+    maxIpsCount: env.int('PROXY_MAX_IPS', 1),
+  },
   app: {
     keys: env.array('APP_KEYS')!,
   },

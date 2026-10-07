@@ -33,6 +33,18 @@
     "description": {
       "type": "richtext"
     },
+    "faculty": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "topics": {
+      "type": "text",
+      "maxLength": 600
+    },
+    "audience": {
+      "type": "string",
+      "maxLength": 300
+    },
     "infoUrl": {
       "type": "string",
       "regex": "^https?:\\/\\/[^\\s]+$"

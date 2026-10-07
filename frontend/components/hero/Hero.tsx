@@ -3,10 +3,10 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'motion/react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { GuideDeck } from './GuideDeck';
 import { LinkPreview, PREVIEW_ITEM } from './LinkPreview';
-import { RollingNumber } from '@/components/ui/RollingNumber';
+import { RollingNumber, rollDuration } from '@/components/ui/RollingNumber';
 import { Word, Words } from '@/components/ui/Words';
 import { gsap } from '@/lib/gsap';
 import { getQuality } from '@/lib/quality';
@@ -15,6 +15,8 @@ import type { LevelCounts } from '@/lib/format';
 import { MayaNumber, mayaReading } from '@/components/ui/MayaNumber';
 import { Emblem } from '@/components/ui/Emblem';
 import { Arrow } from '@/components/ui/Arrow';
+import { Scribble } from '@/components/ui/Scribble';
+import { Note } from '@/components/ui/Note';
 import { MagnifyingGlassIcon } from '@phosphor-icons/react/dist/ssr';
 
 export interface HeroUniversity {
@@ -121,10 +123,14 @@ export function Hero({ year, counts, universities, levels }: Props) {
           <h1
             id="hero-title"
             data-reveal-group
-            className="mt-6 max-w-[13ch] text-[clamp(2.25rem,11.2vw,2.75rem)] leading-[0.96] text-fg sm:text-[clamp(2.75rem,6.6vw,6.4rem)]"
+            className="mt-6 max-w-[15ch] text-[clamp(2.25rem,10.4vw,2.75rem)] leading-[0.98] text-fg sm:text-[clamp(2.6rem,5.3vw,5.15rem)]"
           >
             <Words text="Foro Interuniversitario de Estudios de" />{' '}
-            <Word className="text-violet-grad">Posgrado</Word>
+            <span className="marked marked--swash">
+              <Word className="text-violet-grad">Posgrado</Word>
+              {/* Subrayado a mano cuando la palabra termina de subir */}
+              <Scribble kind="swash" at={980} />
+            </span>
           </h1>
           <p data-reveal="blur" className="hero-lead">
             Las direcciones de posgrado de{' '}
@@ -163,9 +169,14 @@ export function Hero({ year, counts, universities, levels }: Props) {
             data-reveal="up"
             className="hero-search"
           >
-            <label htmlFor="hero-q" className="hero-search__label">
-              ¿Qué quieres estudiar?
-            </label>
+            <span className="hero-search__head">
+              <label htmlFor="hero-q" className="hero-search__label">
+                ¿Qué quieres estudiar?
+              </label>
+              <Note arrow="arrow-left" tilt={-4} className="hero-search__note" at={1500}>
+                empieza por aquí
+              </Note>
+            </span>
             <div className="hero-search__field">
               <MagnifyingGlassIcon aria-hidden className="hero-search__icon" />
               <input
@@ -219,12 +230,9 @@ export function Hero({ year, counts, universities, levels }: Props) {
         </ol>
 
         {/* Cifras: odómetro, regla que se dibuja y destello al llegar */}
-        <dl
-          data-reveal-stagger="up"
-          className="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-4 lg:col-span-12"
-        >
-          {stats.map((s, i) => (
-            <HeroStat key={s.label} value={s.value} label={s.label} index={i} />
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-4 lg:col-span-12">
+          {stats.map((s) => (
+            <HeroStat key={s.label} value={s.value} label={s.label} />
           ))}
         </dl>
         {/* Las cifras también "a la maya": la misma lógica del emblema, explicada en una línea */}
@@ -264,32 +272,48 @@ export function Hero({ year, counts, universities, levels }: Props) {
   );
 }
 
-function HeroStat({ value, label, index }: { value: number; label: string; index: number }) {
-  const [landed, setLanded] = useState(false);
-  // Cada cifra arranca un poco después de la anterior; la primera espera a que entre el título
-  const delay = 0.9 + index * 0.22;
+/**
+ * Una cifra de la portada. Toda su animación la hace el script de arranque desde que la cifra
+ * entra en pantalla (`data-reveal-group`), sin esperar a React: el filete se dibuja, el odómetro
+ * gira, la etiqueta sube y, justo cuando la última columna se detiene, un destello y el numeral
+ * maya cae pieza a pieza. Antes arrancaba al hidratar más ~1 s de espera, y al bajar rápido había
+ * que esperar a que empezara a moverse.
+ */
+function HeroStat({ value, label }: { value: number; label: string }) {
+  // Momento en que el odómetro se detiene (ms desde que la cifra entra en pantalla)
+  const land = ROLL_START + rollDuration(value);
   return (
-    <div className="hero-stat" data-landed={landed} style={{ '--i': index } as React.CSSProperties}>
-      <span aria-hidden className="hero-stat__rule" />
+    <div className="hero-stat" data-reveal-group="">
+      <span aria-hidden className="hero-stat__rule" data-reveal="line" data-reveal-at={0} />
       <dt className="sr-only">{label}</dt>
       <dd>
         <span className="hero-stat__row">
           <span className="hero-stat__num text-violet-grad block font-display text-[clamp(2.4rem,4vw,3.6rem)] leading-none [font-variation-settings:'opsz'_96,'SOFT'_50]">
-            <span aria-hidden className="hero-stat__flash" />
-            <RollingNumber value={value} delay={delay} onLand={() => setLanded(true)} />
+            <span
+              aria-hidden
+              className="hero-stat__flash"
+              data-reveal="flash"
+              data-reveal-at={land - 250}
+            />
+            <RollingNumber value={value} delay={ROLL_START / 1000} standalone={false} />
           </span>
           {/* La misma cifra en numeración maya: cae pieza a pieza cuando el odómetro se detiene */}
           <span className="hero-stat__maya" title={mayaReading(value)}>
-            <MayaNumber value={value} />
+            <MayaNumber value={value} revealAt={land - 120} />
           </span>
         </span>
         <span aria-hidden className="hero-stat__label ui-label mt-2 block text-fg-muted">
-          <span>{label}</span>
+          <span data-reveal="rise" data-reveal-at={220}>
+            {label}
+          </span>
         </span>
       </dd>
     </div>
   );
 }
+
+/** El odómetro arranca junto con el filete, en cuanto la cifra aparece. */
+const ROLL_START = 0;
 
 /** Adelanto de "nueve universidades": los nueve sellos, cada uno lleva a su perfil. */
 function UniversitiesPreview({ universities }: { universities: HeroUniversity[] }) {

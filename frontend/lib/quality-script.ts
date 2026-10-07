@@ -12,9 +12,15 @@
  *      estado inicial desde que el parser lo inserta, antes de que se pinte).
  *    - Un solo IntersectionObserver y un solo MutationObserver para todo el sitio; cada animación
  *      corre una vez, en el compositor (opacidad y transformaciones) y se descarta al terminar.
+ *    - Lo pendiente se retiene oculto con un recorte (clip-path) en pausa y su animación se crea al
+ *      entrar: una animación de opacidad o transformación en pausa hacía de cada elemento pendiente
+ *      una capa de GPU (unas 400 en la portada) y cada fotograma del scroll pagaba por todas.
  *    - Lo que entra junto se encadena en orden de lectura (el título antes que el párrafo).
  *    - `data-reveal-group` agrupa piezas (palabras de un título): el grupo es el disparador y sus
  *      piezas entran en cascada. `data-reveal-delay` y `data-reveal-step` en milisegundos.
+ *      `data-reveal-at` (ms) fija el momento exacto de una pieza desde que su grupo entra, sin
+ *      sumarse a la cascada: así las cifras de la portada giran, se detienen y su numeral maya cae
+ *      en el instante justo, sin esperar a que React hidrate.
  *    - Sin JavaScript o con menos movimiento no se oculta nada.
  *
  * 3. Fotos que terminan de cargar después de la entrada aparecen con un fundido (sin tocar el DOM).
@@ -65,12 +71,20 @@ function fx(kind,el){
       var top=!el.closest('[data-side="bottom"]');
       return lite?[[{opacity:0,translate:top?'0 30px':'0 -30px',offset:0}],900,EASE,0]:[[{opacity:0,transform:'perspective(900px) rotateX('+(top?88:-88)+'deg) rotateY(0deg) translateZ(0px)',offset:0}],1250,EASE,0];
     case 'deck':return [[{opacity:0,translate:'0 80px',rotate:'8deg',offset:0}],1600,EASE,0];
+    case 'roll':return [[{transform:'translateY(0%)',offset:0}],1500,EASE,180];
+    case 'flash':return [[{opacity:0,scale:'0.4'},{opacity:0.9,scale:'1',offset:0.3},{opacity:0,scale:'1.5'}],1100,EASE,0];
+    case 'maya':return [[{opacity:0,scale:'0.2',translate:'0 -6px',offset:0}],550,POP,75];
+    case 'draw':return [[{strokeDashoffset:1.05,offset:0}],lite?650:900,'cubic-bezier(0.65,0,0.35,1)',140];
+    case 'note':return [[{opacity:0,scale:'0.7',rotate:'-9deg',translate:'0 10px',offset:0}],750,POP,90];
+    case 'bead':return [[{opacity:0,translate:'-46px 0',offset:0}],lite?480:680,POP,28];
+    case 'book':return [[{opacity:0,translate:'0 -90px',rotate:'-7deg',offset:0}],lite?700:950,POP,85];
     case 'fold':
       var h=el.getAttribute('data-fold-hinge'),r=h==='top'?'rotateX(-92deg)':h==='left'?'rotateY(92deg)':h==='right'?'rotateY(-92deg)':'rotateX(92deg)';
       return lite?[[{opacity:0,translate:'0 0.4em',offset:0}],800,EASE,40]:[[{opacity:0,transform:r,'--fold-crease':0.5,offset:0}],800,FOLD,55];
     default:return up();
   }
 }
+var HOLD=[{clipPath:'inset(50%)'},{clipPath:'inset(50%)'}];
 var held=new Map(),members=new Map(),fired=new WeakSet(),done=new WeakSet(),pend=new Set();
 var io=new IntersectionObserver(function(list){
   var ts=[];
@@ -84,6 +98,8 @@ var io=new IntersectionObserver(function(list){
     for(var m=0;m<ms.length;m++){
       var hh=held.get(ms[m]);if(!hh)continue;
       if(!first)first=hh;
+      var at=num(ms[m],'data-reveal-at');
+      if(at!=null){show(ms[m],base+t+at);continue;}
       show(ms[m],base+t+step);
       step=Math.min(step+(own!=null?own:hh.step),900);
     }
@@ -100,7 +116,14 @@ function fire(trg){
 function show(el,delay){
   var hh=held.get(el);if(!hh)return;
   held.delete(el);done.add(el);
-  for(var i=0;i<hh.a.length;i++){hh.a[i].effect.updateTiming({delay:delay});hh.a[i].play();}
+  if(hh.a){for(var i=0;i<hh.a.length;i++){hh.a[i].effect.updateTiming({delay:delay});hh.a[i].play();}return;}
+  // Retenido con el recorte: se suelta y, en el mismo instante, arranca su animación de verdad
+  // (con fill backwards su primer fotograma ya rige durante el retraso: no hay parpadeo)
+  var f=hh.f;hh.h.cancel();
+  try{
+    el.animate(f[0],{duration:f[1],easing:f[2],fill:'backwards',delay:delay});
+    if(hh.k==='clip'){var img=el.querySelector('img,video');if(img)img.animate([{scale:'1.28',offset:0}],{duration:1700,easing:EASE,fill:'backwards',delay:delay});}
+  }catch(e){}
 }
 function kindOf(el){
   var k=el.getAttribute('data-reveal');
@@ -110,16 +133,20 @@ function kindOf(el){
 function add(el){
   if(held.has(el)||done.has(el))return;
   var kind=kindOf(el);if(kind==='none')return;
-  var f=fx(kind,el),a=[];
+  var f=fx(kind,el),a=null,h=null;
   try{
-    a.push(el.animate(f[0],{duration:f[1],easing:f[2],fill:'backwards'}));
-    if(kind==='clip'){
-      var img=el.querySelector('img,video');
-      if(img)a.push(img.animate([{scale:'1.28',offset:0}],{duration:1700,easing:EASE,fill:'backwards'}));
+    if(kind==='draw'){
+      // El trazo se retiene en su propio inicio (stroke-dashoffset no crea capa)
+      a=[el.animate(f[0],{duration:f[1],easing:f[2],fill:'backwards'})];a[0].pause();
+    }else{
+      // Lo demás se retiene oculto con un recorte en pausa: una animación de opacidad o
+      // transformación en pausa convertía CADA elemento pendiente en una capa de GPU (cientos en la
+      // portada) y encarecía cada fotograma del scroll. El recorte no crea capa y, a diferencia de
+      // visibility, no saca el contenido del árbol de accesibilidad.
+      h=el.animate(HOLD,{duration:1000,fill:'both'});h.pause();
     }
   }catch(e){return;}
-  for(var i=0;i<a.length;i++)a[i].pause();
-  held.set(el,{a:a,step:f[3]});
+  held.set(el,{a:a,h:h,f:f,k:kind,step:f[3]});
   var g=el.closest('[data-reveal-group]'),trg=g&&g!==el?g:el;
   if(fired.has(trg)){show(el,0);return;}
   if(trg!==el){var l=members.get(trg);if(!l){l=[];members.set(trg,l);}l.push(el);}
@@ -127,7 +154,7 @@ function add(el){
 }
 function drop(el){
   var hh=held.get(el);
-  if(hh){for(var i=0;i<hh.a.length;i++)hh.a[i].cancel();held.delete(el);}
+  if(hh){if(hh.a)for(var i=0;i<hh.a.length;i++)hh.a[i].cancel();if(hh.h)hh.h.cancel();held.delete(el);}
   if(pend.has(el)){io.unobserve(el);pend.delete(el);members.delete(el);}
 }
 var SEL='[data-reveal],[data-reveal-stagger]>*';
@@ -151,6 +178,14 @@ new MutationObserver(function(recs){
   }
 }).observe(d,{childList:true,subtree:true});
 function revealAll(){pend.forEach(function(trg){var ms=fire(trg);for(var i=0;i<ms.length;i++)show(ms[i],0);});}
+// Lo que quedó ARRIBA sin haber entrado nunca (un salto de scroll o un cambio de alto de la página,
+// como Hitos al pasar de fijado a tira en modo liviano) se muestra al terminar de mover la página:
+// el observador solo avisa al cruzar la pantalla y eso lo dejaba oculto para siempre.
+function passed(){
+  pend.forEach(function(trg){var b=trg.getBoundingClientRect();if(b.bottom<0&&(b.width||b.height)){var ms=fire(trg);for(var i=0;i<ms.length;i++)show(ms[i],0);}});
+}
+var stop=0;
+w.addEventListener('scroll',function(){if(!pend.size)return;clearTimeout(stop);stop=setTimeout(passed,250);},{passive:true});
 w.addEventListener('beforeprint',revealAll);
 // Red de seguridad: si algo quedó retenido en pantalla (disparador sin tamaño), se muestra igual
 w.addEventListener('load',function(){setTimeout(function(){

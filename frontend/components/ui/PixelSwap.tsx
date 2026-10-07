@@ -1,16 +1,22 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { prefersReducedMotion } from '@/hooks/useReducedMotion';
 import { cn } from '@/lib/cn';
 
-// Cada píxel es una ventana a su propia copia del contenido entrante; la retícula queda
-// acotada aunque el tamaño de píxel pedido sea muy pequeño.
+// Retícula acotada aunque el tamaño de píxel pedido sea muy pequeño.
 const MAX_PIXELS = 160;
-const KEYFRAME_STEPS = 14;
-// Tope global de transiciones por píxeles a la vez: cada una clona el contenido una vez por píxel.
-// Si alguien barre el cursor por todas las losas, las que excedan el tope cambian al instante.
-const MAX_RUNNING = 2;
+// Tope global de transiciones a la vez: cada una redibuja un recorte por fotograma (barato), pero
+// si alguien barre el cursor por todas las losas no tiene sentido animar las nueve.
+const MAX_RUNNING = 3;
 let running = 0;
 
 type Pattern = 'random' | 'center' | 'edges' | 'left-to-right' | 'diagonal' | 'spiral';
@@ -56,16 +62,14 @@ function bezier(x1: number, y1: number, x2: number, y2: number) {
 const EASE = bezier(0.16, 1, 0.3, 1);
 
 interface Pixel {
-  id: number;
-  left: number;
-  top: number;
+  /** Centro de la celda. */
+  cx: number;
+  cy: number;
   offset: number;
 }
 interface Grid {
   pixels: Pixel[];
   size: number;
-  width: number;
-  height: number;
 }
 
 function buildGrid(
@@ -95,14 +99,36 @@ function buildGrid(
       const base = order(x, y);
       const random = noise(index + 1);
       pixels.push({
-        id: index,
-        left: originX + c * size,
-        top: originY + r * size,
+        cx: originX + c * size + size / 2,
+        cy: originY + r * size + size / 2,
         offset: base === null ? random : base * (1 - randomness) + random * randomness,
       });
     }
   }
-  return { pixels, size, width, height };
+  return { pixels, size };
+}
+
+const CLOSED = "path('M0 0z')";
+
+/** Recorte con la forma de todas las celdas abiertas en el instante `t` (ms). */
+function pixelPath(
+  grid: Grid,
+  t: number,
+  pixelMs: number,
+  spread: number,
+  startScale: number,
+  endScale: number
+) {
+  let d = '';
+  for (const px of grid.pixels) {
+    const local = (t - px.offset * spread) / pixelMs;
+    if (local <= 0) continue;
+    const e = EASE(Math.min(local, 1));
+    const half = (grid.size * (startScale + (endScale - startScale) * e)) / 2;
+    const w = (half * 2).toFixed(1);
+    d += `M${(px.cx - half).toFixed(1)} ${(px.cy - half).toFixed(1)}h${w}v${w}h-${w}z`;
+  }
+  return d ? `path('${d}')` : CLOSED;
 }
 
 interface Props {
@@ -120,10 +146,13 @@ interface Props {
 }
 
 /**
- * Cambio de contenido por píxeles. Adaptado de React Bits `PixelSwap`: la capa entrante se
- * clona una vez por píxel (no se re-renderiza por React) y cada píxel crece hasta cubrir su
- * celda mientras su contenido aplica la transformación inversa, así lo revelado no se mueve.
- * Aquí el estado es controlado (`active`) y el patrón por defecto barre desde la esquina.
+ * Cambio de contenido por píxeles (adaptado de React Bits `PixelSwap`): la cara entrante aparece
+ * por celdas que crecen desde un 30 % hasta cubrir su sitio, en el orden del patrón.
+ *
+ * Antes cada píxel era una copia completa del contenido (hasta 160 clones con su imagen por
+ * transición): pasar el cursor por las losas mientras se hacía scroll congelaba la página. Ahora la
+ * cara entrante es una sola capa recortada por un `clip-path` que reúne todas las celdas abiertas:
+ * por fotograma se escribe un solo trazado. Mismo aspecto, sin crear nodos.
  */
 export function PixelSwap({
   firstContent,
@@ -143,9 +172,7 @@ export function PixelSwap({
 
   const containerRef = useRef<HTMLDivElement>(null);
   const layerRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const pixelRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const animations = useRef<Animation[]>([]);
-  const timer = useRef(0);
+  const raf = useRef(0);
 
   const grid = useMemo(
     () =>
@@ -181,34 +208,40 @@ export function PixelSwap({
   }, []);
 
   const stop = useCallback(() => {
-    animations.current.forEach((a) => a.cancel());
-    animations.current = [];
-    pixelRefs.current.forEach((p) => p?.replaceChildren());
-    if (timer.current) window.clearTimeout(timer.current);
-    timer.current = 0;
+    cancelAnimationFrame(raf.current);
+    raf.current = 0;
+    layerRefs.current.forEach((l) => l?.style.removeProperty('clip-path'));
   }, []);
 
   useEffect(() => stop, [stop]);
 
   useEffect(() => {
     if (transition || active === shown) return;
+    // Sin movimiento, sin medida aún o con el tope alcanzado: cambia al instante
+    if (!gridRef.current.pixels.length || prefersReducedMotion() || running >= MAX_RUNNING) {
+      setShown(active);
+      return;
+    }
     setTransition({ to: active, grid: gridRef.current });
   }, [active, shown, transition]);
+
+  // Antes del primer pintado de la capa entrante: cerrada del todo, para que no destelle
+  useLayoutEffect(() => {
+    if (!transition) return;
+    layerRefs.current[transition.to ? 1 : 0]?.style.setProperty('clip-path', CLOSED);
+  }, [transition]);
 
   useEffect(() => {
     if (!transition) return;
     const { to, grid: frozen } = transition;
+    const layer = layerRefs.current[to ? 1 : 0];
     const s = settingsRef.current;
-    const finish = () => {
-      stop();
-      setShown(to);
-      setTransition(null);
-    };
-    const source = layerRefs.current[to ? 1 : 0];
-    if (!source || !frozen.pixels.length || prefersReducedMotion() || running >= MAX_RUNNING) {
-      finish();
-      return;
-    }
+    const total = Math.max(200, s.duration);
+    const pixelMs = clamp(s.pixelDuration, 60, total);
+    const spread = Math.max(0, total - pixelMs);
+    // Las celdas crecen un poco más que su sitio para cerrar cualquier hueco de subpíxel
+    const endScale = 1.04;
+    const startScale = clamp(s.pixelScale, 0.05, 1) * endScale;
     running++;
     let released = false;
     const release = () => {
@@ -216,57 +249,33 @@ export function PixelSwap({
       released = true;
       running--;
     };
-    const total = Math.max(200, s.duration);
-    const pixelMs = clamp(s.pixelDuration, 60, total);
-    const spread = Math.max(0, total - pixelMs);
-    // Los píxeles crecen un poco más que su celda para cerrar cualquier hueco de subpíxel
-    const endScale = 1.04;
-    const startScale = clamp(s.pixelScale, 0.05, 1) * endScale;
-    const win: Keyframe[] = [];
-    const inner: Keyframe[] = [];
-    for (let step = 0; step <= KEYFRAME_STEPS; step++) {
-      const p = step / KEYFRAME_STEPS;
-      const e = EASE(p);
-      const sc = startScale + (endScale - startScale) * e;
-      win.push({ offset: p, opacity: Math.min(1, e * 1.6), transform: `scale(${sc})` });
-      inner.push({ offset: p, transform: `scale(${1 / sc})` });
-    }
-    frozen.pixels.forEach((px, i) => {
-      const el = pixelRefs.current[i];
-      if (!el) return;
-      const content = document.createElement('div');
-      content.className = 'pixel-swap__pixel-content';
-      content.style.left = `${-px.left}px`;
-      content.style.top = `${-px.top}px`;
-      content.style.width = `${frozen.width}px`;
-      content.style.height = `${frozen.height}px`;
-      content.style.transformOrigin = `${px.left + frozen.size / 2}px ${px.top + frozen.size / 2}px`;
-      const clone = source.cloneNode(true) as HTMLElement;
-      clone.dataset.visible = 'true';
-      clone.removeAttribute('aria-hidden');
-      content.appendChild(clone);
-      el.replaceChildren(content);
-      const timing: KeyframeAnimationOptions = {
-        duration: pixelMs,
-        delay: px.offset * spread,
-        easing: 'linear',
-        fill: 'both',
-      };
-      animations.current.push(el.animate(win, timing), content.animate(inner, timing));
-    });
-    timer.current = window.setTimeout(() => {
-      release();
-      finish();
-    }, total);
+    const start = performance.now();
+    const tick = (now: number) => {
+      const t = now - start;
+      if (t >= total || !layer) {
+        release();
+        stop();
+        setShown(to);
+        setTransition(null);
+        return;
+      }
+      layer.style.setProperty(
+        'clip-path',
+        pixelPath(frozen, t, pixelMs, spread, startScale, endScale)
+      );
+      raf.current = requestAnimationFrame(tick);
+    };
+    raf.current = requestAnimationFrame(tick);
     return () => {
       release();
       stop();
     };
   }, [transition, stop]);
 
-  const incoming = transition?.to ? 1 : 0;
+  const incoming = transition ? (transition.to ? 1 : 0) : -1;
   const layer = (content: ReactNode, index: number) => {
     const isShown = index === (shown ? 1 : 0);
+    const entering = index === incoming;
     return (
       <div
         key={index}
@@ -274,8 +283,8 @@ export function PixelSwap({
           layerRefs.current[index] = el;
         }}
         className="pixel-swap__layer"
-        data-visible={isShown && !(transition && index === incoming)}
-        style={{ zIndex: isShown ? 2 : 1 }}
+        data-visible={isShown || entering}
+        style={{ zIndex: entering ? 3 : isShown ? 2 : 1 }}
         aria-hidden={!isShown}
       >
         {content}
@@ -287,25 +296,6 @@ export function PixelSwap({
     <div ref={containerRef} className={cn('pixel-swap', className)} data-active={shown}>
       {layer(firstContent, 0)}
       {layer(secondContent, 1)}
-      {transition && (
-        <div className="pixel-swap__grid" aria-hidden>
-          {transition.grid.pixels.map((px, i) => (
-            <div
-              key={px.id}
-              ref={(el) => {
-                pixelRefs.current[i] = el;
-              }}
-              className="pixel-swap__pixel"
-              style={{
-                left: px.left,
-                top: px.top,
-                width: transition.grid.size,
-                height: transition.grid.size,
-              }}
-            />
-          ))}
-        </div>
-      )}
     </div>
   );
 }

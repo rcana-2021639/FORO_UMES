@@ -7,6 +7,7 @@ import {
   levelsByUniversity,
   modalitiesByUniversity,
   parseVideo,
+  programBrief,
   readingMinutes,
   videoEmbed,
   videoThumbnail,
@@ -146,5 +147,51 @@ describe('tiempo de lectura', () => {
     const noise = '![foto](https://x.y/z.png) https://a.b/c *** - - # > '.repeat(200);
     const md = `## Título\n\n${Array(399).fill('texto').join(' ')} [enlace](https://foro.org) ${noise}`;
     expect(readingMinutes(md)).toBe(2);
+  });
+});
+
+describe('programBrief', () => {
+  const md = [
+    'La **Maestría en Educación** de la Universidad de San Carlos de Guatemala se imparte en la Facultad de Humanidades. Forma investigadores. Culmina con una tesis.',
+    '**Ejes del programa**',
+    '- Política educativa\n- Investigación &amp; docencia',
+    '**Dirigido a:** Profesionales con licenciatura.',
+    '**Modalidad:** Presencial · **Duración:** 2 años',
+  ].join('\n\n');
+  it('separa facultad, frases, ejes y a quién va dirigido', () => {
+    expect(programBrief(md)).toEqual({
+      where: 'Facultad de Humanidades',
+      lead: 'Forma investigadores. Culmina con una tesis.',
+      axes: ['Política educativa', 'Investigación & docencia'],
+      audience: 'Profesionales con licenciatura.',
+    });
+  });
+  it('si no sigue la plantilla, todo queda como texto (recortado) y nada se pierde', () => {
+    expect(programBrief('Un programa **distinto**.\n\nCon otro párrafo.')).toEqual({
+      where: null,
+      lead: 'Un programa distinto. Con otro párrafo.',
+      axes: [],
+      audience: null,
+    });
+    expect(programBrief(null)).toEqual({ where: null, lead: null, axes: [], audience: null });
+  });
+  it('los campos propios de Strapi mandan sobre lo que dice la descripción', () => {
+    expect(
+      programBrief(md, {
+        faculty: '  Escuela de Estudios de Postgrado ',
+        topics: '- Evaluación\r\n\nCurrículo\n• Gestión\nDidáctica\nUno de más',
+        audience: 'Docentes universitarios',
+      })
+    ).toEqual({
+      where: 'Escuela de Estudios de Postgrado',
+      lead: 'Forma investigadores. Culmina con una tesis.',
+      axes: ['Evaluación', 'Currículo', 'Gestión', 'Didáctica'],
+      audience: 'Docentes universitarios',
+    });
+  });
+  it('un campo propio vacío no borra lo que sí está en la descripción', () => {
+    expect(programBrief(md, { faculty: ' ', topics: '\n', audience: null })).toEqual(
+      programBrief(md)
+    );
   });
 });

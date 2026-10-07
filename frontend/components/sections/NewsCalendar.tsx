@@ -11,11 +11,16 @@ export interface CalendarNote {
 /** Años que caben como columnas; con más, se muestran los más recientes. */
 const MAX_YEARS = 8;
 
+/** Inclinación y largo de cada periódico, fijos por posición (sin azar: igual en servidor y cliente). */
+const tilt = (i: number, k: number) => (((i * 7 + k * 5) % 7) - 3) * 0.55;
+const length = (i: number, k: number) => 84 + ((i * 3 + k * 11) % 5) * 4;
+
 /**
- * Cabecera de /noticias (DESIGN_NOTES §28.4, fase 5): el archivo entero en puntos, una columna
- * por año y un punto por nota (la misma gramática de puntos del sitio), apilados del más antiguo al
- * más reciente. Se ve de un vistazo desde cuándo publica el Foro y con qué ritmo. Cada punto es un
- * enlace a su nota y muestra el título al señalarlo o enfocarlo (el globo es CSS, sin JavaScript).
+ * Cabecera de /noticias · la hemeroteca (v7.1): el archivo entero como pilas de periódicos
+ * doblados, una pila por año y un periódico por nota, del más antiguo (abajo) al más reciente.
+ * Se ve de un vistazo desde cuándo publica el Foro y con qué ritmo. Al llegar, los periódicos
+ * caen uno a uno en su pila; cada uno es un enlace a su nota y, al señalarlo o enfocarlo, se
+ * asoma y muestra el título (el globo es CSS, sin JavaScript). Sustituye a la columna de puntos.
  */
 export function NewsCalendar({ notes, now }: { notes: CalendarNote[]; now: Date }) {
   const byYear = new Map<number, CalendarNote[]>();
@@ -29,47 +34,61 @@ export function NewsCalendar({ notes, now }: { notes: CalendarNote[]; now: Date 
   const years = Array.from({ length: last - from + 1 }, (_, i) => from + i);
   for (const list of byYear.values())
     list.sort((a, b) => a.publishedAt.localeCompare(b.publishedAt));
-  const max = Math.max(3, ...years.map((y) => byYear.get(y)?.length ?? 0));
+  const max = Math.max(4, ...years.map((y) => byYear.get(y)?.length ?? 0));
+  const newest = [...notes].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))[0];
+  // Orden de caída: año por año, de abajo arriba
+  const startOf = years.map((_, i) =>
+    years.slice(0, i).reduce((sum, y) => sum + (byYear.get(y)?.length ?? 0), 0)
+  );
 
   return (
-    <figure className="news-cal" aria-label={`${notes.length} notas publicadas desde ${first}`}>
+    <figure className="hemero" aria-label={`${notes.length} notas publicadas desde ${first}`}>
+      <header className="hemero__mast" aria-hidden>
+        <span className="hemero__title">Hemeroteca del Foro</span>
+        <span className="hemero__meta">
+          {notes.length} {notes.length === 1 ? 'nota' : 'notas'} · desde {first}
+        </span>
+      </header>
       <div
-        className="news-cal__grid"
+        className="hemero__shelf"
         style={{ '--rows': max, '--cols': years.length } as CSSProperties}
       >
         {years.map((y, i) => {
           const list = byYear.get(y) ?? [];
           return (
-            <div key={y} className="news-cal__col" data-empty={!list.length}>
-              <span className="news-cal__n" aria-hidden>
+            <div key={y} className="hemero__col" data-empty={!list.length || undefined}>
+              <span className="hemero__n" aria-hidden>
                 {list.length || ''}
               </span>
-              <ul className="news-cal__dots" aria-label={`${y}: ${list.length} notas`}>
+              <ul className="hemero__stack" aria-label={`${y}: ${list.length} notas`}>
                 {list.map((n, k) => (
                   <li key={n.documentId}>
                     <Link
                       href={`/noticias/${n.documentId}`}
-                      className="news-cal__dot"
-                      data-tip={n.title}
+                      className="hemero__paper"
+                      data-tip={`${n.title} · ${formatDate(n.publishedAt)}`}
+                      data-new={n.documentId === newest?.documentId || undefined}
                       aria-label={`${n.title}, ${formatDate(n.publishedAt)}`}
-                      style={{ '--d': i * 2 + k } as CSSProperties}
+                      style={
+                        {
+                          '--d': startOf[i] + k,
+                          '--r': `${tilt(i, k)}deg`,
+                          '--w': `${length(i, k)}%`,
+                        } as CSSProperties
+                      }
                     />
                   </li>
                 ))}
               </ul>
-              <span className="news-cal__month" aria-hidden>
+              <span className="hemero__year" aria-hidden>
                 {y}
               </span>
             </div>
           );
         })}
       </div>
-      <figcaption className="news-cal__cap">
-        <span>
-          <b>{notes.length}</b> {notes.length === 1 ? 'nota publicada' : 'notas publicadas'} desde{' '}
-          {first}
-        </span>
-        <span>Un punto, una nota</span>
+      <figcaption className="hemero__cap">
+        Cada periódico es una nota: señálalo para ver su título.
       </figcaption>
     </figure>
   );

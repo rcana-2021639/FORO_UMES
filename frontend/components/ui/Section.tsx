@@ -3,6 +3,7 @@ import { cn } from '@/lib/cn';
 import type { SectionTheme } from '@/components/providers/SectionThemeObserver';
 import { FoldText } from '@/components/fx/FoldText';
 import { MayaNumeral } from './MayaNumeral';
+import type { ScribbleKind } from './Scribble';
 
 interface Props {
   id: string;
@@ -22,6 +23,8 @@ interface Props {
   rhythm?: 'tight' | 'normal' | 'wide';
   /** Capa de fondo a pantalla de sección (canvas, estela…); va detrás del contenido. */
   backdrop?: ReactNode;
+  /** Palabra del título marcada a mano (v7 "Anuario anotado"). */
+  mark?: { word: string; kind: ScribbleKind };
 }
 
 /**
@@ -44,6 +47,7 @@ export function Section({
   aside,
   rhythm = 'normal',
   backdrop,
+  mark,
 }: Props) {
   const pad =
     rhythm === 'tight'
@@ -81,7 +85,7 @@ export function Section({
         <div className="sec-head__body grid gap-6 md:grid-cols-12 md:gap-x-10">
           <h2 id={`${id}-title`} className="md:col-span-7">
             {typeof title === 'string' ? (
-              <FoldText text={title} splitBy="word" hinge="bottom" stagger={0.07} />
+              <FoldText text={title} splitBy="word" hinge="bottom" stagger={0.07} mark={mark} />
             ) : (
               title
             )}

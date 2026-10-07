@@ -35,6 +35,8 @@
     ".strapi/",
     // El frontend (Next.js) tiene su propio tsconfig
     "frontend/",
+    // El video explicativo (Remotion) tiene su propio tsconfig con JSX
+    "video/",
 
     // Do not include admin files in the server compilation
     "src/admin/",

@@ -37,6 +37,7 @@ export default async function ActividadesPage() {
         crumbs={[{ label: 'Actividades' }]}
         kicker="Lo que ya pasó y lo que viene"
         title="Actividades del Foro"
+        mark={{ word: 'Actividades', kind: 'swash' }}
         intro="Encuentros, seminarios y proyectos de las nueve universidades. Filtra por tipo y pulsa un boleto para ver de qué se trata y quién participa."
         visual={
           next ? (

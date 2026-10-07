@@ -41,10 +41,17 @@ const layerColor = (face: string, depth: string, index: number, total: number) =
 const rot = (x: number, y: number) => `rotateX(${x.toFixed(3)}deg) rotateY(${y.toFixed(3)}deg)`;
 
 /**
- * Texto con profundidad: la misma palabra apilada en N capas con `translateZ`, de modo que
- * las letras se ven "sobrepuestas" y con volumen; el bloque se inclina siguiendo al puntero o
- * en una órbita lenta. Adaptado de React Bits `DepthText` (Fraunces y ejes variables en vez
- * de una sans pesada; con reduced-motion queda quieto en su inclinación base).
+ * Texto con profundidad: la misma palabra apilada en N capas hacia el fondo, de modo que las
+ * letras se ven "sobrepuestas" y con volumen; el bloque se inclina siguiendo al puntero o en una
+ * órbita lenta. Adaptado de React Bits `DepthText` (con reduced-motion queda quieto en su
+ * inclinación base).
+ *
+ * Rendimiento: el original apilaba las capas en 3D real (`preserve-3d` + `translateZ`), y cada
+ * capa era una capa de GPU: la portada llegó a tener más de 100 solo por esto, y el navegador
+ * tardaba varios milisegundos por fotograma en ordenarlas y en averiguar qué había bajo el cursor.
+ * Ahora cada capa se coloca en 2D donde la proyección la pondría con la inclinación base
+ * (desplazamiento y escala de la perspectiva), y solo el bloque entero gira en 3D: una capa de GPU
+ * por palabra. La órbita es de pocos grados, así que la diferencia no se percibe.
  */
 export function DepthText({
   text,
@@ -70,11 +77,12 @@ export function DepthText({
   const rootRef = useRef<HTMLSpanElement>(null);
   const stageRef = useRef<HTMLSpanElement>(null);
 
-  // Modo liviano: 6 capas más separadas dan el mismo volumen con una fracción de nodos, y quieto
+  // Hasta 12 capas (más separadas si se pidieron más): el mismo volumen con menos nodos.
+  // Modo liviano: 6 capas y quieto.
   const lite = useQuality() !== 'full';
   const full = clamp(Math.round(layers), 2, MAX_LAYERS);
-  const n = lite ? Math.min(full, 6) : full;
-  const d = clamp(lite ? (depth * full) / n : depth, 0, 12);
+  const n = Math.min(full, lite ? 6 : 12);
+  const d = clamp((depth * full) / n, 0, 12);
   const t = clamp(tilt, 0, 14);
   const sm = clamp(smoothing, 0.02, 0.35);
   const persp = clamp(perspective, 300, 2000);
@@ -82,18 +90,23 @@ export function DepthText({
 
   const base = useMemo(() => ({ x: -t * 0.32, y: t * 0.42 }), [t]);
 
-  const depthLayers = useMemo(
-    () =>
-      Array.from({ length: n }, (_, i) => {
-        const index = n - i;
-        return {
-          index,
-          color: layerColor(faceColor, depthColor, index, n),
-          transform: `translateZ(${-index * d}px)`,
-        };
-      }),
-    [n, d, faceColor, depthColor]
-  );
+  // Dónde caería cada capa (a z = -index·d) con la inclinación base y la perspectiva: un
+  // desplazamiento y una escala en 2D, relativos a la cara
+  const depthLayers = useMemo(() => {
+    const rad = Math.PI / 180;
+    const sx = Math.sin(base.x * rad);
+    const sy = Math.sin(base.y * rad);
+    return Array.from({ length: n }, (_, i) => {
+      const index = n - i;
+      const z = index * d;
+      const k = persp / (persp + z);
+      return {
+        index,
+        color: layerColor(faceColor, depthColor, index, n),
+        transform: `translate(${(-z * sy * k).toFixed(2)}px, ${(z * sx * k).toFixed(2)}px) scale(${k.toFixed(4)})`,
+      };
+    });
+  }, [n, d, faceColor, depthColor, base, persp]);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -188,8 +201,6 @@ export function DepthText({
     lineHeight: 0.9,
     whiteSpace: 'nowrap',
     userSelect: 'none',
-    transformStyle: 'preserve-3d',
-    backfaceVisibility: 'hidden',
     textRendering: 'geometricPrecision',
   };
 
@@ -208,7 +219,6 @@ export function DepthText({
         ref={stageRef}
         className="relative inline-grid place-items-center"
         style={{
-          transformStyle: 'preserve-3d',
           transform: rot(base.x, base.y),
           transformOrigin: '50% 50%',
           willChange: lite ? undefined : 'transform',
@@ -219,7 +229,12 @@ export function DepthText({
             aria-hidden
             key={l.index}
             className="pointer-events-none absolute inset-0 z-0 inline-block"
-            style={{ ...textStyle, color: l.color, transform: l.transform }}
+            style={{
+              ...textStyle,
+              color: l.color,
+              transform: l.transform,
+              transformOrigin: '50% 48%',
+            }}
           >
             {text}
           </span>
@@ -232,7 +247,6 @@ export function DepthText({
             textShadow: shadow
               ? `0 22px 34px color-mix(in srgb, ${depthColor} 30%, transparent), 0 3px 6px rgb(var(--shadow-ink) / 0.2)`
               : 'none',
-            transform: 'translateZ(0.6px)',
           }}
         >
           {text}

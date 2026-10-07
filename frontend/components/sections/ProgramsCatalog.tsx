@@ -18,6 +18,7 @@ import { Arrow } from '@/components/ui/Arrow';
 import { ModalityIcon } from '@/components/ui/ModalityIcon';
 import { MagnifyingGlassIcon } from '@phosphor-icons/react/dist/ssr';
 import { SavedCompare } from './SavedCompare';
+import { UniversityStamps } from '@/components/ui/UniversityStamps';
 
 const MODALITIES: ProgramModality[] = ['Presencial', 'Virtual', 'Hibrida'];
 
@@ -50,7 +51,21 @@ const readUrlQuery = (): string =>
  * por nivel, cada grupo con su cabecera de color, y cada programa es una tarjeta con la
  * estrella para compararlo. La lista de guardados vive en localStorage.
  */
-export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
+export interface CatalogUniversity {
+  documentId: string;
+  acronym: string;
+  name: string;
+  logo?: string | null;
+}
+
+export function ProgramsCatalog({
+  programs,
+  universities: unis = [],
+}: {
+  programs: AcademicProgram[];
+  /** Las universidades en el orden del Foro, con su sello (para el filtro). */
+  universities?: CatalogUniversity[];
+}) {
   // `/programas?nivel=Maestria` (enlaces de la guía de la portada) abre ya filtrado; en cuanto
   // la persona elige otra pestaña, manda su elección
   const [picked, setLevel] = useState<LevelFilter | null>(null);
@@ -87,6 +102,34 @@ export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
     [programs, modality, uni, q]
   );
   const counts = useMemo(() => countByLevel(base, saved), [base, saved]);
+
+  // Cuántos programas de cada universidad quedan con los demás filtros (nivel, modalidad, búsqueda)
+  const stamps = useMemo(() => {
+    const n = new Map<string, number>();
+    let total = 0;
+    for (const p of programs) {
+      if (modality && p.modality !== modality) continue;
+      if (q && !fold(p.name).includes(fold(q.trim()))) continue;
+      if (level === 'saved' ? !saved.includes(p.documentId) : level !== 'all' && p.level !== level)
+        continue;
+      total += 1;
+      const id = p.university?.documentId;
+      if (id) n.set(id, (n.get(id) ?? 0) + 1);
+    }
+    const list: CatalogUniversity[] = unis.length
+      ? unis
+      : universities.map((u) => ({ documentId: u.id, acronym: u.label, name: u.label }));
+    return {
+      total,
+      options: list.map((u) => ({
+        id: u.documentId,
+        acronym: u.acronym,
+        name: u.name,
+        logo: u.logo,
+        count: n.get(u.documentId) ?? 0,
+      })),
+    };
+  }, [programs, modality, q, level, saved, unis, universities]);
 
   // Cada combinación de filtros reparte las tarjetas de nuevo
   const dealKey = `${level}|${modality}|${uni}|${q.trim().toLowerCase()}`;
@@ -146,6 +189,7 @@ export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
 
       <div
         id="buscar"
+        data-reveal="up"
         className="mt-6 grid scroll-mt-28 gap-4 rounded-[10px] border border-[var(--rule)] bg-white p-4 md:grid-cols-12 md:items-center md:p-5"
       >
         <label className="relative block md:col-span-12 lg:col-span-4">
@@ -166,7 +210,7 @@ export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
         </label>
 
         <div
-          className="flex flex-wrap items-center gap-2 md:col-span-7 lg:col-span-5"
+          className="flex flex-wrap items-center gap-2 md:col-span-12 lg:col-span-8"
           role="group"
           aria-label="Modalidad"
         >
@@ -185,27 +229,18 @@ export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
           ))}
         </div>
 
-        <div className="flex items-center gap-2 md:col-span-5 md:justify-end lg:col-span-3">
-          <label className="ui-label flex items-center gap-2 text-fg-muted">
-            Universidad
-            <select
-              value={uni}
-              onChange={(e) => setUni(e.target.value)}
-              className="rounded-[8px] border border-fg/20 bg-bg px-3 py-2 text-[0.9rem] text-fg outline-none transition-colors duration-300 focus:border-accent-sage"
-            >
-              <option value="">Todas</option>
-              {universities.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.label}
-                </option>
-              ))}
-            </select>
-          </label>
+        <div className="md:col-span-12">
+          <UniversityStamps
+            options={stamps.options}
+            value={uni}
+            total={stamps.total}
+            onChange={setUni}
+          />
         </div>
       </div>
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-        <p className="ui-label text-fg-muted" aria-live="polite">
+        <p className="ui-label text-fg-muted" aria-live="polite" data-reveal="fade">
           {visible.length === programs.length ? (
             <>
               <strong className="font-semibold text-fg">{programs.length}</strong> programas
@@ -267,7 +302,7 @@ export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
                   >
                     {meta.glyph}
                   </motion.span>
-                  <div>
+                  <div data-reveal="left">
                     <h2
                       id={`grp-${g.level}`}
                       className="text-[clamp(1.5rem,2.6vw,2rem)] leading-none text-fg"
@@ -321,7 +356,7 @@ export function ProgramsCatalog({ programs }: { programs: AcademicProgram[] }) {
         })}
         {remaining > 0 && (
           <div className="flex flex-col items-center gap-2">
-            <button type="button" onClick={showMore} className="cta-ghost">
+            <button type="button" onClick={showMore} className="cta-ghost" data-reveal="up">
               Mostrar {Math.min(PAGE, remaining)} programas más
             </button>
             <span className="ui-label text-fg-muted">

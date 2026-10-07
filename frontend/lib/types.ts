@@ -69,6 +69,12 @@ export interface AcademicProgram extends Base {
   modality: ProgramModality;
   duration?: string | null;
   description?: string | null;
+  /** Facultad o escuela que lo imparte. */
+  faculty?: string | null;
+  /** Temas principales, uno por línea. */
+  topics?: string | null;
+  /** A quién va dirigido. */
+  audience?: string | null;
   infoUrl?: string | null;
   university?: UniversityRef | null;
 }

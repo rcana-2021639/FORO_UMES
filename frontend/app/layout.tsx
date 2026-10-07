@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Newsreader, Schibsted_Grotesk } from 'next/font/google';
+import { Alegreya, Alegreya_Sans, Alegreya_Sans_SC, Shantell_Sans } from 'next/font/google';
 import './globals.css';
 import '@/styles/v3.css';
 import '@/styles/v4.css';
@@ -14,24 +14,46 @@ import { Footer } from '@/components/nav/Footer';
 import { ClickSparkLayer } from '@/components/fx/ClickSparkLayer';
 import { CommandSearch } from '@/components/nav/CommandSearch';
 import { QualityProbe } from '@/components/providers/QualityProbe';
+import { OffscreenPause } from '@/components/providers/OffscreenPause';
+import { PageBackdrop } from '@/components/fx/PageBackdrop';
 import { QUALITY_SCRIPT } from '@/lib/quality-script';
 import { DEFAULT_OG_IMAGE } from '@/lib/seo';
 import { INDEXABLE, SITE_DESCRIPTION, SITE_NAME, SITE_SHORT_NAME, SITE_URL } from '@/lib/site';
 
-// Titulares: Newsreader (eje óptico 6–72: fina en grande, robusta en pequeño). Texto e interfaz:
-// Schibsted Grotesk. Elegidas tras comparar 8 parejas con texto real (DESIGN_NOTES §27.5).
-const newsreader = Newsreader({
-  variable: '--font-newsreader',
-  subsets: ['latin', 'latin-ext'],
-  axes: ['opsz'],
+// v7 "Anuario anotado" (DESIGN_NOTES §29.3): el anuario impreso en Alegreya —de Huerta
+// Tipográfica (Argentina); su nombre viene de "alegría"— y, encima, las notas a mano de quien lo
+// leyó, en Shantell Sans. Solo el subconjunto latino: ya trae á é í ó ú ñ ü ¿ ¡.
+const alegreya = Alegreya({
+  variable: '--font-alegreya',
+  subsets: ['latin'],
   style: ['normal', 'italic'],
   display: 'swap',
 });
 
-const schibsted = Schibsted_Grotesk({
-  variable: '--font-schibsted',
-  subsets: ['latin', 'latin-ext'],
+const alegreyaSans = Alegreya_Sans({
+  variable: '--font-alegreya-sans',
+  subsets: ['latin'],
+  weight: ['400', '500', '700', '800'],
+  style: ['normal', 'italic'],
   display: 'swap',
+});
+
+// Versalitas de verdad para las etiquetas (antes, mayúsculas forzadas con interletra)
+const alegreyaSC = Alegreya_Sans_SC({
+  variable: '--font-alegreya-sc',
+  subsets: ['latin'],
+  weight: ['500', '700'],
+  display: 'swap',
+});
+
+// Letra a mano para las anotaciones: con ejes de informalidad (INFM) y rebote (BNCE). No se
+// precarga: son notas pequeñas y llegan un instante después sin mover nada.
+const shantell = Shantell_Sans({
+  variable: '--font-shantell',
+  subsets: ['latin'],
+  axes: ['BNCE', 'INFM'],
+  display: 'swap',
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -74,7 +96,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="es"
-      className={`${newsreader.variable} ${schibsted.variable} h-full antialiased`}
+      className={`${alegreya.variable} ${alegreyaSans.variable} ${alegreyaSC.variable} ${shantell.variable} h-full antialiased`}
       data-quality="full"
       suppressHydrationWarning
     >
@@ -85,6 +107,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="flex min-h-full flex-col">
         <GooeyDefs />
+        {/* Fondo propio de cada vista (v7 §29.4): detrás de todo, responde al cursor */}
+        <PageBackdrop />
         {/* Progreso de lectura: animación ligada al scroll, sin JavaScript */}
         <div aria-hidden className="scroll-progress" />
         <SmoothScroll>
@@ -99,6 +123,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <CommandSearch />
         <ToasterMount />
         <QualityProbe />
+        <OffscreenPause />
       </body>
     </html>
   );

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { gsap } from '@/lib/gsap';
 import { prefersReducedMotion } from '@/hooks/useReducedMotion';
 import { cn } from '@/lib/cn';
-import { getQuality } from '@/lib/quality';
 import { Chevron } from './Chevron';
 
 export interface DepthItem {
@@ -13,6 +12,13 @@ export interface DepthItem {
   /** Se ejecuta al hacer click (sin arrastre) sobre la tarjeta ya enfocada. */
   onOpen?: () => void;
   label?: string;
+  /** Clase extra para el marco de esta tarjeta (p. ej. la posición de la pestaña de una ficha). */
+  className?: string;
+}
+
+/** Control desde fuera: llevar el carrusel a una tarjeta (con la misma animación de las flechas). */
+export interface DepthCarouselApi {
+  goTo: (index: number) => void;
 }
 
 interface Props {
@@ -27,6 +33,7 @@ interface Props {
   perspective?: number;
   visibleCards?: number;
   falloff?: number;
+  /** Sin efecto: el desenfoque por tarjeta se retiró por rendimiento (se recalculaba por fotograma). */
   blur?: number;
   duration?: number;
   ease?: string;
@@ -36,6 +43,7 @@ interface Props {
   onChange?: (index: number) => void;
   className?: string;
   ariaLabel?: string;
+  apiRef?: React.RefObject<DepthCarouselApi | null>;
 }
 
 const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
@@ -68,6 +76,7 @@ export function DepthCarousel({
   onChange,
   className,
   ariaLabel = 'Carrusel',
+  apiRef,
 }: Props) {
   const count = items.length;
   const rootRef = useRef<HTMLDivElement>(null);
@@ -150,30 +159,27 @@ export function DepthCarousel({
       }
       const back = Math.max(0, d);
       const az = Math.abs(d);
-      const shown = az <= c.visibleCards + 0.5;
+      // Las que ya salieron por la izquierda (d ≤ -1) son invisibles: tampoco se dibujan
+      const shown = az <= c.visibleCards + 0.5 && d > -1.02;
       // Con decenas de tarjetas, solo se tocan las visibles (y una vez la que se acaba de ocultar)
       const was = shownRef.current[i];
       shownRef.current[i] = shown;
       if (!shown && was === false) continue;
       if (!shown) {
-        el.style.opacity = '0';
-        el.style.pointerEvents = 'none';
-        el.style.filter = 'none';
+        // Fuera del abanico: fuera del documento (sin capa, sin pintura, sin pruebas de puntero)
+        el.style.display = 'none';
         el.setAttribute('aria-hidden', 'true');
         continue;
       }
+      if (was !== true) el.style.display = 'block';
       const tz = -c.depth * d;
       const tx = dir * c.spread * d;
       const ry = dir * c.tilt * clamp(d, 0, 1);
       const opacity = d < 0 ? Math.max(0, 1 + d) : 1;
-      const blurPx =
-        // En modo liviano la profundidad la dan el velo y la escala; el blur se recalcula por frame
-        c.blur > 0 && getQuality() === 'full'
-          ? Math.min(c.blur, (back / Math.max(1, c.visibleCards)) * c.blur)
-          : 0;
+      // La profundidad la dan el velo, la escala y el giro. El desenfoque por tarjeta se quitó: se
+      // recalculaba en cada fotograma del arrastre y obligaba a la GPU a re-filtrar cada tarjeta.
       el.style.transform = `translate(-50%, -50%) scale(${sc}) translateX(${tx.toFixed(2)}px) translateZ(${tz.toFixed(2)}px) rotateY(${ry.toFixed(3)}deg)`;
       el.style.opacity = opacity.toFixed(3);
-      el.style.filter = blurPx > 0.05 ? `blur(${blurPx.toFixed(2)}px)` : 'none';
       el.style.zIndex = String(Math.round(2000 - d * 20));
       el.style.pointerEvents = opacity > 0.05 ? 'auto' : 'none';
       const hidden = String(Math.round(pos) !== i);
@@ -229,6 +235,14 @@ export function DepthCarousel({
   );
 
   const navigateBy = useCallback((step: number) => setFocus(focusRef.current + step), [setFocus]);
+
+  useEffect(() => {
+    if (!apiRef) return;
+    apiRef.current = { goTo: (i) => setFocus(i) };
+    return () => {
+      apiRef.current = null;
+    };
+  }, [apiRef, setFocus]);
 
   // Escala para que el carrusel quepa en anchos pequeños
   useEffect(() => {
@@ -385,7 +399,7 @@ export function DepthCarousel({
             ref={(el) => {
               cardRefs.current[i] = el;
             }}
-            className="depth-carousel__card"
+            className={cn('depth-carousel__card', it.className)}
             style={{ width: cardWidth, height: cardHeight, borderRadius: radius }}
             role="group"
             aria-roledescription="diapositiva"

@@ -721,3 +721,248 @@ destacadas, en violeta: un solo sistema de trazo para todo el sitio.
 - Errores: el **número del error en numeración maya** (404 = un punto de 400, la concha del cero y
   cuatro puntos) cae pieza a pieza; atajo al buscador global.
 - Pendiente: pie de página (fase 6) y la fase 7 completa.
+
+## 29. v7.0 — Fluidez medida, letra con vida y fondos propios
+
+### 29.1 Encargo
+
+"Que no se trabe ni en la computadora ni en el teléfono, sin sacrificar animaciones"; contadores
+que arranquen al aparecer; rediseños puntuales (oferta de la portada, hitos, galería con
+MorphSlider, otro concepto para el anillo de universidades, Comparar más claro, tablero de la
+oferta, selector de universidad, tarjetas de noticias, cabecera de la galería); tipografía con más
+vida (incluso trazo dibujado); fondo interactivo propio por vista; entradas en todo. Por fases,
+nada genérico.
+
+### 29.2 Fase 1 — Fluidez (medida en la computadora del usuario: i5-10500 con Intel UHD 630)
+
+Método: build de producción, Chrome con la GPU real (ventana fuera de pantalla), scroll con rueda;
+fotogramas por `requestAnimationFrame`, trazas de Chrome (invalidaciones de estilo, capas, perfil
+de CPU) y supresión de piezas una a una. Lo que trababa y cómo se resolvió, sin quitar animaciones:
+
+| Causa (medida)                                                                                                                      | Arreglo                                                                                                                                                                                                        |
+| ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PixelSwap` clonaba la cara entera (con su imagen) en cada píxel: ~420 copias por volteo al pasar el cursor                         | Una sola capa recortada con `clip-path: path()` que reúne las celdas abiertas; mismo patrón y curva                                                                                                            |
+| Hitos: `--d/--ad` en el `<li>` en cada fotograma → recalculaba ~40 elementos por tarjeta (139 recálculos > 8 ms)                    | Escritura directa de `transform`/`opacity`/`translate` en las 3 piezas que se mueven (quedó 1)                                                                                                                 |
+| Hitos: `filter: saturate()` y transiciones que se reiniciaban en cada fotograma                                                     | Solo propiedades de la GPU, sin transición en lo que cambia por fotograma                                                                                                                                      |
+| 565 capas de GPU: `DepthText` (capas 3D reales), `FoldText` y tarjetas con 3D permanente, 124 tarjetas con `will-change`            | `DepthText` proyecta sus capas en 2D (gira solo el bloque); 3D solo mientras anima o con el cursor encima; carrusel virtual (solo existen las visibles)                                                        |
+| `Tilt` (tarjetas de noticias) escribía 5 variables heredables por fotograma y animaba una sombra grande                             | `transform` en línea + variables registradas `inherits: false` para el brillo; sombra al entrar, no por fotograma                                                                                              |
+| El tema de cada capítulo reescribía 9 variables en `:root` (recálculo de toda la página) y el `color` del body se interpolaba 1,1 s | Variables por capítulo en CSS; el cruce de fondo son dos capas fijas que se funden por opacidad                                                                                                                |
+| `html:has(.u-profile) …` obligaba a revisar el documento con cada cambio del DOM                                                    | Esas reglas viajan en el `<style>` del perfil (`brandRootCss`)                                                                                                                                                 |
+| Bucles decorativos (orbes, guía, cinta) seguían corriendo a miles de px                                                             | `OffscreenPause`: `data-away` pausa las animaciones CSS de los bloques lejanos                                                                                                                                 |
+| Al cargar: prueba de WebGL (~0,4 s), tela elástica y carrusel WebGL montándose aunque estuvieran muy abajo                          | `useNear`: se preparan al acercarse (una pantalla antes)                                                                                                                                                       |
+| Lenis mueve la página desde el hilo principal: con una página rica, ~15–20 % de fotogramas llegaban tarde                           | **Scroll suave adaptativo** (`SmoothScroll`): mide los primeros fotogramas de scroll y, si > 10 % llega tarde, deja el nativo (otro hilo, nunca se traba) y lo recuerda en el equipo. `?lenis=1/0` para probar |
+| Cifras: esperaban a que React hidratara y ~1 s más                                                                                  | Las anima el script de arranque (`roll`, `flash`, `maya`, `data-reveal-at`): giran en cuanto aparecen                                                                                                          |
+
+Resultado en la portada: fotogramas lentos al hacer scroll de 26–39 % a ~0 % con scroll nativo;
+`DOMContentLoaded` de 850 a 480 ms; las cifras arrancan en < 0,3 s al llegar a ellas.
+
+Reglas para lo que venga: nada de variables CSS heredables escritas por fotograma (escribir la
+propiedad en la pieza, o `@property … inherits: false`); nada de 3D/`will-change` permanentes
+(encenderlos al animar o con el cursor); nada pesado (WebGL, texturas) al cargar si está lejos;
+medir con `scratchpad/perf` (Playwright con GPU) antes y después.
+
+### 29.3 Fase 2 — Tipografía: "Anuario anotado"
+
+Pedido: letra con vida, alegre, "no tan recta y sin vida", incluso como dibujada. Se compararon cinco
+sistemas con texto real del Foro (Alegreya, Young Serif, Bricolage Grotesque, Recursive, Gloock):
+Bricolage se ve "startup", Gloock de revista de moda, Recursive casual demasiado informal y Young
+Serif no tiene pesos ni itálica. Elegido: **Alegreya** — caligráfica, con itálica verdadera y 400–900,
+de Huerta Tipográfica (Argentina); su nombre viene de "alegría" — con **Alegreya Sans** (texto),
+**Alegreya Sans SC** (versalitas reales en las etiquetas) y **Shantell Sans** (notas a mano, ejes de
+informalidad y rebote). Solo subconjunto latino (cubre á é í ó ú ñ ü ¿ ¡); Shantell no se precarga.
+
+Concepto: el anuario impreso (v5) **anotado a mano** por quien lo leyó. `components/ui/Scribble.tsx`
+(subrayado, garabato, doble, círculo, resaltador, flechas, chispa, zigzag; caminos hechos a mano con
+temblor) y `components/ui/Note.tsx` (nota en Shantell, inclinada, con flecha). Los trazos se dibujan
+solos al aparecer (`data-reveal="draw"`, `stroke-dashoffset` con `pathLength=1`) y las notas saltan
+(`note`), con el script de arranque: sin React ni medidas. `FoldText`, `Words`, `Section` y
+`PageHeader` aceptan `mark={{ word, kind }}`: el trazo se dibuja justo después de que esa palabra
+entra. Regla de la casa: **"nueve" siempre va encerrado en un círculo** (el 9 del emblema); cada
+capítulo y cada página llevan su propio trazo.
+
+Medidas: texto 1.125rem (Alegreya Sans tiene ojo pequeño), etiquetas 0.86rem en versalitas,
+`ui-label` 0.92rem; titulares 700 (h1 760) con itálica de énfasis en violeta.
+
+### 29.4 Fase 3 — Fondos propios de cada vista (`components/fx/PageBackdrop.tsx`)
+
+Pedido: un fondo interactivo en todas las vistas, acorde a cada una y **no genérico**. Regla: el fondo
+es el _papel_ de lo que se está viendo, no una textura decorativa.
+
+| Vista                        | Papel                            | Qué hace el cursor                                                                                                         |
+| ---------------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Inicio                       | Puntos mayas                     | Cerca del cursor los puntos crecen y se funden de cinco en cinco en barras (cifras mayas; el emblema es el 9)              |
+| Universidades                | Nueve hilos, uno por universidad | Los empuja; vibran al soltarlos y el que se toca se tiñe del color de su universidad. En un perfil, su hilo va en su color |
+| Programas                    | Código de barras del catálogo    | Las barras cercanas se encienden en los colores de los cuatro niveles                                                      |
+| Actividades                  | Hoja de calendario               | El día bajo el cursor se encierra en un círculo a mano (hoy ya va marcado)                                                 |
+| Noticias                     | Semitono de periódico (45°)      | Lupa: la tinta crece bajo el cursor                                                                                        |
+| Galería                      | Hoja de contactos de fotógrafo   | El cuadro bajo el cursor se marca con lápiz graso                                                                          |
+| Contacto (oscuro) y el resto | Papel de carta rayado            | El cursor escribe un trazo de tinta que se seca                                                                            |
+
+Contacto es oscura de punta a punta, así que su papel va _dentro_ de la sección (`BackdropLayer
+local tone="dark"`); en el resto va fijo detrás de todo desde el layout. El encabezado de página y
+el hero dejaron de ser opacos (el fondo se ve a través), y los puntos viejos del hero se retiraron.
+
+Rendimiento: dos lienzos. El de base se dibuja una vez (al cargar, al cambiar de vista o de tamaño, y
+cuando llegan las fuentes). El vivo solo existe con puntero fino y modo completo, dibuja únicamente
+mientras algo se mueve y se detiene solo; en teléfono, modo ligero o movimiento reducido el fondo es
+estático y no gasta nada. Los puntos se agrupan por intensidad (`dotBatch`: un `Path2D` por cada uno
+de 12 niveles) en vez de cambiar de color punto por punto: en Noticias, con cientos de puntos por
+fotograma, eso bajó los fotogramas lentos al mover el cursor de 19.7 % a 2.6 %. Medido con GPU real
+(Chrome con ventana, 1920×1080, barrido de cursor de 3 s): todas las vistas entre 0 % y 4 %.
+
+### 29.5 Fase 4 — Portada: el fichero, el códice y la galería que se funde
+
+**"Toda la oferta" → el fichero** (`ProgramsRail`). Se veía vacía: una ficha de color plano en el
+centro y nada a la izquierda. Ahora es el fichero de una biblioteca:
+
+- cada programa es una **ficha de catálogo**: papel rayado con margen en el color del nivel,
+  signatura en el margen (nivel, universidad, número), datos "llenados a mano" en Shantell,
+  sello de goma de la universidad y la perforación de la varilla. La **pestaña** de cada nivel está
+  a otra altura del borde (como los separadores de un cajón), así que en el abanico se leen los
+  niveles de las fichas de atrás. El velo de profundidad tiene la silueta de la ficha y hunde las
+  de atrás en lila (blanco sobre blanco se perdía);
+- a la izquierda, **la ficha del frente abierta**: dónde se imparte, qué es, "lo que se estudia" con
+  palomitas a mano, a quién va dirigida y los botones (`programBrief` en lib/format.ts separa la
+  descripción del backend; si una no sigue la plantilla, todo queda como texto, nada se pierde);
+- debajo, **el canto del cajón**: una raya por ficha en el color de su nivel. Muestra dónde está la
+  del frente; al pasar el cursor dice cuál es cada una; click o arrastre la saca al frente. Al
+  arrastrar, solo la marca y el título siguen al dedo y el fichero salta al soltar (recorrer 100
+  fichas con su animación trababa). Para teclado es un deslizador.
+- Intactos: el carrusel de profundidad, sus flechas y su animación (pedido explícito); `DepthCarousel`
+  solo ganó `className` por tarjeta y `apiRef.goTo()`.
+
+**Hitos → páginas de un códice** (solo vestido; la pista fijada, la curva 3D, la entrada, la
+inclinación, la chispa y los iconos siguen igual): la línea es una banda de fechas con doble filete
+(el avance se pinta en el filete de abajo), las tarjetas son páginas de papel con doble filete y la
+foto montada dentro, el tipo va en un cartucho (como los bloques de glifos), las universidades
+participantes en versalitas ("con USAC · URL…"), el folio de cada página en la cuenta maya, el año
+del fondo también en numeración maya, los ingresos con su sigla en tinta y "se sumó al Foro" a mano,
+y "hoy" escrito y encerrado a mano.
+
+**Galería de la portada → MorphSlider + hoja de contactos** (`HomeGallery`, `MorphSlider`). El
+deslizador WebGL que pasó el equipo, con sus valores (melt, intensidad 0.55, aberración 0.35, deriva
+0.4, 1.1 s, power2.inOut, escala 2.4, bucle, radio 16, leyendas, controles e indicadores). Arrastrar
+"frota" la transición; click amplía. Al lado, la **hoja de contactos** del fotógrafo: tira de
+película con perforaciones y la foto actual encerrada a lápiz graso. Pie de foto como etiqueta de
+papel con cinta. Adaptaciones de rendimiento: se crea al acercarse, solo dibuja en pantalla, en
+reposo no calcula el ruido, texturas del tamaño que se dibuja y subidas a la GPU en ratos libres
+(el tirón al cambiar de foto desapareció). Sin WebGL o en modo liviano: misma composición con
+fundido. **/galeria no cambió** (sigue con su carrusel `GalleryShowcase`).
+
+**Rendimiento encontrado de paso** (medido con trazas de Chrome):
+
+- La portada mantenía **~420 capas de GPU**: el motor de entradas retenía cada elemento pendiente
+  con una animación de opacidad/transformación en pausa, y Chrome hace capa de cada una. Ahora se
+  retienen con un recorte (`clip-path`) en pausa, que no crea capa y no saca el contenido del árbol
+  de accesibilidad (`visibility` sí lo sacaba); su animación se crea al entrar. Prueba aislada con
+  300 elementos: trabajo de capas por fotograma de ~150 ms a ~12 ms. Además, lo que quedó arriba sin
+  entrar (salto de scroll, cambio de alto) se muestra al detener el scroll.
+- Animaciones de una sola vez con `both` (emblema del encabezado, espectro de universidades,
+  numerales de capítulo, guía, fondo, ficha abierta) quedaban "vivas" en su último cuadro como
+  capas: pasan a `backwards`, que en reposo se ve igual. Resultado: ~420 → ~220 capas.
+- `OffscreenPause` marcaba secciones antes de que React las hidratara (aviso de hidratación en
+  desarrollo): ahora solo marca nodos ya hidratados.
+- Strapi en desarrollo vigilaba `frontend/.next` con Vite y recargaba el panel en cada build (más de
+  un núcleo de CPU): `src/admin/vite.config.ts` lo ignora.
+
+### 29.6 Fase 5 — Universidades: el librero y "Comparar" con preguntas
+
+**El "átomo" (anillo de sellos en órbita) → el librero del Foro** (`UniversityShelf`; `SealRing` se
+retiró). Pedido: otro concepto, no el mismo modelo con más animación. Nueve libros en un estante,
+uno por universidad, en el mismo mundo de biblioteca que el fichero de la portada:
+
+- **el grosor de cada lomo es su número de programas** (flex-grow = programas) y la altura varía
+  como en un librero real; en el lomo, su sello, la sigla en versalitas verticales, el año en que
+  entró al Foro y dos filetes "dorados";
+- en reposo los lomos son de la familia violeta (el Foro es neutral); al señalar uno, el libro se
+  saca del estante, sus vecinos se apartan inclinándose, el lomo toma el color de su universidad y
+  los filetes su segundo color; abajo se lee quién es, cuántos programas tiene, desde cuándo está y
+  su oferta por nivel en una barra;
+- el sujetalibros es el emblema (el 9 maya); entrada: los libros caen al estante uno tras otro
+  (`data-reveal="book"`) y el estante se extiende; click: su perfil, con el sello viajando hasta
+  la cabecera (misma transición que tenía el anillo).
+
+**Comparar → pregunta y respuesta** (`UniversitiesCompare`, `lib/compare.ts` con pruebas). La tabla
+de nueve columnas con flechas de ordenar no se entendía. Ahora:
+
+- "¿Qué quieres comparar?": cuántos programas, cada nivel, estudiar a distancia (virtual + híbrido)
+  o desde cuándo están. Al elegir, **una frase responde** con nombres y cifras ("Solo 4 de las 9
+  ofrecen doctorados: USAC, URL, UMG y Galileo, con 3 cada una") y la tabla se ordena;
+- en vez de cinco columnas de números, **una barra por universidad**: su largo es el total y cada
+  tramo un nivel en su color; al preguntar por un nivel solo ese tramo queda encendido (y la
+  leyenda, que explica qué es cada nivel, también); la cifra que responde va grande con su puesto;
+- entrada: el panel de la pregunta, luego las filas en cascada y las barras llenándose tramo por
+  tramo (animaciones de una vez con `backwards`); al cambiar de pregunta las filas se deslizan.
+
+### 29.7 Fase 6 — Catálogo: la cuenta maya y los sellos
+
+**La "tabla" de puntos de la cabecera → la cuenta maya** (`OfferAbacus`; `OfferDots` se retiró).
+Cada universidad es una varilla de ábaco con una cuenta por programa (del color de su nivel;
+Especialización además rayada, para no depender solo del color). Al entrar, las cuentas se deslizan
+a su sitio (`data-reveal="bead"`) y, **cada cinco, se funden en una barra**: así se escriben los
+números mayas (puntos de uno, barras de cinco), de modo que cada varilla se lee como su cifra; al
+final va el total en numeración maya y en arábigos. Al señalar una varilla, sus barras se abren en
+cuentas y cada una dice qué programa es.
+
+**Filtro por universidad → tira de sellos** (`UniversityStamps`). El desplegable se cambió por los
+nueve sellos (y el emblema para "Todas"), cada uno con cuántos de sus programas coinciden con los
+demás filtros (nivel, modalidad, búsqueda); los que se quedan en cero se ven tenues. El elegido
+**se estampa**: cae girado como un sello de goma y queda con un aro de tinta del color de su
+universidad (su color solo aparece en lo suyo). En el teléfono la tira se desliza de lado.
+
+### 29.8 Fase 7 — Noticias como recortes; la galería como mesa de fotos
+
+**Tarjetas de /noticias → recortes de periódico** (`NewsArchive`). Se medían fluidas tras la fase 1,
+pero "no se renderizaban bien": la inclinación 3D (Tilt + capas en profundidad) obligaba al navegador
+a dibujar el texto como imagen y girarla, y los títulos se veían borrosos mientras el cursor estaba
+encima. Ahora, sin 3D:
+
+- en reposo, cada nota es un recorte de papel un poco torcido, sujeto con cinta, con línea de
+  cabecera de diario (N.º y fecha sobre doble filete), letra capitular y la foto **impresa en trama
+  de puntos violeta** (como el fondo semitono de la página);
+- al tomarlo (cursor o teclado): se levanta y se endereza, la trama se revela y deja la foto a color,
+  la foto sigue al cursor con un paralaje 2D, el título se subraya a mano y la flecha avanza.
+  Medido: 0 % de fotogramas lentos al recorrer seis tarjetas (antes 0.4–2 %) y menos de la mitad del
+  trabajo de capas. La nota destacada conserva su malla elástica.
+
+**Cabecera de /galeria → mesa de polaroids** (`PhotoFan`). Las cuatro fotos (que ya se abrían en
+abanico al llegar, y lo siguen haciendo) son polaroids con su pie escrito a mano. Se pueden **tomar
+y arrastrar**: la que se toma sube encima y, al soltarla, queda girada según cómo se lanzó; un toque
+sin arrastre solo la sube; "ordenar la mesa" las devuelve al abanico. El arrastre escribe solo
+`--dx`/`--dy` (registradas, sin herencia) en la foto que se mueve, sin transición mientras se arrastra
+y con transición al soltar u ordenar.
+
+### 29.9 Fase 8 — Entradas en todo el sitio y revisión final
+
+**Entradas.** Se recorrió cada página buscando bloques visibles sin animación de entrada (ni
+propia, ni de su contenedor, ni de sus piezas). Se sumaron: el texto y la cabecera del fichero, la
+cabecera de la hoja de contactos, el título "Lo que ya dio resultados" y las flechas de "Así
+trabaja"; en el catálogo, la caja de filtros, el conteo, los encabezados de cada nivel y "Mostrar
+más"; en Actividades, los filtros (en cascada), las cabeceras de "Próximas"/"Anteriores" y los
+botones de cada año. La auditoría encontró además una regresión propia: al retirar la tabla de
+puntos se había borrado `@keyframes dot-in`, que usaban los puntos del calendario de Noticias
+(ya restaurado; se verificó que ninguna animación del CSS apunta a fotogramas inexistentes).
+
+**Revisión.**
+
+- Sin desborde horizontal en 360, 768, 1024, 1280 y 1920 px en todas las páginas. En el teléfono,
+  la tabla de Comparar ensanchaba la página (las filas que se deslizan al reordenarse); se arregló
+  con `contain: paint` en su contenedor.
+- Ninguna entrada queda retenida después de recorrer cada página, en modo completo y liviano, en
+  escritorio y teléfono. Con "menos movimiento" todo se ve sin animar (la tira horizontal original de
+  /galeria muestra sus fotos al deslizarla, como antes).
+- Los trazos a mano ocultos dejaban asomar su punta redonda como un puntito (miniaturas de la hoja
+  de contactos, subrayado de los recortes, trazos antes de dibujarse): patrón `1 2` y desfase `1.05`.
+- En tableta, la ficha abierta del fichero ya no conserva su alto de escritorio (dejaba un hueco).
+- Pruebas: 69 del frontend (nuevas: `programBrief`, `compareAnswer`) y 116 unitarias del backend;
+  tipos, lint y formato limpios; compilación de producción correcta.
+
+### 29.10 Ronda de ajustes (7-oct-2026): portada, pie, contacto y panel
+
+- **Fondo de la portada · relieve** (`PageBackdrop.tsx`, patrón `relieve`): la retícula de puntos mayas distraía. Ahora son curvas de nivel de un paisaje volcánico (marching squares sobre rejilla de 8 px, ruido de valor con semilla), muy tenues (α 0.085; una de cada cinco "maestra", α 0.17), con triángulos de cumbre. Entran de la más baja a la más alta (una cada 45 ms, se reanuda si se vuelve a pintar a medias) y alrededor del cursor se enciende una copia (recorte circular con degradado `destination-in`, ~190 px). Nada se mueve solo.
+- **Así trabaja el Foro** (`ProcessSteps.tsx`): se conservan las tres tarjetas 3D, el número con capas, el título que se despliega y el autoavance. Nuevo: renglones de acta, sello por paso que cae al llegar al frente, casillas que se marcan a mano; el diagrama ahora cuenta cada paso con las siglas de las nueve (desde la API): rueda y estrella {9/4} (nadie preside), radios hacia un acuerdo que se sella, fila que publica una página. Los puntos de control son un recorrido con nombre y tramo que se llena.
+- **Contacto, una sola versión** (`ContactForm.tsx`): el mismo diseño en la portada y en `/contacto` (se quitó el papel rayado de la página). Más directo: pregunta-guía, opciones con su descripción siempre visible, tres pasos de qué pasa con el mensaje sobre el formulario, aviso de que la inscripción la hace cada universidad (se enciende al elegir «Estudiante») y botón de enviar que parece botón.
+- **Noticias · hemeroteca** (`NewsCalendar.tsx`): la columna de puntos se cambió por pilas de periódicos doblados por año; caen uno a uno, la nota más reciente en morado, y al señalarlos se asoman con su título.
+- **Pie** (`Footer.tsx`, `FooterMembers.tsx`): las nueve universidades con el **logotipo** que suben a Strapi (miniatura; la sigla si no hay o no carga), su color solo al pasar el cursor; debajo, el Foro, secciones, atajos y «Escribir al Foro».
+- **Toda la oferta**: el panel izquierdo ya no depende de cómo esté redactada la descripción: `faculty`, `topics` (uno por línea) y `audience` son campos de Strapi; si vienen vacíos se usa lo que diga la descripción (`programBrief`).
+- **Panel**: emblema y morados del Foro, textos de bienvenida, ~310 textos que Strapi no traía en español, tarjeta «Cómo cargar información» en el inicio y guía interactiva en `/guia/` (la sirve Strapi).

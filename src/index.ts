@@ -8,6 +8,7 @@ import { CUSTOM_ROUTES_OPENAPI } from './openapi/custom-routes';
 import { registerRichTextSanitizer } from './security/richtext-sanitizer';
 import { ensureUploadSettings } from './security/upload-settings';
 import { ensurePanelLabels } from './panel/labels';
+import { ensureInitialAdmin } from './security/initial-admin';
 
 /**
  * Engancha el guard de propiedad/auditoría a todas las rutas del content-manager.
@@ -65,6 +66,8 @@ export default {
    * Todo lo de aquí es idempotente: el código es la fuente de verdad de índices, rol y permisos.
    */
   async bootstrap({ strapi }: { strapi: Core.Strapi }) {
+    // Antes que nada: si no hay administradores, el registro público de /admin estaría abierto
+    await ensureInitialAdmin(strapi);
     await ensureExtraIndexes(strapi);
     await registerOwnershipCondition(strapi);
     await ensureUniversityEditorRole(strapi);

@@ -205,3 +205,75 @@ Al cierre del Sprint 8 se entrega:
 3. Acceso a Railway, Resend, Cloudflare R2 y Sentry transferido a cuentas institucionales del Foro (no personales).
 4. Documentación: [README.md](README.md), [SEGURIDAD.md](SEGURIDAD.md), [TESTING.md](TESTING.md), [OBSERVABILIDAD.md](OBSERVABILIDAD.md), este archivo y [openapi.yaml](openapi.yaml).
 5. Pendientes conocidos: datos reales de representantes y programas por universidad; dominio definitivo; correo institucional para `CONTACT_NOTIFY_EMAIL` y `MAIL_FROM`.
+
+## 8. Despliegue gratuito (sin tarjeta): Vercel + Render + Supabase + Cloudinary
+
+Para cuando el Foro no tiene presupuesto. Todo es gratis y ninguna de estas cuentas pide tarjeta. Lo que se sacrifica frente a Railway: menos memoria, sin respaldos automáticos y un servidor que se dormiría si nadie lo visita (se resuelve con un "despertador", §8.6).
+
+| Pieza                        | Servicio (plan gratis) | Límite que importa                                                                                |
+| ---------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------- |
+| Sitio (Next.js)              | Vercel _Hobby_         | Siempre encendido. Uso no comercial (el Foro es una iniciativa académica)                         |
+| Panel y API (Strapi)         | Render _Free_          | 512 MB de RAM, 750 h/mes (alcanza para 1 servicio todo el mes); se duerme tras 15 min sin visitas |
+| Base de datos                | Supabase _Free_        | 500 MB; se pausa tras 7 días sin actividad (el despertador lo evita)                              |
+| Fotos subidas                | Cloudinary _Free_      | 25 créditos/mes (≈ 25 GB entre almacenamiento y descargas)                                        |
+| Correo (avisos, contraseñas) | Brevo _Free_           | 300 correos al día                                                                                |
+| Despertador y alertas        | UptimeRobot _Free_     | Revisa cada 5 minutos y avisa por correo si el sitio se cae                                       |
+
+Medido en local (oct-2026): Strapi en producción usa ~335 MB con carga, dentro de los 512 MB. Por eso `render.yaml` limita el montón de Node a 320 MB y procesa las fotos en un solo hilo.
+
+> Todas las cuentas deben quedar **a nombre del Foro** (un correo institucional), no de una persona.
+
+### 8.1 Base de datos — Supabase
+
+1. https://supabase.com → _Start your project_ → crear organización y proyecto `foro-posgrado`. Región: la más cercana (p. ej. _East US_). Contraseña de la base: generarla y guardarla en el gestor de contraseñas.
+2. _Project Settings → Database → Connection string → **Session pooler**_ (funciona por IPv4, que es lo que tiene Render). De ahí salen `DATABASE_HOST` (`aws-0-<región>.pooler.supabase.com`), `DATABASE_USERNAME` (`postgres.<id-del-proyecto>`) y la contraseña.
+
+### 8.2 Fotos — Cloudinary
+
+https://cloudinary.com → crear cuenta → _Dashboard_: copiar **Cloud name**, **API Key** y **API Secret** (`CLOUDINARY_NAME`, `CLOUDINARY_KEY`, `CLOUDINARY_SECRET`). Las fotos quedan en la carpeta `foro-posgrado`.
+
+### 8.3 Correo — Brevo
+
+https://www.brevo.com → cuenta gratis → _SMTP & API → SMTP_: `SMTP_HOST=smtp-relay.brevo.com`, `SMTP_USER` (el login SMTP) y `SMTP_PASSWORD` (una clave SMTP nueva). Verificar el remitente que irá en `MAIL_FROM` (el correo del Foro). `CONTACT_NOTIFY_EMAIL`: a quién le llegan los mensajes del formulario.
+
+### 8.4 Panel y API — Render
+
+1. Fusionar los cambios en `main` (Render despliega esa rama; ver §2).
+2. https://render.com → entrar con GitHub → _New → Blueprint_ → elegir el repositorio. Render lee [`render.yaml`](render.yaml), crea el servicio `foro-posgrado-api` y genera solo las claves de Strapi.
+3. Llenar las variables marcadas como pendientes: las de Supabase (§8.1), Cloudinary (§8.2), Brevo (§8.3), `SUPERADMIN_*` (§8.5), `PUBLIC_URL` = `https://foro-posgrado-api.onrender.com` (la que muestre Render) y `FRONTEND_URL` = la dirección del sitio en Vercel (§8.6; se puede completar después y redesplegar).
+4. _Create_. El primer despliegue tarda ~10 minutos (compila el panel). Comprobar `https://foro-posgrado-api.onrender.com/_health` → respuesta vacía con código 204.
+
+### 8.5 Primer Super Admin (sin consola)
+
+En el plan gratis de Render no hay consola para crear el administrador, y mientras no exista ninguno, **cualquiera** que abra `/admin` podría registrarse como Super Admin. Por eso Strapi lo crea solo al arrancar ([`src/security/initial-admin.ts`](src/security/initial-admin.ts)), antes de aceptar visitas, con estas variables:
+
+- `SUPERADMIN_EMAIL`: correo institucional de quien administra.
+- `SUPERADMIN_PASSWORD`: 12+ caracteres con mayúscula, minúscula, número y símbolo (si no cumple, no se crea y el registro lo dice).
+- `SUPERADMIN_FIRSTNAME`, `SUPERADMIN_LASTNAME`: opcionales.
+
+En cuanto se entra por primera vez a `https://<api>/admin`: **borrar `SUPERADMIN_PASSWORD`** en Render (_Environment_) y guardar. Si se deja, el registro avisa en cada arranque.
+
+### 8.6 Sitio — Vercel
+
+1. https://vercel.com → entrar con GitHub → _Add New → Project_ → el repositorio → **Root Directory: `frontend`**.
+2. Variables (_Environment Variables_), ver §3.3.1:
+   - `NEXT_PUBLIC_API_URL` = `https://foro-posgrado-api.onrender.com`
+   - `NEXT_PUBLIC_MEDIA_URL` = `https://res.cloudinary.com/<cloud name>`
+   - `NEXT_PUBLIC_SITE_URL` = la dirección final del sitio (al principio, la `.vercel.app` que asigne Vercel)
+   - `FRONTEND_API_TOKEN` = el mismo valor que generó Render (Render → _Environment_ → ver valor)
+   - `NEXT_TELEMETRY_DISABLED=1`
+3. _Deploy_. La compilación lee la API: si Render estaba dormido, despertarlo antes abriendo `/_health`.
+4. Volver a Render y poner `FRONTEND_URL` = la dirección del sitio (sin barra final).
+
+**Despertador** — https://uptimerobot.com → _New monitor_ → HTTP(s) → URL `https://foro-posgrado-api.onrender.com/api/forum-summary` → cada **5 minutos** → alertas al correo del Foro. Esa ruta consulta la base, así que mantiene despiertos a Render (se duerme a los 15 min sin visitas) **y** a Supabase (se pausa a los 7 días). Un segundo monitor sobre la portada del sitio avisa si Vercel falla.
+
+### 8.7 Después del primer despliegue
+
+1. Checklist de la §4 (cambiando R2 por Cloudinary en la fila 10).
+2. **IP real de los visitantes**: entrar al panel y revisar _Bitácora de auditoría_: la IP del inicio de sesión debe ser la tuya (búscala en https://ifconfig.me), no una de Render. Si sale otra, probar `PROXY_IP_HEADER=True-Client-IP` en Render y repetir. Sin esto, el límite de envíos del formulario de contacto contaría a todos los visitantes como uno solo.
+3. Cargar la información real: crear las 9 universidades (con su **Logotipo**), invitar a los editores y crear su _Perfil de editor_ (guía en `https://<api>/guia/`, sección «Para el Super Admin»). **No** cargar los datos de simulación (`npm run seed`) en producción: son personas y fechas ficticias.
+4. **Respaldo semanal** (el plan gratis de Supabase no guarda copias descargables): `./scripts/backup-db.sh backup "<cadena de conexión del Session pooler>"` y guardar el archivo fuera de Supabase.
+
+### 8.8 Guía para los editores
+
+La guía interactiva del panel está en `https://<api>/guia/` (la sirve Strapi desde [`public/guia/`](public/guia/), no se enlaza desde el sitio público y no se indexa). Desde el inicio del panel, la tarjeta «Cómo cargar información» lleva a ella. Para regenerar sus capturas tras un cambio del panel: `npx tsx scripts/demo-editor.ts` (cuenta de prueba local), después `node scripts/guia/capturar.mjs` y `python scripts/guia/construir.py` (instrucciones al inicio de `capturar.mjs`).
