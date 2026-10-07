@@ -88,7 +88,7 @@ jobs:
         run: npm run test:coverage
       - name: Guardar informe de cobertura
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage
           path: coverage/lcov-report
