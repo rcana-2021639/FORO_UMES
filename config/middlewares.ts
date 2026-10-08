@@ -10,8 +10,16 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Middlewar
       : [...frontendUrls, 'http://localhost:3000', 'http://127.0.0.1:3000'];
 
   // Host de las imágenes en producción (R2/CDN o Cloudinary), para la CSP
-  const mediaHost =
-    env('S3_PUBLIC_URL', '') || (env('CLOUDINARY_NAME') ? 'res.cloudinary.com' : '');
+  // Solo el origen (dominio): en una CSP, una fuente con ruta sin barra final coincide únicamente
+  // con esa ruta exacta y bloquearía todas las imágenes de la carpeta
+  const publicUrl = env('S3_PUBLIC_URL', '');
+  let publicOrigin: string;
+  try {
+    publicOrigin = publicUrl ? new URL(publicUrl).origin : '';
+  } catch {
+    publicOrigin = publicUrl;
+  }
+  const mediaHost = publicOrigin || (env('CLOUDINARY_NAME') ? 'res.cloudinary.com' : '');
 
   return [
     // requestId + registro estructurado por petición (reemplaza strapi::logger)
