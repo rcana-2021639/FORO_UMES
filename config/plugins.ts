@@ -50,7 +50,11 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin =>
                   accessKeyId: env('S3_ACCESS_KEY_ID'),
                   secretAccessKey: env('S3_SECRET_ACCESS_KEY'),
                 },
-                params: { Bucket: env('S3_BUCKET') },
+                // S3_NO_ACL=true para servicios sin ACL (Supabase Storage): sin esto el proveedor envía
+                // "public-read" por defecto y el servicio lo rechaza
+                params: env.bool('S3_NO_ACL', false)
+                  ? { Bucket: env('S3_BUCKET'), ACL: undefined }
+                  : { Bucket: env('S3_BUCKET') },
               },
             },
             actionOptions: { upload: {}, uploadStream: {}, delete: {} },
