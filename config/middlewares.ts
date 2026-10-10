@@ -1,4 +1,5 @@
 import type { Core } from '@strapi/strapi';
+import { MAX_UPLOAD_BYTES } from '../src/lib/upload-limits';
 
 const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Middlewares => {
   // Orígenes permitidos: el frontend real en producción (FRONTEND_URL, separados por coma)
@@ -68,12 +69,16 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Middlewar
     'global::query-whitelist',
     // Límite de tasa por ruta (Sprint 5); el servidor del frontend se identifica con su token
     { name: 'global::rate-limit', config: { frontendToken: env('FRONTEND_API_TOKEN', '') } },
+    // Traduce a español el error de subida "imagen muy pesada"; envuelve a strapi::body,
+    // que es quien responde 413 al superar el límite de formidable.
+    'global::upload-errors',
     {
       name: 'strapi::body',
       config: {
-        // Corta la subida al superar 5 MB ANTES de procesar la imagen (Strapi solo valida
+        // Corta la subida al superar el límite ANTES de procesar la imagen (Strapi solo valida
         // sizeLimit después de optimizarla, lo que permitiría procesar archivos enormes).
-        formidable: { maxFileSize: 5 * 1024 * 1024 },
+        // El mensaje claro al editor lo pone el middleware global::upload-errors.
+        formidable: { maxFileSize: MAX_UPLOAD_BYTES },
         jsonLimit: '1mb',
         formLimit: '1mb',
       },

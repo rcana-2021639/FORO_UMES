@@ -1,4 +1,5 @@
 import type { Core } from '@strapi/strapi';
+import { MAX_UPLOAD_BYTES } from '../src/lib/upload-limits';
 
 // Solo imágenes rasterizadas. SVG queda excluido a propósito: puede contener scripts (XSS).
 const allowedMediaTypes = ['image/png', 'image/jpeg', 'image/webp'];
@@ -14,8 +15,6 @@ const deniedTypes = [
   'text/x-shellscript',
   'application/x-mach-binary',
 ];
-
-const MAX_UPLOAD_BYTES = 5 * 1024 * 1024; // 5 MB por imagen
 
 const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin => ({
   'users-permissions': {

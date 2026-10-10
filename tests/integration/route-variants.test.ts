@@ -123,6 +123,19 @@ describe('variantes de ruta (mayúsculas, barra final)', () => {
     }
   });
 
+  it('una imagen mayor a 5 MB da un error claro en español (no "FileTooBig")', async () => {
+    const tooBig = Buffer.alloc(6 * 1024 * 1024); // 6 MB > límite de 5 MB
+    for (const route of ['/upload', '/UPLOAD', '/upload/']) {
+      const res = await api()
+        .post(route)
+        .set('Authorization', `Bearer ${tokenA}`)
+        .attach('files', tooBig, { filename: 'pesada.png', contentType: 'image/png' });
+      expect({ route, status: res.status }).toEqual({ route, status: 413 });
+      expect(res.body.error.message).toContain('5 MB');
+      expect(res.body.error.message).not.toContain('FileTooBig');
+    }
+  });
+
   it('la lista blanca de consultas no se salta con /API/ en mayúsculas', async () => {
     const deep = 'populate[representatives][populate][university][populate]=*';
     for (const route of ['/api/universities', '/API/universities', '/Api/Universities/']) {

@@ -102,7 +102,7 @@ export default async function ActividadPage({ params }: Params) {
             >
               <Image
                 src={cover}
-                alt={a.coverImage?.alternativeText ?? ''}
+                alt={a.coverImage?.alternativeText || a.title}
                 fill
                 sizes="(min-width:768px) 66vw, 100vw"
                 className="object-cover"

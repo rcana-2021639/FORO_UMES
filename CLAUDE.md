@@ -76,7 +76,7 @@ Custom API routes (`contact`, `forum-summary`) live under `src/api/<name>/{contr
 - The Next server identifies itself to Strapi with `X-Frontend-Token` = `FRONTEND_API_TOKEN` (same value in both `.env` files) to get its own rate-limit bucket — all SSR traffic shares one IP.
 - CSP and security headers live in `frontend/next.config.ts` (closed origin list, no nonces on purpose to keep ISR); a new external origin must be added there and in `images.remotePatterns`. SEO: `lib/site.ts` (indexable only on HTTPS without `NEXT_PUBLIC_NOINDEX`), `lib/seo.ts` (`pageMetadata` — a page's `openGraph` replaces the layout's entirely), `lib/json-ld.ts`.
 - `/privacidad` describes exactly what the system does with personal data (e.g. contact messages auto-deleted after `CONTACT_RETENTION_DAYS`); change it together with any such behavior.
-- Visual system v5 ("Anuario", `frontend/DESIGN_NOTES.md` §27): Newsreader (headings) + Schibsted Grotesk (text), flat color, 1px rules, small-caps labels, the Maya-numeral-9 emblem (`components/ui/Emblem.tsx`). Styling layers load in order `globals.css` → `styles/v3.css` → `v4.css` → `v5.css`; v5 re-dresses existing pieces without touching their animations — the user wants every existing animation kept. Element defaults (h1–h3) go in `globals.css` `@layer base`, because unlayered rules in `styles/*.css` override Tailwind utilities.
+- Visual system v7 ("Anuario anotado", `frontend/DESIGN_NOTES.md` §29, building on v5 §27 and v6 §28): white + purple, Alegreya / Alegreya Sans / Alegreya Sans SC with Shantell Sans for hand-drawn notes (fonts in `app/layout.tsx`), flat color, 1px rules, the Maya-numeral-9 emblem (`components/ui/Emblem.tsx`). Styling layers load in order `globals.css` → `styles/v3.css` → `v4.css` → `v5.css` → `v6.css` (v7 changes live in `v6.css`, `tokens.css`, `globals.css`); each layer re-dresses existing pieces without touching their animations — the user wants every existing animation kept. Performance rules from §29.2 (measured on an Intel UHD 630): no inherited CSS vars written per frame, write `transform`/`opacity` directly on the moving element. Element defaults (h1–h3) go in `globals.css` `@layer base`, because unlayered rules in `styles/*.css` override Tailwind utilities.
 - Public API nested `populate` is whitelisted by path (`representatives.photo`, `galleryItems.file` in `src/lib/query-whitelist.ts`); a new second-level populate in `frontend/lib/api.ts` needs its path added there or the API answers 400.
 
 ### Config
@@ -91,6 +91,8 @@ Custom API routes (`contact`, `forum-summary`) live under `src/api/<name>/{contr
 ### Branching
 
 `jonathan` = development (CI on every push, Railway staging deploys from here). `main` = production (only receives PRs from `jonathan` with green CI; merging triggers deploy). `feature/<task>` optional for parallel work, merges into `jonathan`. The redesign and seed work lives on the `Estuardo` branch, which the user asked to push to directly.
+
+`DESPLIEGUE.md` documents the original Railway plan; the current target is a zero-budget setup (Vercel for `frontend/`, Render via `render.yaml`, Supabase Postgres + Storage with `S3_NO_ACL=true`). Never run the seed in production.
 
 ### Local data
 

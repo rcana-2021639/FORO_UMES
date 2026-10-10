@@ -123,6 +123,12 @@ export async function Footer() {
           <span className="sf-base__end">
             <Link href="/privacidad">Aviso de privacidad</Link>
             <span aria-hidden>·</span>
+            <Link href="/terminos">Términos</Link>
+            <span aria-hidden>·</span>
+            <Link href="/cookies">Cookies</Link>
+            <span aria-hidden>·</span>
+            <Link href="/aviso-legal">Aviso legal</Link>
+            <span aria-hidden>·</span>
             <span>Guatemala, C. A.</span>
             <BackToTop />
           </span>

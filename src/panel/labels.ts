@@ -1,4 +1,5 @@
 import type { Core } from '@strapi/strapi';
+import { IMAGE_RULES } from '../lib/upload-limits';
 
 /**
  * Etiquetas, ayudas y columnas del panel administrativo (auditoría de producción, A-10).
@@ -28,7 +29,6 @@ type PanelConfig = {
 
 type EditCell = { name: string; size: number };
 
-const IMAGE_RULES = 'PNG, JPG o WebP de hasta 5 MB.';
 const URL_RULE = 'Dirección completa, empezando con https://';
 const RICH_TEXT = 'Admite negritas, listas y enlaces (barra de herramientas).';
 

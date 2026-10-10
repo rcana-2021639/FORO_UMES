@@ -87,9 +87,11 @@ export default function PrivacidadPage() {
             fuera de Guatemala:
           </p>
           <ul data-reveal-stagger="up">
-            <li>alojamiento de los servidores y de la base de datos (Railway);</li>
-            <li>almacenamiento de las imágenes publicadas (Cloudflare);</li>
-            <li>envío del aviso de tu mensaje al equipo del Foro (Resend);</li>
+            <li>alojamiento del sitio público (Vercel);</li>
+            <li>alojamiento del servidor de administración (Render);</li>
+            <li>base de datos (Supabase);</li>
+            <li>almacenamiento de las imágenes publicadas (Cloudinary);</li>
+            <li>envío del aviso de tu mensaje al equipo del Foro (Brevo);</li>
             <li>registro de errores técnicos, sin datos personales (Sentry).</li>
           </ul>
 

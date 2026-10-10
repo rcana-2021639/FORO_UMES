@@ -54,6 +54,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     index('/galeria'),
     index('/contacto'),
     index('/privacidad'),
+    index('/terminos'),
+    index('/cookies'),
+    index('/aviso-legal'),
     ...universities.map((u) => ({
       url: absoluteUrl(`/universidades/${u.documentId}`),
       lastModified: u.updatedAt,

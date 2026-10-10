@@ -246,7 +246,7 @@ function StaticCover({ items, active }: { items: NewsItem[]; active: number }) {
             {src && (
               <Image
                 src={src}
-                alt={n.coverImage?.alternativeText ?? ''}
+                alt={n.coverImage?.alternativeText || n.title}
                 fill
                 sizes="(min-width: 1024px) 58vw, 100vw"
                 className="object-cover"

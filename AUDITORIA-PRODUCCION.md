@@ -222,16 +222,34 @@ Pendiente por el entorno: la imagen Docker se compiló entera pero no se pudo gu
 
 ---
 
+## Auditoría en producción: Strapi, legal y accesibilidad (10-oct-2026)
+
+Segunda ronda con el sitio ya desplegado (Vercel + Render + Supabase + Cloudinary). Se atacó la API en vivo (`foro-posgrado-api.onrender.com`) y se revisó el repo. **No vulnerable** confirmado en vivo: inyección en filtros (el ORM parametriza; o se rechaza con 400 o se trata como texto literal), `populate=*`/`populate[createdBy]`/filtrar u ordenar por campos de admin (400 `QUERY_NOT_ALLOWED`), `pageSize` enorme (acotado a 50), borradores ocultos, CORS de origen ajeno bloqueado, `.env` fuera de git y gitleaks en CI. Cabeceras en vivo correctas (HSTS, CSP cerrada, `nosniff`, `X-Frame-Options: DENY`, `Permissions-Policy`, HttpOnly/SameSite, sesión con refresh). SEO en vivo: `sitemap.xml`, `robots.txt`, manifiesto, favicon propio, 404 y JSON-LD responden.
+
+| ID  | Severidad | Hallazgo                                                                                                                                                                 | Corrección                                                                                                                                                                       | Verificación                                                                                                                                   |
+| --- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| B-1 | Media     | Al subir una imagen de más de 5 MB, el panel mostraba `FileTooBig` (inglés, sin decir el límite): confuso para editores no técnicos, el problema que más les frustra     | Middleware `global::upload-errors` (envuelve a `strapi::body`) traduce el 413 a un mensaje claro en español con el límite; el "5 MB" se centraliza en `src/lib/upload-limits.ts` | 5 pruebas unitarias (`upload-errors.test.ts`) + integración (subir 6 MB → 413 con mensaje en español, corre en CI); 127/127 unitarias en verde |
+| B-2 | Media     | Faltaban páginas legales: **Aviso legal**, **Términos y condiciones** y **Aviso de cookies** (solo existía `/privacidad`); riesgo de queja por no informar               | `/aviso-legal`, `/terminos`, `/cookies` con el estilo del sitio; enlaces en el pie; en el sitemap. Marcadores `[entre corchetes]` para datos que completa el Foro                | Renderizadas en navegador (capturas); enlaces del pie verificados; 71/71 pruebas del frontend                                                  |
+| B-3 | Media     | Sin rastreo (no hay analítica ni cookies de publicidad; confirmado): no hace falta banner de consentimiento, solo un aviso claro                                         | El aviso de cookies explica que solo se usa almacenamiento local técnico; previsto actualizarlo si algún día se agrega analítica                                                 | Revisión en navegador                                                                                                                          |
+| B-4 | Media     | El aviso de privacidad nombraba proveedores que ya no se usan (Railway, Cloudflare, Resend) en vez de los reales                                                         | Actualizado a Vercel, Render, Supabase, Cloudinary, Brevo, Sentry                                                                                                                | Revisión en navegador                                                                                                                          |
+| B-5 | Media     | Las portadas de noticias y actividades caían a `alt=""` cuando el editor no llenaba el texto alternativo: para un lector de pantalla, una imagen de contenido desaparece | El `alt` cae al **título** de la noticia/actividad si no hay texto alternativo (`alternativeText \|\| title`), en archivo y listados; la galería ya lo hacía                     | Typecheck + revisión; corre en producción tras el despliegue (la API local estaba apagada)                                                     |
+
+**No era problema (ya resuelto antes):** los logos decorativos usan `alt=""` con el nombre de la universidad en el `aria-label` del enlace; `lang="es"`, enlace "Saltar al contenido", `h1` por página y jerarquía de encabezados correcta; formularios con etiqueta (A-8).
+
+Pendiente por el entorno (Fase D): la base de prueba local no se pudo levantar (Docker no arranca, disco al 98 %), así que la prueba de integración de la subida pesada se validará en CI; cargar las 9 universidades con datos reales; probar un respaldo + restauración de Supabase; borrar la cuenta temporal local; verificar la IP real en la bitácora.
+
+---
+
 ## Registro de fases
 
-| Fase               | Estado     | Fecha       | Resumen                                                                                        |
-| ------------------ | ---------- | ----------- | ---------------------------------------------------------------------------------------------- |
-| 0 — Reconocimiento | Hecha      | 29-sep-2026 | Todo compila y pasa; 7 hallazgos, corregidos junto con 13 nuevos (ver arriba)                  |
-| 1 — Seguridad      | Hecha      | 5-oct-2026  | Revisión a fondo con sondeos reales: 16 hallazgos (A-1 a A-16), todos corregidos y con pruebas |
-| 2 — Robustez       | Adelantada | 5-oct-2026  | Tiempo límite en las consultas del frontend (A-9)                                              |
-| 3 — UX             | Pendiente  |             |                                                                                                |
-| 4 — Accesibilidad  | Pendiente  |             |                                                                                                |
-| 5 — SEO            | Adelantada | 29-sep-2026 | Lo básico hecho (F0-5); faltan Core Web Vitals y revisión con datos reales                     |
-| 6 — Panel          | Adelantada | 5-oct-2026  | Panel en español con etiquetas y ayudas por campo (A-8); falta la guía corta para editores     |
-| 7 — Legal          | Adelantada | 29-sep-2026 | Aviso de privacidad y conservación de datos; falta revisión legal y correo oficial             |
-| 8 — Despliegue     | Pendiente  |             |                                                                                                |
+| Fase               | Estado     | Fecha       | Resumen                                                                                                                 |
+| ------------------ | ---------- | ----------- | ----------------------------------------------------------------------------------------------------------------------- |
+| 0 — Reconocimiento | Hecha      | 29-sep-2026 | Todo compila y pasa; 7 hallazgos, corregidos junto con 13 nuevos (ver arriba)                                           |
+| 1 — Seguridad      | Hecha      | 5-oct-2026  | Revisión a fondo con sondeos reales: 16 hallazgos (A-1 a A-16), todos corregidos y con pruebas                          |
+| 2 — Robustez       | Adelantada | 5-oct-2026  | Tiempo límite en las consultas del frontend (A-9)                                                                       |
+| 3 — UX             | Pendiente  |             |                                                                                                                         |
+| 4 — Accesibilidad  | Adelantada | 10-oct-2026 | `alt` de portadas cae al título (B-5); confirmados skip link, `lang`, jerarquía de encabezados y logos con `aria-label` |
+| 5 — SEO            | Adelantada | 29-sep-2026 | Lo básico hecho (F0-5); faltan Core Web Vitals y revisión con datos reales                                              |
+| 6 — Panel          | Adelantada | 10-oct-2026 | Panel en español (A-8) y mensaje claro de imagen pesada (B-1); falta la guía corta para editores                        |
+| 7 — Legal          | Adelantada | 10-oct-2026 | Privacidad + aviso legal + términos + cookies (B-2..B-4); falta revisión legal y correo/datos oficiales del Foro        |
+| 8 — Despliegue     | En curso   | 7-oct-2026  | Desplegado (Vercel + Render + Supabase + Cloudinary); falta respaldo/restauración probados y datos reales (Fase D)      |

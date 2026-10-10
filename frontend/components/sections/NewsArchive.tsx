@@ -167,7 +167,7 @@ function Featured({ item, elastic }: { item: NewsItem; elastic: boolean }) {
             ) : thumb ? (
               <Image
                 src={thumb}
-                alt={item.coverImage?.alternativeText ?? ''}
+                alt={item.coverImage?.alternativeText || item.title}
                 fill
                 sizes="100vw"
                 className="object-cover"
@@ -230,7 +230,7 @@ function Card({ item, n }: { item: NewsItem; n: number }) {
               <span className="clip__pan">
                 <Image
                   src={cover}
-                  alt={item.coverImage?.alternativeText ?? ''}
+                  alt={item.coverImage?.alternativeText || item.title}
                   fill
                   sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw"
                   className="clip__img"

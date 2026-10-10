@@ -94,7 +94,7 @@ export default async function NoticiaPage({ params }: Params) {
               <figure className="article-cover">
                 <Image
                   src={cover}
-                  alt={n.coverImage?.alternativeText ?? ''}
+                  alt={n.coverImage?.alternativeText || n.title}
                   fill
                   sizes="(min-width:900px) 40vw, 100vw"
                   className="object-cover"
